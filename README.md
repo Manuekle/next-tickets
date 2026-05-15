@@ -192,22 +192,56 @@ All endpoints are prefixed with `/api`. Protected routes require `Authorization:
 
 ## 🐳 Docker
 
+Quick reference for Docker commands.
+
 ```bash
-# Start all services (PostgreSQL, Redis, MinIO)
+# Build and start all services
 docker compose -f docker/docker-compose.yml up -d
 
-# Start with API (production mode)
-docker compose -f docker/docker-compose.yml up -d --build
+# Build only the API image
+docker build -f docker/Dockerfile.api -t next-tickets-api .
 
-# View logs
-docker compose -f docker/docker-compose.yml logs -f
-
-# Stop all services
-docker compose -f docker/docker-compose.yml down
-
-# Reset volumes (destroy all data)
-docker compose -f docker/docker-compose.yml down -v
+# Run migrations in container
+docker exec -it next-tickets-api npx prisma db push
+docker exec -it next-tickets-api npx ts-node prisma/seed.ts
 ```
+
+## 🤗 Deploy Backend on Hugging Face
+
+The backend can be deployed for free on Hugging Face Spaces (Docker):
+
+1. Create a Space at [huggingface.co/spaces](https://huggingface.co/spaces):
+   - **SDK:** Docker
+   - **Hardware:** CPU free (upgradeable to GPU if needed)
+
+2. Configure the Space with these **Secrets** (Settings → Repository Secrets):
+
+   | Secret | Example |
+   |--------|---------|
+   | `DATABASE_URL` | `postgresql://user:pass@host:5432/next_tickets` |
+   | `JWT_ACCESS_SECRET` | Random 64-char string |
+   | `JWT_REFRESH_SECRET` | Random 64-char string |
+   | `FRONTEND_URL` | `https://your-app.vercel.app` |
+   | `S3_ENDPOINT` | S3-compatible endpoint |
+   | `S3_ACCESS_KEY` | S3 access key |
+   | `S3_SECRET_KEY` | S3 secret key |
+   | `S3_BUCKET` | `next-tickets` |
+   | `SMTP_HOST` | SMTP server for emails |
+   | `SMTP_USER` | SMTP user |
+   | `SMTP_PASS` | SMTP password |
+   | `EMAIL_FROM` | `noreply@nexttickets.com` |
+
+3. Dockerfile HF-ready at `docker/hf.Dockerfile`. Set in Space settings:
+   - **Dockerfile path:** `docker/hf.Dockerfile`
+
+4. Your API will be live at: `https://username-next-tickets.hf.space`
+
+5. Update `NEXT_PUBLIC_API_URL` in Vercel:
+   ```
+   NEXT_PUBLIC_API_URL=https://username-next-tickets.hf.space/api
+   ```
+
+
 
 ## 🔄 CI/CD
 

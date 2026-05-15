@@ -21,8 +21,8 @@ export class AnalyticsService {
       this.prisma.ticket.groupBy({ by: ['priority'], _count: true, where: { ...baseWhere } }),
       this.prisma.$queryRawUnsafe<any[]>(
         `SELECT c.name, COALESCE(COUNT(t.id), 0)::int as count
-         FROM categories c LEFT JOIN tickets t ON t.category_id = c.id
-         ${baseWhere.customerId ? 'AND t.customer_id = $1' : ''}
+         FROM categories c LEFT JOIN tickets t ON t."categoryId" = c.id
+         ${baseWhere.customerId ? 'AND t."customerId" = $1' : ''}
          GROUP BY c.name`,
         ...(baseWhere.customerId ? [baseWhere.customerId] : []),
       ),
@@ -35,8 +35,8 @@ export class AnalyticsService {
     ]);
 
     const avgResult = await this.prisma.$queryRawUnsafe<{ avg_hours: number | null }[]>(
-      `SELECT AVG(EXTRACT(EPOCH FROM (first_response_at - created_at)) / 3600) as avg_hours
-       FROM tickets WHERE first_response_at IS NOT NULL AND created_at > NOW() - INTERVAL '30 days'`,
+      `SELECT AVG(EXTRACT(EPOCH FROM ("firstResponseAt" - "createdAt")) / 3600) as avg_hours
+       FROM tickets WHERE "firstResponseAt" IS NOT NULL AND "createdAt" > NOW() - INTERVAL '30 days'`,
     );
 
     return {
@@ -102,8 +102,8 @@ export class AnalyticsService {
 
     for (const agentId of agentIds) {
       const result = await this.prisma.$queryRawUnsafe<{ avg_hours: number | null }[]>(
-        `SELECT AVG(EXTRACT(EPOCH FROM (t.first_response_at - t.created_at)) / 3600) as avg_hours
-         FROM tickets t WHERE t.assigned_to_id = $1 AND t.first_response_at IS NOT NULL`,
+        `SELECT AVG(EXTRACT(EPOCH FROM (t."firstResponseAt" - t."createdAt")) / 3600) as avg_hours
+         FROM tickets t WHERE t."assignedToId" = $1 AND t."firstResponseAt" IS NOT NULL`,
         agentId,
       );
       avgResponseTimes[agentId] = result[0]?.avg_hours || 0;
