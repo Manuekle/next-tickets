@@ -4,19 +4,29 @@ import * as nodemailer from 'nodemailer';
 @Injectable()
 export class MailerService {
   private readonly logger = new Logger(MailerService.name);
-  private transporter: nodemailer.Transporter;
+  private transporter: nodemailer.Transporter | null = null;
 
   constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'localhost',
-      port: parseInt(process.env.SMTP_PORT || '1025'),
-      secure: false,
-      auth: process.env.SMTP_USER ? {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      } : undefined,
-      tls: { rejectUnauthorized: false },
-    });
+    const host = process.env.SMTP_HOST;
+    const user = process.env.SMTP_USER;
+    const pass = process.env.SMTP_PASS;
+
+    if (host && user && pass) {
+      this.transporter = nodemailer.createTransport({
+        host,
+        port: parseInt(process.env.SMTP_PORT || '587'),
+        secure: false,
+        auth: { user, pass },
+        tls: { rejectUnauthorized: false },
+      });
+      this.logger.log('Mailer initialized with SMTP');
+    } else {
+      this.logger.warn('SMTP not configured — emails will be logged only');
+    }
+  }
+
+  private isEnabled(): boolean {
+    return this.transporter !== null;
   }
 
   async sendPasswordReset(email: string, token: string) {
@@ -39,8 +49,12 @@ export class MailerService {
   }
 
   private async sendEmail(to: string, subject: string, html: string) {
+    if (!this.isEnabled()) {
+      this.logger.log(`[MAIL DISABLED] Would send to ${to}: ${subject}`);
+      return;
+    }
     try {
-      await this.transporter.sendMail({
+      await this.transporter!.sendMail({
         from: process.env.EMAIL_FROM || 'noreply@nexttickets.com',
         to,
         subject,

@@ -17,27 +17,19 @@ export class AnalyticsService {
       this.prisma.ticket.count({ where: { ...baseWhere, status: TicketStatus.IN_PROGRESS } }),
     ]);
 
-    const [byPriority, byCategory, recentActivity] = await Promise.all([
+    const [byPriority, categories, recentActivity, avgResult] = await Promise.all([
       this.prisma.ticket.groupBy({ by: ['priority'], _count: true, where: { ...baseWhere } }),
-      this.prisma.$queryRawUnsafe<any[]>(
-        `SELECT c.name, COALESCE(COUNT(t.id), 0)::int as count
-         FROM categories c LEFT JOIN tickets t ON t."categoryId" = c.id
-         ${baseWhere.customerId ? 'AND t."customerId" = $1' : ''}
-         GROUP BY c.name`,
-        ...(baseWhere.customerId ? [baseWhere.customerId] : []),
-      ),
+      this.prisma.category.findMany({ select: { name: true, _count: { select: { tickets: true } } }, orderBy: { name: 'asc' } }),
       this.prisma.activityLog.findMany({
         where: agentActivityFilter,
         take: 10,
         orderBy: { createdAt: 'desc' },
         include: { user: { select: { id: true, name: true, avatarUrl: true } }, ticket: { select: { title: true } } },
       }),
+      this.getAvgResponseTime(baseWhere),
     ]);
 
-    const avgResult = await this.prisma.$queryRawUnsafe<{ avg_hours: number | null }[]>(
-      `SELECT AVG(EXTRACT(EPOCH FROM ("firstResponseAt" - "createdAt")) / 3600) as avg_hours
-       FROM tickets WHERE "firstResponseAt" IS NOT NULL AND "createdAt" > NOW() - INTERVAL '30 days'`,
-    );
+    const byCategory = categories.map((c) => ({ name: c.name, count: c._count.tickets }));
 
     return {
       openCount, closedCount, pendingCount, inProgressCount,
@@ -46,6 +38,16 @@ export class AnalyticsService {
       recentActivity,
       avgFirstResponseHours: avgResult[0]?.avg_hours || null,
     };
+  }
+
+  private async getAvgResponseTime(baseWhere: any): Promise<{ avg_hours: number | null }[]> {
+    const tickets = await this.prisma.ticket.findMany({
+      where: { ...baseWhere, firstResponseAt: { not: null }, createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
+      select: { createdAt: true, firstResponseAt: true },
+    });
+    if (tickets.length === 0) return [{ avg_hours: null }];
+    const totalHours = tickets.reduce((sum, t) => sum + (t.firstResponseAt!.getTime() - t.createdAt.getTime()) / 3600000, 0);
+    return [{ avg_hours: Math.round((totalHours / tickets.length) * 100) / 100 }];
   }
 
   async getTrends(days: number = 30) {
@@ -100,13 +102,21 @@ export class AnalyticsService {
     const agentIds = agents.map((a) => a.id);
     const avgResponseTimes: Record<string, number> = {};
 
+    const allAgentTickets = await this.prisma.ticket.findMany({
+      where: { assignedToId: { in: agentIds }, firstResponseAt: { not: null } },
+      select: { assignedToId: true, createdAt: true, firstResponseAt: true },
+    });
+
     for (const agentId of agentIds) {
-      const result = await this.prisma.$queryRawUnsafe<{ avg_hours: number | null }[]>(
-        `SELECT AVG(EXTRACT(EPOCH FROM (t."firstResponseAt" - t."createdAt")) / 3600) as avg_hours
-         FROM tickets t WHERE t."assignedToId" = $1 AND t."firstResponseAt" IS NOT NULL`,
-        agentId,
+      const agentTickets = allAgentTickets.filter((t) => t.assignedToId === agentId);
+      if (agentTickets.length === 0) {
+        avgResponseTimes[agentId] = 0;
+        continue;
+      }
+      const totalHours = agentTickets.reduce(
+        (sum, t) => sum + (t.firstResponseAt!.getTime() - t.createdAt.getTime()) / 3600000, 0,
       );
-      avgResponseTimes[agentId] = result[0]?.avg_hours || 0;
+      avgResponseTimes[agentId] = Math.round((totalHours / agentTickets.length) * 10) / 10;
     }
 
     return agents.map((agent) => {
