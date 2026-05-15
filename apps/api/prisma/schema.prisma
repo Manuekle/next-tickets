@@ -1,0 +1,227 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  AGENT
+  CUSTOMER
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_ON_CUSTOMER
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  passwordHash     String
+  name             String
+  avatarUrl        String?
+  role             Role      @default(CUSTOMER)
+  isActive         Boolean   @default(true)
+  emailVerified    Boolean   @default(false)
+  twoFactorSecret  String?
+  twoFactorEnabled Boolean  @default(false)
+  assignedTickets  Ticket[]  @relation("AssignedAgent")
+  createdTickets   Ticket[]  @relation("Customer")
+  comments         TicketComment[]
+  sessions         Session[]
+  notifications    Notification[]
+  attachments      Attachment[]
+  activityLogs     ActivityLog[]
+  knowledgeArticles KnowledgeArticle[]
+  auditLogs        AuditLog[]
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  device    String?
+  ip        String?
+  userAgent String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Ticket {
+  id              String         @id @default(cuid())
+  title           String
+  description     String         @db.Text
+  status          TicketStatus   @default(OPEN)
+  priority        TicketPriority @default(MEDIUM)
+  customerId      String
+  customer        User           @relation("Customer", fields: [customerId], references: [id])
+  assignedToId    String?
+  assignedTo      User?          @relation("AssignedAgent", fields: [assignedToId], references: [id])
+  categoryId      String?
+  category        Category?      @relation(fields: [categoryId], references: [id])
+  slaDueAt        DateTime?
+  slaBreached     Boolean        @default(false)
+  firstResponseAt DateTime?
+  resolvedAt      DateTime?
+  closedAt        DateTime?
+  comments        TicketComment[]
+  attachments     Attachment[]
+  tags            TicketTag[]
+  activityLogs    ActivityLog[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model TicketComment {
+  id         String   @id @default(cuid())
+  content    String   @db.Text
+  isInternal Boolean  @default(false)
+  ticketId   String
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  color       String?
+  slug        String   @unique
+  isActive    Boolean  @default(true)
+  tickets           Ticket[]
+  knowledgeArticles KnowledgeArticle[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Tag {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  color     String?
+  tickets   TicketTag[]
+  createdAt DateTime   @default(now())
+}
+
+model TicketTag {
+  ticketId String
+  tagId    String
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([ticketId, tagId])
+}
+
+model Attachment {
+  id           String   @id @default(cuid())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  url          String
+  key          String
+  ticketId     String?
+  ticket       Ticket?  @relation(fields: [ticketId], references: [id])
+  commentId    String?
+  uploadedById String
+  uploadedBy   User     @relation(fields: [uploadedById], references: [id])
+  createdAt    DateTime @default(now())
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  action    String
+  details   Json?
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String
+  previous  Json?
+  next      Json?
+  ip        String?
+  createdAt DateTime @default(now())
+}
+
+model SLA {
+  id                  String          @id @default(cuid())
+  name                String
+  description         String?
+  firstResponseHours  Float
+  resolutionHours     Float
+  priority            TicketPriority?
+  isActive            Boolean         @default(true)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+}
+
+model Automation {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  trigger     String
+  conditions  Json?
+  actions     Json
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model KnowledgeArticle {
+  id              String    @id @default(cuid())
+  title           String
+  content         String    @db.Text
+  excerpt         String?
+  slug            String    @unique
+  published       Boolean   @default(false)
+  helpfulCount    Int       @default(0)
+  notHelpfulCount Int       @default(0)
+  categoryId      String?
+  category        Category? @relation(fields: [categoryId], references: [id])
+  authorId        String
+  author          User      @relation(fields: [authorId], references: [id])
+  tags            String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String
+  title     String
+  body      String?
+  read      Boolean  @default(false)
+  link      String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}

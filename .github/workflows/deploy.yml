@@ -1,0 +1,44 @@
+name: Deploy
+on:
+  push:
+    branches: [main]
+jobs:
+  deploy-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+
+  deploy-api:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t next-tickets-api -f docker/Dockerfile.api .
+      - name: Save image
+        run: docker save next-tickets-api | gzip > next-tickets-api.tar.gz
+      - name: Deploy to VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          source: next-tickets-api.tar.gz
+          target: /opt/next-tickets/
+      - name: Restart service
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            cd /opt/next-tickets
+            docker load < next-tickets-api.tar.gz
+            docker stop next-tickets-api || true
+            docker rm next-tickets-api || true
+            docker run -d --name next-tickets-api --env-file .env -p 4000:4000 next-tickets-api:latest
