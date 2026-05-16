@@ -1,11 +1,5 @@
 {
-  "git": {
-    "deploymentEnabled": {
-      "apps/api": false,
-      "packages": false
-    }
-  },
-  "buildCommand": "cd apps/web && npx next build",
+  "buildCommand": "npx turbo build --filter=@next-tickets/shared && cd apps/web && npx next build",
   "installCommand": "npm install",
   "outputDirectory": "apps/web/.next",
   "framework": "nextjs"
