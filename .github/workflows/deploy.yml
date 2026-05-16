@@ -3,21 +3,6 @@ on:
   push:
     branches: [main]
 jobs:
-  deploy-web:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: '22', cache: 'npm' }
-      - run: npm ci
-      - run: npx turbo build --filter=@next-tickets/shared
-      - name: Deploy to Vercel
-        run: npx vercel --prod --yes --token ${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-
   deploy-api:
     runs-on: ubuntu-latest
     steps:
@@ -27,12 +12,29 @@ jobs:
       - run: npm ci
       - run: npx prisma generate --schema=apps/api/prisma/schema.prisma
       - name: Push API to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git clone https://user:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/manujsx/next-tickets /tmp/hf-deploy
-          rsync -av --exclude='.git' --exclude='node_modules' --exclude='dist' ./ /tmp/hf-deploy/
+          if [ -z "$HF_TOKEN" ]; then
+            echo "HF_TOKEN not set — skipping HF deploy"
+            exit 0
+          fi
+          git clone https://user:$HF_TOKEN@huggingface.co/spaces/manujsx/next-tickets /tmp/hf-deploy
+          rsync -av --delete \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='dist' \
+            --exclude='.next' \
+            --exclude='.turbo' \
+            ./ /tmp/hf-deploy/
           cd /tmp/hf-deploy
           git config user.email "ci@next-tickets.com"
           git config user.name "CI Bot"
           git add -A
-          git diff --quiet && git diff --staged --quiet || git commit -m "deploy: ${{ github.sha }}"
-          git push
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes to HF Space"
+          else
+            git commit -m "deploy: ${{ github.sha }}"
+            git push
+            echo "✅ HF Space updated — rebuilding..."
+          fi
