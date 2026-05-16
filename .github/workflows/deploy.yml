@@ -20,7 +20,7 @@ jobs:
             exit 0
           fi
           git clone https://user:$HF_TOKEN@huggingface.co/spaces/manujsx/next-tickets /tmp/hf-deploy
-          rsync -av --delete \
+          rsync -av \
             --exclude='.git' \
             --exclude='node_modules' \
             --exclude='dist' \
