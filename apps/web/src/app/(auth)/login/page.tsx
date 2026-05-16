@@ -22,7 +22,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { setUser, setTokens } = useAuthStore();
+  const { login } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -35,8 +35,7 @@ export default function LoginPage() {
         method: 'POST',
         body: JSON.stringify(data),
       });
-      setTokens(res.data.accessToken, res.data.refreshToken);
-      setUser(res.data.user);
+      login(res.data.accessToken, res.data.refreshToken, res.data.user);
       toast.success('Welcome back!');
       router.push('/');
     } catch (err: any) {

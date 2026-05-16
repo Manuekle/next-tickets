@@ -4,7 +4,8 @@ import { createContext, useContext, useEffect, useState, useRef, useCallback } f
 import { io, type Socket } from 'socket.io-client';
 import { useAuthStore } from '@/stores/auth-store';
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:4000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
+const SOCKET_URL = API_URL.replace('/api', '');
 
 const SocketContext = createContext<Socket | null>(null);
 
@@ -32,15 +33,19 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
     const newSocket = io(SOCKET_URL, {
       auth: { token: accessToken },
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
     });
 
     newSocket.on('connect', () => onConnect(newSocket));
     newSocket.on('disconnect', onDisconnect);
+    newSocket.on('connect_error', () => {
+      // Silently handle connection errors (WebSocket might not be available)
+    });
 
     return () => {
       newSocket.off('connect');
       newSocket.off('disconnect');
+      newSocket.off('connect_error');
       newSocket.disconnect();
     };
   }, [accessToken, onConnect, onDisconnect]);

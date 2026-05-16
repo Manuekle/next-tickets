@@ -10,10 +10,12 @@ interface AuthState {
   setUser: (user: UserDto) => void;
   setTokens: (access: string, refresh: string) => void;
   setLoading: (loading: boolean) => void;
+  login: (accessToken: string, refreshToken: string, user: UserDto) => void;
   logout: () => void;
 }
 
-function setAuthCookie(value: string) {
+function setAuthCookie(user: UserDto | null, accessToken: string | null, refreshToken: string | null) {
+  const value = JSON.stringify({ user, accessToken, refreshToken });
   document.cookie = `auth-storage=${encodeURIComponent(value)};path=/;max-age=604800;samesite=lax`;
 }
 
@@ -28,17 +30,26 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       isLoading: true,
+
       setUser: (user) => {
         set({ user });
-        const state = useAuthStore.getState();
-        setAuthCookie(JSON.stringify({ user: state.user, accessToken: state.accessToken, refreshToken: state.refreshToken }));
+        const s = useAuthStore.getState();
+        setAuthCookie(user, s.accessToken, s.refreshToken);
       },
+
       setTokens: (accessToken, refreshToken) => {
         set({ accessToken, refreshToken });
-        const state = useAuthStore.getState();
-        setAuthCookie(JSON.stringify({ user: state.user, accessToken: state.accessToken, refreshToken: state.refreshToken }));
+        const s = useAuthStore.getState();
+        setAuthCookie(s.user, accessToken, refreshToken);
       },
+
       setLoading: (isLoading) => set({ isLoading }),
+
+      login: (accessToken, refreshToken, user) => {
+        set({ accessToken, refreshToken, user, isLoading: false });
+        setAuthCookie(user, accessToken, refreshToken);
+      },
+
       logout: () => {
         set({ user: null, accessToken: null, refreshToken: null });
         clearAuthCookie();
