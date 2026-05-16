@@ -4,30 +4,34 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-    --font-sans: Inter, system-ui, sans-serif;
-    --font-mono: ui-monospace, monospace;
+  --font-sans: Inter, system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
+  --color-brand: #36f4a4;
+  --color-deep-forest: #061a1c;
+  --color-cloud: #e5e7eb;
+  --color-muted-slate: #a1a1aa;
+  --color-border-light: #f4f4f5;
 }
 
-:root {
-    --background: #ffffff;
-    --foreground: #000000;
-    --brand: #36f4a4;
-    --cloud: #e5e7eb;
-    --muted-slate: #a1a1aa;
-    --border-light: #f4f4f5;
-    --deep-forest: #061a1c;
+/* Override HeroUI theme with brand colors */
+:root, .light, [data-theme="light"] {
+  --accent: 0.85 0.25 160;         /* #36f4a4 in OKLCH approximation */
+  --accent-foreground: 0.15 0.02 200; /* #061a1c deep forest */
+  --background: 1 0 0;              /* white */
+  --foreground: 0 0 0;              /* black */
 }
 
-.dark {
-    --background: #061a1c;
-    --foreground: #ffffff;
+.dark, [data-theme="dark"] {
+  --accent: 0.85 0.25 160;
+  --accent-foreground: 0.15 0.02 200;
+  --background: 0.12 0.02 200;     /* deep forest */
+  --foreground: 1 0 0;             /* white */
+  --surface: 0.15 0.02 200;
+  --surface-secondary: 0.18 0.02 200;
 }
 
 @layer base {
-  * {
-    @apply border-border;
-  }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply antialiased;
   }
 }

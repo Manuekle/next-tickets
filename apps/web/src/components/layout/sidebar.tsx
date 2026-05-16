@@ -1,14 +1,13 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import { Button } from '@heroui/react';
 import {
   LayoutDashboard, Ticket, BookOpen, BarChart3, Settings, ChevronLeft, Workflow, Gauge, Shield,
 } from 'lucide-react';
-import { Button } from '@heroui/react';
 import { useState } from 'react';
 
-const navItems: { href: string; label: string; icon: any; disabled?: boolean }[] = [
+const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/tickets', label: 'Tickets', icon: Ticket },
   { href: '/sla', label: 'SLA', icon: Gauge },
@@ -24,45 +23,40 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <aside className={cn(
-      'flex flex-col border-r bg-card transition-all duration-200',
-      collapsed ? 'w-16' : 'w-56',
-    )}>
-      <div className="flex h-14 items-center border-b border-border-light px-4">
+    <aside className="flex flex-col border-r border-default-200 bg-surface transition-all duration-200 h-dvh sticky top-0">
+      <div className="flex h-14 items-center gap-2 border-b border-default-200 px-3">
         {!collapsed && (
-          <Link href="/" className="text-lg font-heading font-medium tracking-tight">
-            next<span className="text-[#36f4a4]">tickets</span>
+          <Link href="/" className="flex-1 text-base font-semibold tracking-tight truncate">
+            next<span className="text-accent">tickets</span>
           </Link>
         )}
         <Button
           variant="ghost"
           isIconOnly
-          className={cn('ml-auto h-8 w-8 min-w-8 text-muted-slate hover:text-foreground', collapsed && 'mx-auto')}
-          onClick={() => setCollapsed(!collapsed)}
+          size="sm"
+          className="shrink-0"
+          onPress={() => setCollapsed(!collapsed)}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          <ChevronLeft className={cn('h-4 w-4 transition-transform', collapsed && 'rotate-180')} />
+          <ChevronLeft className={`h-4 w-4 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
         </Button>
       </div>
-      <nav role="navigation" aria-label="Main navigation" className="flex-1 space-y-0.5 px-2 py-3">
+      <nav aria-label="Main navigation" className="flex flex-col gap-0.5 p-2 flex-1 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
           return (
             <Link
               key={item.label}
-              href={item.disabled ? '#' : item.href}
-              className={cn(
-                'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-150',
+              href={item.href}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                 isActive
-                  ? 'bg-brand/10 text-foreground'
-                  : 'text-muted-slate hover:bg-accent hover:text-foreground',
-                item.disabled && 'cursor-not-allowed opacity-50',
-                collapsed && 'justify-center px-2',
-              )}
-              {...(item.disabled ? { onClick: (e) => e.preventDefault() } : {})}
+                  ? 'bg-accent/10 text-foreground'
+                  : 'text-default-500 hover:bg-default-100 hover:text-foreground'
+              } ${collapsed ? 'justify-center px-2' : ''}`}
+              aria-current={isActive ? 'page' : undefined}
             >
-              <Icon className={cn('h-4 w-4 shrink-0', isActive && 'text-brand')} />
+              <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-accent' : ''}`} />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           );

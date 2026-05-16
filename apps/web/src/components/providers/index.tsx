@@ -1,7 +1,7 @@
 'use client';
 
-import { RouterProvider } from '@heroui/react';
 import { useRouter } from 'next/navigation';
+import { RouterProvider } from 'react-aria-components';
 import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import { QueryProvider } from './query-provider';
 import { AuthProvider } from './auth-provider';
@@ -13,7 +13,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <RouterProvider navigate={router.push}>
-      <NextThemesProvider attribute="class" defaultTheme="system" enableSystem>
+      <NextThemesProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
         <QueryProvider>
           <AuthProvider>
             <SocketProvider>

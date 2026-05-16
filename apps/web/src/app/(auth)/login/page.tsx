@@ -19,7 +19,7 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuthStore();
+  const { login: authLogin } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -32,43 +32,48 @@ export default function LoginPage() {
         method: 'POST',
         body: JSON.stringify(data),
       });
-      login(res.data.accessToken, res.data.refreshToken, res.data.user);
+      authLogin(res.data.accessToken, res.data.refreshToken, res.data.user);
       toast.success('Welcome back!');
       router.push('/');
-    } catch (err: any) {
-      toast.error(err.message || 'Invalid credentials');
+    } catch {
+      toast.error('Invalid email or password');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Card className="shadow-lg border-border-light">
-      <CardHeader className="flex flex-col items-start gap-1">
-        <p className="font-heading font-medium text-xl">Sign in</p>
-        <p className="text-sm text-muted-slate">Enter your credentials to access your account</p>
+    <Card className="w-full">
+      <CardHeader className="flex flex-col items-start gap-1 pb-2">
+        <p className="text-xl font-semibold">Sign in</p>
+        <p className="text-sm text-default-500">Enter your credentials to access your account</p>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <TextField isInvalid={!!errors.email}>
+      <CardContent className="pt-2">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <TextField isInvalid={!!errors.email} isRequired>
             <Label>Email</Label>
             <Input type="email" {...register('email')} />
             {errors.email && <FieldError>{errors.email.message}</FieldError>}
           </TextField>
-          <TextField isInvalid={!!errors.password}>
+          <TextField isInvalid={!!errors.password} isRequired>
             <Label>Password</Label>
             <Input type="password" {...register('password')} />
             {errors.password && <FieldError>{errors.password.message}</FieldError>}
           </TextField>
-          <Button type="submit" className="w-full rounded-lg bg-brand text-deep-forest hover:brightness-95 font-medium" isDisabled={loading}>
-            Sign in
+          <Button type="submit" variant="primary" size="lg" isDisabled={loading} className="mt-2 w-full font-medium">
+            {loading ? 'Signing in...' : 'Sign in'}
           </Button>
         </form>
-        <div className="mt-4 text-center text-sm text-muted-slate">
-          Don&apos;t have an account?{' '}
-          <Link href="/register" className="text-foreground hover:text-brand font-medium transition-colors">Sign up</Link>
-          <br />
-          <Link href="/forgot-password" className="text-foreground hover:text-brand font-medium transition-colors">Forgot password?</Link>
+        <div className="mt-6 flex flex-col items-center gap-2 text-sm text-default-500">
+          <span>
+            Don&apos;t have an account?{' '}
+            <Link href="/register" className="font-medium text-foreground hover:text-accent transition-colors">
+              Sign up
+            </Link>
+          </span>
+          <Link href="/forgot-password" className="font-medium text-foreground hover:text-accent transition-colors">
+            Forgot password?
+          </Link>
         </div>
       </CardContent>
     </Card>

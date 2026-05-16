@@ -3,7 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import { Card, CardHeader, CardContent, Skeleton } from '@heroui/react';
 import { Ticket, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 interface DashboardStats {
   openCount: number;
@@ -12,7 +11,6 @@ interface DashboardStats {
   avgFirstResponseHours: number | null;
   byPriority: { priority: string; count: number }[];
   byCategory: { name: string; count: number }[];
-  recentActivity: { id: string; action: string; user: { name: string }; createdAt: string }[];
 }
 
 export default function DashboardPage() {
@@ -25,21 +23,21 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <div className="flex h-40 items-center justify-center text-destructive">
+      <div className="flex h-40 items-center justify-center text-danger">
         Failed to load dashboard
       </div>
     );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-2xl font-heading font-medium tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-sm text-muted-slate">Overview of your support queue</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+        <p className="mt-1 text-sm text-default-500">Overview of your support queue</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Open Tickets" value={stats?.openCount} icon={Ticket} loading={isLoading} accent />
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard title="Open Tickets" value={stats?.openCount} icon={Ticket} loading={isLoading} />
         <StatCard title="Closed" value={stats?.closedCount} icon={CheckCircle} loading={isLoading} />
         <StatCard title="Pending" value={stats?.pendingCount} icon={Clock} loading={isLoading} />
         <StatCard
@@ -50,16 +48,20 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <Card>
-          <CardHeader><p className="text-sm font-medium">By Priority</p></CardHeader>
+          <CardHeader>
+            <p className="text-sm font-medium">By Priority</p>
+          </CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-32 w-full rounded-lg" /> : (
-              <div className="space-y-2">
+            {isLoading ? (
+              <Skeleton className="h-32 w-full rounded-lg" />
+            ) : (
+              <div className="flex flex-col gap-2">
                 {stats?.byPriority.map((p) => (
-                  <div key={p.priority} className="flex items-center justify-between">
-                    <span className="text-sm capitalize">{p.priority.toLowerCase()}</span>
-                    <span className="text-sm font-medium">{p.count}</span>
+                  <div key={p.priority} className="flex items-center justify-between py-1">
+                    <span className="text-sm capitalize text-default-500">{p.priority.toLowerCase()}</span>
+                    <span className="text-sm font-semibold">{p.count}</span>
                   </div>
                 ))}
               </div>
@@ -68,14 +70,18 @@ export default function DashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader><p className="text-sm font-medium">By Category</p></CardHeader>
+          <CardHeader>
+            <p className="text-sm font-medium">By Category</p>
+          </CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-32 w-full rounded-lg" /> : (
-              <div className="space-y-2">
+            {isLoading ? (
+              <Skeleton className="h-32 w-full rounded-lg" />
+            ) : (
+              <div className="flex flex-col gap-2">
                 {stats?.byCategory.map((c) => (
-                  <div key={c.name} className="flex items-center justify-between">
-                    <span className="text-sm">{c.name}</span>
-                    <span className="text-sm font-medium">{c.count}</span>
+                  <div key={c.name} className="flex items-center justify-between py-1">
+                    <span className="text-sm text-default-500">{c.name}</span>
+                    <span className="text-sm font-semibold">{c.count}</span>
                   </div>
                 ))}
               </div>
@@ -87,18 +93,18 @@ export default function DashboardPage() {
   );
 }
 
-function StatCard({ title, value, icon: Icon, loading, accent }: any) {
+function StatCard({ title, value, icon: Icon, loading }: any) {
   return (
-    <Card className={cn('shadow-sm hover:shadow-md transition-shadow', accent && 'ring-1 ring-brand/20')}>
-      <CardHeader className="flex items-center justify-between pb-2">
-        <span className="text-sm font-medium text-muted-slate">{title}</span>
-        <Icon className={cn('h-4 w-4', accent ? 'text-brand' : 'text-muted-slate')} />
+    <Card className="transition-shadow hover:shadow-md">
+      <CardHeader className="flex items-center justify-between pb-1">
+        <span className="text-sm text-default-500">{title}</span>
+        <Icon className="h-4 w-4 text-default-400" />
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         {loading ? (
           <Skeleton className="h-8 w-20 rounded-lg" />
         ) : (
-          <p className={cn('text-2xl font-heading font-medium', accent ? 'text-foreground' : 'text-foreground')}>{value ?? 0}</p>
+          <p className="text-2xl font-semibold">{value ?? 0}</p>
         )}
       </CardContent>
     </Card>
