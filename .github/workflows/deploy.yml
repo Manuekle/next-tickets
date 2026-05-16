@@ -7,38 +7,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: 'npm' }
+      - run: npm ci
+      - run: npx turbo build --filter=@next-tickets/shared
       - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: npx vercel --prod --yes --token ${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
 
   deploy-api:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build Docker image
-        run: docker build -t next-tickets-api -f docker/Dockerfile.api .
-      - name: Save image
-        run: docker save next-tickets-api | gzip > next-tickets-api.tar.gz
-      - name: Deploy to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: next-tickets-api.tar.gz
-          target: /opt/next-tickets/
-      - name: Restart service
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            cd /opt/next-tickets
-            docker load < next-tickets-api.tar.gz
-            docker stop next-tickets-api || true
-            docker rm next-tickets-api || true
-            docker run -d --name next-tickets-api --env-file .env -p 4000:4000 next-tickets-api:latest
+      - uses: actions/setup-node@v4
+        with: { node-version: '22', cache: 'npm' }
+      - run: npm ci
+      - run: npx prisma generate --schema=apps/api/prisma/schema.prisma
+      - name: Push API to Hugging Face
+        run: |
+          git clone https://user:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/manujsx/next-tickets /tmp/hf-deploy
+          rsync -av --exclude='.git' --exclude='node_modules' --exclude='dist' ./ /tmp/hf-deploy/
+          cd /tmp/hf-deploy
+          git config user.email "ci@next-tickets.com"
+          git config user.name "CI Bot"
+          git add -A
+          git diff --quiet && git diff --staged --quiet || git commit -m "deploy: ${{ github.sha }}"
+          git push

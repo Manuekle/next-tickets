@@ -12,7 +12,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '22', cache: 'npm' }
       - run: npm ci
-      - run: npm run lint
+      - run: npm run lint --filter=@next-tickets/api --filter=@next-tickets/web --filter=@next-tickets/shared
 
   typecheck:
     runs-on: ubuntu-latest
@@ -21,7 +21,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '22', cache: 'npm' }
       - run: npm ci
-      - run: npx turbo typecheck
+      - run: npx prisma generate --schema=apps/api/prisma/schema.prisma
+      - run: npx turbo typecheck --filter=@next-tickets/api --filter=@next-tickets/web --filter=@next-tickets/shared
 
   test:
     runs-on: ubuntu-latest
@@ -41,6 +42,7 @@ jobs:
         with: { node-version: '22', cache: 'npm' }
       - run: npm ci
       - run: npx prisma generate --schema=apps/api/prisma/schema.prisma
+      - run: DATABASE_URL="postgresql://user:pass@localhost:5432/test" npx prisma db push --schema=apps/api/prisma/schema.prisma --accept-data-loss
       - run: npm run test --filter=@next-tickets/api
 
   build:
@@ -50,4 +52,5 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: '22', cache: 'npm' }
       - run: npm ci
-      - run: npm run build
+      - run: npx prisma generate --schema=apps/api/prisma/schema.prisma
+      - run: npx turbo build --filter=@next-tickets/shared --filter=@next-tickets/web

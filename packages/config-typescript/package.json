@@ -1,1 +1,6 @@
-{ "name": "@next-tickets/config-typescript", "version": "0.0.0", "private": true }
+{
+  "name": "@next-tickets/config-typescript",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": { "build": "", "lint": "", "typecheck": "" }
+}
