@@ -3,6 +3,15 @@
 > Modern SaaS ticket management platform — a Jira + Zendesk + Linear hybrid.
 > Built with Next.js 15, NestJS 11, Prisma ORM, PostgreSQL.
 
+<div align="center">
+
+[![Frontend](https://img.shields.io/badge/Frontend-Vercel-black?style=flat&logo=vercel)](https://next-tickets-roan.vercel.app)
+[![API](https://img.shields.io/badge/API-HuggingFace-yellow?style=flat&logo=huggingface)](https://manujsx-next-tickets.hf.space)
+[![License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/Manuekle/next-tickets/blob/main/LICENSE)
+[![Tests](https://img.shields.io/badge/tests-8%20units%20%7C%207%20e2e-brightgreen)](https://github.com/Manuekle/next-tickets)
+
+</div>
+
 <p align="center">
   <img src="https://img.shields.io/badge/build-passing-brightgreen" alt="Build">
   <img src="https://img.shields.io/badge/node-%3E%3D22-blue" alt="Node">
@@ -53,6 +62,19 @@ next-tickets/
 ### Monorepo Tooling
 
 Powered by **Turborepo** with npm workspaces for efficient build caching, parallel task execution, and dependency management across all packages.
+
+## 🌐 Production Deployments
+
+| Service | URL | Status |
+|---------|-----|--------|
+| **Frontend** | https://next-tickets-roan.vercel.app | ✅ Live |
+| **Backend API** | https://manujsx-next-tickets.hf.space | ✅ Live |
+| **Database** | Neon PostgreSQL | ✅ Connected |
+| **Storage** | Supabase Storage (S3) | ✅ Configured |
+
+> **Login credentials:** `admin@nexttickets.com` / `Admin123!`
+
+---
 
 ## 🚀 Quick Start
 
@@ -208,7 +230,12 @@ docker exec -it next-tickets-api npx ts-node prisma/seed.ts
 
 ## 🤗 Deploy Backend on Hugging Face
 
-The backend can be deployed for free on Hugging Face Spaces (Docker):
+The backend is deployed on Hugging Face Spaces with Docker:
+
+- **Live API:** https://manujsx-next-tickets.hf.space
+- **Space config:** https://huggingface.co/spaces/manujsx/next-tickets
+
+To deploy your own:
 
 1. Create a Space at [huggingface.co/spaces](https://huggingface.co/spaces):
    - **SDK:** Docker
@@ -218,27 +245,22 @@ The backend can be deployed for free on Hugging Face Spaces (Docker):
 
    | Secret | Example |
    |--------|---------|
-   | `DATABASE_URL` | `postgresql://user:pass@host:5432/next_tickets` |
+   | `DATABASE_URL` | PostgreSQL connection string (Neon, Supabase, etc.) |
    | `JWT_ACCESS_SECRET` | Random 64-char string |
    | `JWT_REFRESH_SECRET` | Random 64-char string |
    | `FRONTEND_URL` | `https://your-app.vercel.app` |
-   | `S3_ENDPOINT` | S3-compatible endpoint |
-   | `S3_ACCESS_KEY` | S3 access key |
-   | `S3_SECRET_KEY` | S3 secret key |
+   | `S3_ENDPOINT` | S3-compatible endpoint (optional) |
+   | `S3_ACCESS_KEY` | S3 access key (optional) |
+   | `S3_SECRET_KEY` | S3 secret key (optional) |
    | `S3_BUCKET` | `next-tickets` |
-   | `SMTP_HOST` | SMTP server for emails |
-   | `SMTP_USER` | SMTP user |
-   | `SMTP_PASS` | SMTP password |
-   | `EMAIL_FROM` | `noreply@nexttickets.com` |
+   | `SMTP_HOST` | SMTP server (optional - disabled if omitted) |
 
 3. Dockerfile HF-ready at `docker/hf.Dockerfile`. Set in Space settings:
    - **Dockerfile path:** `docker/hf.Dockerfile`
 
-4. Your API will be live at: `https://username-next-tickets.hf.space`
-
-5. Update `NEXT_PUBLIC_API_URL` in Vercel:
+4. Update `NEXT_PUBLIC_API_URL` in Vercel:
    ```
-   NEXT_PUBLIC_API_URL=https://username-next-tickets.hf.space/api
+   NEXT_PUBLIC_API_URL=https://your-space.hf.space/api
    ```
 
 
