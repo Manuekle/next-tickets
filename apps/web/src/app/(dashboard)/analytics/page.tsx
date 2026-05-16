@@ -2,18 +2,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { apiClient } from '@/lib/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table';
-import {
-  Tabs, TabsContent, TabsList, TabsTrigger,
-} from '@/components/ui/tabs';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
+import { Card, CardHeader, CardContent, Button, Skeleton, Chip } from '@heroui/react';
+import { Select, SelectTrigger, SelectValue, SelectPopover, ListBox, ListBoxItem } from '@heroui/react';
 import { BarChart } from '@/components/analytics/bar-chart';
 import { Heatmap } from '@/components/analytics/heatmap';
 import { Download, TrendingUp, Users, Calendar, Shield, ArrowUpDown } from 'lucide-react';
@@ -88,50 +78,50 @@ function TrendsTab() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <Select value={days} onValueChange={(v) => v && setDays(v)}>
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {DAY_RANGES.map((r) => (
-              <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-            ))}
-          </SelectContent>
+        <Select onSelectionChange={(keys) => setDays(String(keys) || '30')}>
+          <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+          <SelectPopover>
+            <ListBox>
+              {DAY_RANGES.map((r) => (
+                <ListBoxItem key={r.value} id={r.value}>{r.label}</ListBoxItem>
+              ))}
+            </ListBox>
+          </SelectPopover>
         </Select>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <Card size="sm">
-          <CardHeader><CardTitle>Created</CardTitle></CardHeader>
+        <Card>
+          <CardHeader><span className="text-sm font-medium">Created</span></CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-6 w-16" /> : <div className="text-xl font-bold">{totals?.created ?? 0}</div>}
+            {isLoading ? <Skeleton className="h-6 w-16 rounded-lg" /> : <p className="text-xl font-bold">{totals?.created ?? 0}</p>}
           </CardContent>
         </Card>
-        <Card size="sm">
-          <CardHeader><CardTitle>Resolved</CardTitle></CardHeader>
+        <Card>
+          <CardHeader><span className="text-sm font-medium">Resolved</span></CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-6 w-16" /> : <div className="text-xl font-bold">{totals?.resolved ?? 0}</div>}
+            {isLoading ? <Skeleton className="h-6 w-16 rounded-lg" /> : <p className="text-xl font-bold">{totals?.resolved ?? 0}</p>}
           </CardContent>
         </Card>
-        <Card size="sm">
-          <CardHeader><CardTitle>Open</CardTitle></CardHeader>
+        <Card>
+          <CardHeader><span className="text-sm font-medium">Open</span></CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-6 w-16" /> : <div className="text-xl font-bold">{totals?.open ?? 0}</div>}
+            {isLoading ? <Skeleton className="h-6 w-16 rounded-lg" /> : <p className="text-xl font-bold">{totals?.open ?? 0}</p>}
           </CardContent>
         </Card>
-        <Card size="sm">
-          <CardHeader><CardTitle>Critical</CardTitle></CardHeader>
+        <Card>
+          <CardHeader><span className="text-sm font-medium">Critical</span></CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-6 w-16" /> : <div className="text-xl font-bold">{totals?.critical ?? 0}</div>}
+            {isLoading ? <Skeleton className="h-6 w-16 rounded-lg" /> : <p className="text-xl font-bold">{totals?.critical ?? 0}</p>}
           </CardContent>
         </Card>
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Created vs Resolved</CardTitle></CardHeader>
+        <CardHeader><span className="text-sm font-medium">Created vs Resolved</span></CardHeader>
         <CardContent>
           {isLoading ? (
-            <Skeleton className="h-48" />
+            <Skeleton className="h-48 rounded-lg" />
           ) : data?.data && data.data.length > 0 ? (
             <div className="grid grid-cols-2 gap-8">
               <div>
@@ -183,19 +173,6 @@ function AgentsTab() {
     return sortDir === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
   });
 
-  const th = (column: keyof AgentRow, label: string) => (
-    <TableHead
-      key={column}
-      className="cursor-pointer select-none"
-      onClick={() => handleSort(column)}
-    >
-      <div className="flex items-center gap-1">
-        {label}
-        <ArrowUpDown className="h-3 w-3" />
-      </div>
-    </TableHead>
-  );
-
   if (error) {
     return (
       <div className="flex h-40 items-center justify-center text-destructive">
@@ -206,42 +183,47 @@ function AgentsTab() {
 
   return (
     <Card>
-      <CardHeader><CardTitle>Agent Performance</CardTitle></CardHeader>
+      <CardHeader><span className="text-sm font-medium">Agent Performance</span></CardHeader>
       <CardContent>
         {isLoading ? (
           <div className="space-y-3">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-full rounded-lg" />
+            <Skeleton className="h-8 w-full rounded-lg" />
+            <Skeleton className="h-8 w-full rounded-lg" />
+            <Skeleton className="h-8 w-full rounded-lg" />
           </div>
         ) : sorted.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {th('name', 'Name')}
-                {th('assigned', 'Assigned')}
-                {th('resolved', 'Resolved')}
-                {th('comments', 'Comments')}
-                {th('avgResponseTimeHours', 'Avg Response (h)')}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sorted.map((agent) => (
-                <TableRow key={agent.name}>
-                  <TableCell className="font-medium">{agent.name}</TableCell>
-                  <TableCell>{agent.assigned}</TableCell>
-                  <TableCell>{agent.resolved}</TableCell>
-                  <TableCell>{agent.comments}</TableCell>
-                  <TableCell>
-                    {agent.avgResponseTimeHours != null
-                      ? `${agent.avgResponseTimeHours.toFixed(1)}h`
-                      : 'N/A'}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b">
+                  {(['name', 'assigned', 'resolved', 'comments', 'avgResponseTimeHours'] as const).map((col) => (
+                    <th
+                      key={col}
+                      className="cursor-pointer select-none px-3 py-2 text-left font-medium text-muted-foreground"
+                      onClick={() => handleSort(col)}
+                    >
+                      <div className="flex items-center gap-1">
+                        {col === 'name' ? 'Name' : col === 'assigned' ? 'Assigned' : col === 'resolved' ? 'Resolved' : col === 'comments' ? 'Comments' : 'Avg Response (h)'}
+                        <ArrowUpDown className="h-3 w-3" />
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.map((agent) => (
+                  <tr key={agent.name} className="border-b last:border-0">
+                    <td className="px-3 py-2 font-medium">{agent.name}</td>
+                    <td className="px-3 py-2">{agent.assigned}</td>
+                    <td className="px-3 py-2">{agent.resolved}</td>
+                    <td className="px-3 py-2">{agent.comments}</td>
+                    <td className="px-3 py-2">{agent.avgResponseTimeHours != null ? `${agent.avgResponseTimeHours.toFixed(1)}h` : 'N/A'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <div className="flex h-20 items-center justify-center text-sm text-muted-foreground">
             No agent data available
@@ -268,10 +250,10 @@ function HeatmapTab() {
 
   return (
     <Card>
-      <CardHeader><CardTitle>Ticket Volume by Day/Hour</CardTitle></CardHeader>
+      <CardHeader><span className="text-sm font-medium">Ticket Volume by Day/Hour</span></CardHeader>
       <CardContent>
         {isLoading ? (
-          <Skeleton className="h-56" />
+          <Skeleton className="h-56 rounded-lg" />
         ) : data?.data && data.data.length > 0 ? (
           <Heatmap data={data.data} />
         ) : (
@@ -304,36 +286,36 @@ function SLATab() {
     <div className="space-y-4">
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
-          <CardHeader><CardTitle>Compliance Rate</CardTitle></CardHeader>
+          <CardHeader><span className="text-sm font-medium">Compliance Rate</span></CardHeader>
           <CardContent>
             {isLoading ? (
-              <Skeleton className="h-12 w-24" />
+              <Skeleton className="h-12 w-24 rounded-lg" />
             ) : (
-              <div className="text-3xl font-bold">
+              <p className="text-3xl font-bold">
                 {sla ? `${(sla.complianceRate * 100).toFixed(1)}%` : 'N/A'}
-              </div>
+              </p>
             )}
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>Compliant</CardTitle></CardHeader>
+          <CardHeader><span className="text-sm font-medium">Compliant</span></CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-xl font-bold text-green-600">{sla?.compliant ?? 0}</div>}
+            {isLoading ? <Skeleton className="h-8 w-16 rounded-lg" /> : <p className="text-xl font-bold text-green-600">{sla?.compliant ?? 0}</p>}
           </CardContent>
         </Card>
         <Card>
-          <CardHeader><CardTitle>Breached</CardTitle></CardHeader>
+          <CardHeader><span className="text-sm font-medium">Breached</span></CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-8 w-16" /> : <div className="text-xl font-bold text-destructive">{sla?.breached ?? 0}</div>}
+            {isLoading ? <Skeleton className="h-8 w-16 rounded-lg" /> : <p className="text-xl font-bold text-destructive">{sla?.breached ?? 0}</p>}
           </CardContent>
         </Card>
       </div>
 
       <Card>
-        <CardHeader><CardTitle>SLA Overview</CardTitle></CardHeader>
+        <CardHeader><span className="text-sm font-medium">SLA Overview</span></CardHeader>
         <CardContent>
           {isLoading ? (
-            <Skeleton className="h-16" />
+            <Skeleton className="h-16 rounded-lg" />
           ) : sla ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between text-sm">
@@ -394,7 +376,7 @@ function ExportButton() {
   };
 
   return (
-    <Button variant="outline" onClick={handleExport} loading={loading}>
+    <Button variant="secondary" onClick={handleExport} isDisabled={loading}>
       <Download className="h-4 w-4" />
       Export CSV
     </Button>
@@ -402,6 +384,15 @@ function ExportButton() {
 }
 
 export default function AnalyticsPage() {
+  const [tab, setTab] = useState('trends');
+
+  const tabs = [
+    { key: 'trends', label: 'Trends', icon: TrendingUp },
+    { key: 'agents', label: 'Agents', icon: Users },
+    { key: 'heatmap', label: 'Heatmap', icon: Calendar },
+    { key: 'sla', label: 'SLA', icon: Shield },
+  ] as const;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -412,26 +403,30 @@ export default function AnalyticsPage() {
         <ExportButton />
       </div>
 
-      <Tabs defaultValue="trends">
-        <TabsList>
-          <TabsTrigger value="trends" className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" /> Trends
-          </TabsTrigger>
-          <TabsTrigger value="agents" className="flex items-center gap-2">
-            <Users className="h-4 w-4" /> Agents
-          </TabsTrigger>
-          <TabsTrigger value="heatmap" className="flex items-center gap-2">
-            <Calendar className="h-4 w-4" /> Heatmap
-          </TabsTrigger>
-          <TabsTrigger value="sla" className="flex items-center gap-2">
-            <Shield className="h-4 w-4" /> SLA
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="trends"><TrendsTab /></TabsContent>
-        <TabsContent value="agents"><AgentsTab /></TabsContent>
-        <TabsContent value="heatmap"><HeatmapTab /></TabsContent>
-        <TabsContent value="sla"><SLATab /></TabsContent>
-      </Tabs>
+      <div className="flex gap-1 border-b" role="tablist" aria-label="Analytics tabs">
+        {tabs.map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.key}
+            onClick={() => setTab(t.key)}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors ${
+              tab === t.key
+                ? 'border-b-2 border-primary text-primary'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <t.icon className="h-4 w-4" />
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'trends' && <TrendsTab />}
+      {tab === 'agents' && <AgentsTab />}
+      {tab === 'heatmap' && <HeatmapTab />}
+      {tab === 'sla' && <SLATab />}
     </div>
   );
 }

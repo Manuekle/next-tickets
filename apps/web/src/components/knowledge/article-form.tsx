@@ -5,19 +5,7 @@ import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
+import { Button, Input, TextArea, Switch, Card, CardContent, TextField, Label, FieldError, Select, SelectTrigger, SelectValue, SelectPopover, ListBox, ListBoxItem } from '@heroui/react';
 import { toast } from 'sonner';
 
 const articleSchema = z.object({
@@ -108,10 +96,9 @@ export function ArticleForm({ initialData }: ArticleFormProps) {
     <Card>
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
+          <TextField isInvalid={!!errors.title}>
+            <Label>Title</Label>
             <Input
-              id="title"
               {...register('title', {
                 onChange: (e) => {
                   if (!isEdit) {
@@ -124,72 +111,62 @@ export function ArticleForm({ initialData }: ArticleFormProps) {
                 },
               })}
             />
-            {errors.title && (
-              <p className="text-sm text-destructive">{errors.title.message}</p>
-            )}
-          </div>
+            {errors.title && <FieldError>{errors.title.message}</FieldError>}
+          </TextField>
 
-          <div className="space-y-2">
-            <Label htmlFor="slug">Slug</Label>
-            <Input id="slug" {...register('slug')} />
-            {errors.slug && (
-              <p className="text-sm text-destructive">{errors.slug.message}</p>
-            )}
-          </div>
+          <TextField isInvalid={!!errors.slug}>
+            <Label>Slug</Label>
+            <Input {...register('slug')} />
+            {errors.slug && <FieldError>{errors.slug.message}</FieldError>}
+          </TextField>
 
-          <div className="space-y-2">
-            <Label htmlFor="content">Content</Label>
-            <Textarea id="content" {...register('content')} rows={12} />
-          </div>
+          <TextField>
+            <Label>Content</Label>
+            <TextArea {...register('content')} rows={12} />
+          </TextField>
 
-          <div className="space-y-2">
-            <Label htmlFor="excerpt">Excerpt</Label>
-            <Textarea id="excerpt" {...register('excerpt')} rows={2} />
-          </div>
+          <TextField>
+            <Label>Excerpt</Label>
+            <TextArea {...register('excerpt')} rows={2} />
+          </TextField>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Category</Label>
-              <Select
-                value={watch('categoryId') || undefined}
-                onValueChange={(v) => setValue('categoryId', v || undefined)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
+            <Select
+              selectedKey={watch('categoryId') || null}
+              onSelectionChange={(keys) => setValue('categoryId', keys ? String(keys) : undefined)}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectPopover>
+                <ListBox>
                   {categories?.data.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.name} ({c._count.articles})
-                    </SelectItem>
+                    <ListBoxItem key={c.id} id={c.id}>{c.name} ({c._count.articles})</ListBoxItem>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
+                </ListBox>
+              </SelectPopover>
+            </Select>
 
-            <div className="space-y-2">
-              <Label htmlFor="tags">Tags (comma separated)</Label>
-              <Input id="tags" {...register('tags')} placeholder="bug, ui, feature" />
-            </div>
+            <TextField>
+              <Label>Tags (comma separated)</Label>
+              <Input {...register('tags')} placeholder="bug, ui, feature" />
+            </TextField>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={watch('published')}
-              onCheckedChange={(v) => setValue('published', v)}
-            />
-            <Label>Published</Label>
-          </div>
+          <Switch
+            isSelected={watch('published')}
+            onChange={(v) => setValue('published', v)}
+          >
+            Published
+          </Switch>
 
           <div className="flex justify-end gap-2 pt-2">
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               onClick={() => router.back()}
             >
               Cancel
             </Button>
-            <Button type="submit" loading={mutation.isPending}>
+            <Button type="submit" isDisabled={mutation.isPending}>
               {isEdit ? 'Update Article' : 'Create Article'}
             </Button>
           </div>

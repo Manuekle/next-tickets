@@ -2,10 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardContent, Button, Skeleton, Chip } from '@heroui/react';
 import { toast } from 'sonner';
 import { Gauge, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 
@@ -53,9 +50,9 @@ export default function SlaPage() {
           <p className="text-sm text-muted-foreground">Service Level Agreement metrics and compliance</p>
         </div>
         <Button
-          variant="outline"
+          variant="secondary"
           onClick={() => breachMutation.mutate()}
-          loading={breachMutation.isPending}
+          isDisabled={breachMutation.isPending}
         >
           <AlertTriangle className="mr-2 h-4 w-4" />
           Check Breaches
@@ -92,12 +89,10 @@ export default function SlaPage() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">Compliance Gauge</CardTitle>
-          </CardHeader>
+          <CardHeader><p className="text-sm font-medium">Compliance Gauge</p></CardHeader>
           <CardContent>
             {isLoading ? (
-              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full rounded-lg" />
             ) : (
               <div className="flex flex-col items-center gap-3 py-4">
                 <div className="relative h-28 w-28">
@@ -131,12 +126,10 @@ export default function SlaPage() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">By Priority</CardTitle>
-          </CardHeader>
+          <CardHeader><p className="text-sm font-medium">By Priority</p></CardHeader>
           <CardContent>
             {isLoading ? (
-              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-32 w-full rounded-lg" />
             ) : (
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
@@ -145,7 +138,7 @@ export default function SlaPage() {
                 </div>
                 {metrics?.byPriority.map((p) => (
                   <div key={p.priority} className="flex items-center justify-between">
-                    <Badge variant="secondary">{p.priority}</Badge>
+                    <Chip variant="soft" size="sm">{p.priority}</Chip>
                     <div className="flex items-center gap-2">
                       <span className="text-sm">{p.total}</span>
                       <span className="text-xs text-muted-foreground">/</span>
@@ -167,15 +160,15 @@ export default function SlaPage() {
 function StatCard({ title, value, icon: Icon, loading, danger }: any) {
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+      <CardHeader className="flex items-center justify-between pb-2">
+        <span className="text-sm font-medium text-muted-foreground">{title}</span>
         <Icon className={`h-4 w-4 ${danger ? 'text-destructive' : 'text-muted-foreground'}`} />
       </CardHeader>
       <CardContent>
         {loading ? (
-          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-20 rounded-lg" />
         ) : (
-          <div className={`text-2xl font-bold ${danger ? 'text-destructive' : ''}`}>{value ?? 0}</div>
+          <p className={`text-2xl font-bold ${danger ? 'text-destructive' : ''}`}>{value ?? 0}</p>
         )}
       </CardContent>
     </Card>

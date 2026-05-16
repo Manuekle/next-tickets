@@ -3,25 +3,19 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { apiClient } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+
+import { Button, Input, TextArea, Chip, Skeleton, useOverlayState, TextField, Label, FieldError } from '@heroui/react';
+
+
+import { Select, SelectTrigger, SelectValue, SelectPopover, ListBox, ListBoxItem } from '@heroui/react';
+
+
+import { Modal, ModalDialog, ModalHeader, ModalHeading, ModalBody, ModalFooter, ModalCloseTrigger } from '@heroui/react';
+
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Loader2 } from 'lucide-react';
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from '@/components/ui/table';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
-  DialogFooter, DialogClose,
-} from '@/components/ui/dialog';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { Key } from 'react-aria-components';
 
 interface SlaRule {
   id: string;
@@ -55,8 +49,9 @@ const defaultForm: SlaForm = {
 
 export default function SlaRulesPage() {
   const queryClient = useQueryClient();
-  const [modalOpen, setModalOpen] = useState(false);
+  const modalState = useOverlayState();
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const deleteModalState = useOverlayState();
   const [editingRule, setEditingRule] = useState<SlaRule | null>(null);
   const [form, setForm] = useState<SlaForm>(defaultForm);
 
@@ -72,7 +67,7 @@ export default function SlaRulesPage() {
         : apiClient('/sla', { method: 'POST', body: JSON.stringify(data.body) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sla-rules'] });
-      setModalOpen(false);
+      modalState.close();
       setEditingRule(null);
       setForm(defaultForm);
       toast.success(editingRule ? 'Rule updated' : 'Rule created');
@@ -86,6 +81,7 @@ export default function SlaRulesPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sla-rules'] });
       setDeleteId(null);
+      deleteModalState.close();
       toast.success('Rule deleted');
     },
     onError: () => toast.error('Failed to delete rule'),
@@ -103,7 +99,7 @@ export default function SlaRulesPage() {
   function openCreate() {
     setEditingRule(null);
     setForm(defaultForm);
-    setModalOpen(true);
+    modalState.open();
   }
 
   function openEdit(rule: SlaRule) {
@@ -116,7 +112,7 @@ export default function SlaRulesPage() {
       priority: rule.priority || '',
       isActive: rule.isActive,
     });
-    setModalOpen(true);
+    modalState.open();
   }
 
   function handleSave() {
@@ -145,156 +141,154 @@ export default function SlaRulesPage() {
         </Button>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Priority</TableHead>
-              <TableHead>First Response</TableHead>
-              <TableHead>Resolution</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="w-24">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <div className="rounded-md border overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <th className="px-4 py-3 text-left font-medium">Name</th>
+              <th className="px-4 py-3 text-left font-medium">Priority</th>
+              <th className="px-4 py-3 text-left font-medium">First Response</th>
+              <th className="px-4 py-3 text-left font-medium">Resolution</th>
+              <th className="px-4 py-3 text-left font-medium">Status</th>
+              <th className="px-4 py-3 text-left font-medium">Created</th>
+              <th className="px-4 py-3 text-left font-medium w-24">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
             {isLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
-                <TableRow key={i}>
-                  <TableCell colSpan={7}><Skeleton className="h-8 w-full" /></TableCell>
-                </TableRow>
+                <tr key={i} className="border-b last:border-0">
+                  <td colSpan={7} className="px-4 py-3"><Skeleton className="h-8 w-full rounded-lg" /></td>
+                </tr>
               ))
             ) : data?.data.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
+              <tr className="border-b last:border-0">
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                   No SLA rules found
-                </TableCell>
-              </TableRow>
+                </td>
+              </tr>
             ) : (
               data?.data.map((rule) => (
-                <TableRow key={rule.id}>
-                  <TableCell className="font-medium">{rule.name}</TableCell>
-                  <TableCell>
+                <tr key={rule.id} className="border-b last:border-0">
+                  <td className="px-4 py-3 font-medium">{rule.name}</td>
+                  <td className="px-4 py-3">
                     {rule.priority ? (
-                      <Badge variant="secondary">{rule.priority}</Badge>
+                      <Chip variant="soft" size="sm">{rule.priority}</Chip>
                     ) : (
                       <span className="text-sm text-muted-foreground">All</span>
                     )}
-                  </TableCell>
-                  <TableCell>{rule.firstResponseHours}h</TableCell>
-                  <TableCell>{rule.resolutionHours}h</TableCell>
-                  <TableCell>
+                  </td>
+                  <td className="px-4 py-3">{rule.firstResponseHours}h</td>
+                  <td className="px-4 py-3">{rule.resolutionHours}h</td>
+                  <td className="px-4 py-3">
                     <Button
                       variant="ghost"
-                      size="xs"
+                      size="sm"
                       className={rule.isActive ? 'text-green-500' : 'text-muted-foreground'}
                       onClick={() => toggleMutation.mutate({ id: rule.id, isActive: !rule.isActive })}
-                      loading={toggleMutation.isPending}
+                      isDisabled={toggleMutation.isPending}
                     >
                       {rule.isActive ? 'Active' : 'Inactive'}
                     </Button>
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
+                  </td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">
                     {format(new Date(rule.createdAt), 'MMM d, yyyy')}
-                  </TableCell>
-                  <TableCell>
+                  </td>
+                  <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon-xs" onClick={() => openEdit(rule)}>
+                      <Button variant="ghost" isIconOnly size="sm" onClick={() => openEdit(rule)}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
-                      <Button variant="ghost" size="icon-xs" onClick={() => setDeleteId(rule.id)}>
+                      <Button variant="ghost" isIconOnly size="sm" onClick={() => { setDeleteId(rule.id); deleteModalState.open(); }}>
                         <Trash2 className="h-3.5 w-3.5 text-destructive" />
                       </Button>
                     </div>
-                  </TableCell>
-                </TableRow>
+                  </td>
+                </tr>
               ))
             )}
-          </TableBody>
-        </Table>
+          </tbody>
+        </table>
       </div>
 
-      <Dialog open={modalOpen} onOpenChange={(open) => { if (!open) { setModalOpen(false); setEditingRule(null); } }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingRule ? 'Edit SLA Rule' : 'Create SLA Rule'}</DialogTitle>
-            <DialogDescription>
-              {editingRule ? 'Update the SLA rule details below.' : 'Define a new SLA rule for tickets.'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Critical SLA" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea id="description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Optional description" />
-            </div>
+      <Modal state={modalState}>
+        <ModalDialog>
+          <ModalCloseTrigger />
+          <ModalHeader>
+            <ModalHeading>{editingRule ? 'Edit SLA Rule' : 'Create SLA Rule'}</ModalHeading>
+          </ModalHeader>
+          <ModalBody className="space-y-4">
+            <TextField>
+              <Label>Name</Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Critical SLA" />
+            </TextField>
+            <TextField>
+              <Label>Description</Label>
+              <TextArea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Optional description" />
+            </TextField>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstResponse">First Response (hours)</Label>
-                <Input id="firstResponse" type="number" min={0.1} step={0.1} value={form.firstResponseHours} onChange={(e) => setForm({ ...form, firstResponseHours: parseFloat(e.target.value) || 0 })} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="resolution">Resolution (hours)</Label>
-                <Input id="resolution" type="number" min={0.1} step={0.1} value={form.resolutionHours} onChange={(e) => setForm({ ...form, resolutionHours: parseFloat(e.target.value) || 0 })} />
-              </div>
+              <TextField>
+                <Label>First Response (hours)</Label>
+                <Input type="number" min={0.1} step={0.1} value={String(form.firstResponseHours)} onChange={(e) => setForm({ ...form, firstResponseHours: parseFloat(e.target.value) || 0 })} />
+              </TextField>
+              <TextField>
+                <Label>Resolution (hours)</Label>
+                <Input type="number" min={0.1} step={0.1} value={String(form.resolutionHours)} onChange={(e) => setForm({ ...form, resolutionHours: parseFloat(e.target.value) || 0 })} />
+              </TextField>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="priority">Priority</Label>
-              <Select value={form.priority || undefined} onValueChange={(v) => setForm({ ...form, priority: v ?? '' })}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="All priorities" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All priorities</SelectItem>
-                  <SelectItem value="LOW">Low</SelectItem>
-                  <SelectItem value="MEDIUM">Medium</SelectItem>
-                  <SelectItem value="HIGH">High</SelectItem>
-                  <SelectItem value="CRITICAL">Critical</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
+            <Select
+              selectedKey={form.priority || null}
+              onSelectionChange={(keys) => setForm({ ...form, priority: String(keys) || '' })}
+            >
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectPopover>
+                <ListBox>
+                  <ListBoxItem key="">All priorities</ListBoxItem>
+                  <ListBoxItem key="LOW">Low</ListBoxItem>
+                  <ListBoxItem key="MEDIUM">Medium</ListBoxItem>
+                  <ListBoxItem key="HIGH">High</ListBoxItem>
+                  <ListBoxItem key="CRITICAL">Critical</ListBoxItem>
+                </ListBox>
+              </SelectPopover>
+            </Select>
+            <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
-                id="isActive"
                 checked={form.isActive}
                 onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
                 className="h-4 w-4 rounded border-input"
               />
-              <Label htmlFor="isActive">Active</Label>
-            </div>
-          </div>
-          <DialogFooter showCloseButton>
-            <Button onClick={handleSave} loading={saveMutation.isPending}>
+              Active
+            </label>
+            <Button onClick={handleSave} isDisabled={saveMutation.isPending}>
               {editingRule ? 'Update' : 'Create'}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ModalBody>
+        </ModalDialog>
+      </Modal>
 
-      <Dialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete SLA Rule</DialogTitle>
-            <DialogDescription>
+      <Modal state={deleteModalState}>
+        <ModalDialog>
+          <ModalCloseTrigger />
+          <ModalHeader>
+            <ModalHeading>Delete SLA Rule</ModalHeading>
+          </ModalHeader>
+          <ModalBody>
+            <p className="text-sm text-muted-foreground">
               Are you sure you want to delete this SLA rule? This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter showCloseButton>
+            </p>
+          </ModalBody>
+          <ModalFooter>
             <Button
-              variant="destructive"
+             
               onClick={() => deleteId && deleteMutation.mutate(deleteId)}
-              loading={deleteMutation.isPending}
+              isDisabled={deleteMutation.isPending}
             >
               Delete
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </ModalFooter>
+        </ModalDialog>
+      </Modal>
     </div>
   );
 }

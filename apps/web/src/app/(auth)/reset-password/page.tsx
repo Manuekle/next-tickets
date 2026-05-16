@@ -3,11 +3,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { apiClient } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button, Input, Card, CardHeader, CardContent, TextField, Label, FieldError } from '@heroui/react';
 import { toast } from 'sonner';
 import { useState, Suspense } from 'react';
 
@@ -53,16 +51,16 @@ function ResetPasswordForm() {
   if (!token) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Invalid link</CardTitle>
-          <CardDescription>
+        <CardHeader className="flex flex-col items-start gap-1">
+          <p className="font-heading font-medium text-xl">Invalid link</p>
+          <p className="text-sm text-muted-slate">
             This password reset link is invalid or has expired.
-          </CardDescription>
+          </p>
         </CardHeader>
         <CardContent>
-          <a href="/forgot-password" className="text-sm text-primary hover:underline">
+          <Link href="/forgot-password" className="text-sm text-primary hover:underline">
             Request a new reset link
-          </a>
+          </Link>
         </CardContent>
       </Card>
     );
@@ -70,23 +68,23 @@ function ResetPasswordForm() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Reset password</CardTitle>
-        <CardDescription>Enter your new password</CardDescription>
+      <CardHeader className="flex flex-col items-start gap-1">
+        <p className="font-heading font-medium text-xl">Reset password</p>
+        <p className="text-sm text-muted-slate">Enter your new password</p>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="password">New password</Label>
-            <Input id="password" type="password" aria-describedby="password-error" {...register('password')} />
-            {errors.password && <p id="password-error" className="text-sm text-destructive" aria-live="polite">{errors.password.message}</p>}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm password</Label>
-            <Input id="confirmPassword" type="password" aria-describedby="confirm-password-error" {...register('confirmPassword')} />
-            {errors.confirmPassword && <p id="confirm-password-error" className="text-sm text-destructive" aria-live="polite">{errors.confirmPassword.message}</p>}
-          </div>
-          <Button type="submit" className="w-full" loading={loading}>
+          <TextField isInvalid={!!errors.password}>
+            <Label>New password</Label>
+            <Input type="password" {...register('password')} />
+            {errors.password && <FieldError>{errors.password.message}</FieldError>}
+          </TextField>
+          <TextField isInvalid={!!errors.confirmPassword}>
+            <Label>Confirm password</Label>
+            <Input type="password" {...register('confirmPassword')} />
+            {errors.confirmPassword && <FieldError>{errors.confirmPassword.message}</FieldError>}
+          </TextField>
+          <Button type="submit" className="w-full" isDisabled={loading}>
             Reset password
           </Button>
         </form>

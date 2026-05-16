@@ -1,8 +1,7 @@
 'use client';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardHeader, CardContent, Skeleton } from '@heroui/react';
 import { Ticket, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -53,9 +52,9 @@ export default function DashboardPage() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
-          <CardHeader><CardTitle className="text-sm">By Priority</CardTitle></CardHeader>
+          <CardHeader><p className="text-sm font-medium">By Priority</p></CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-32" /> : (
+            {isLoading ? <Skeleton className="h-32 w-full rounded-lg" /> : (
               <div className="space-y-2">
                 {stats?.byPriority.map((p) => (
                   <div key={p.priority} className="flex items-center justify-between">
@@ -69,9 +68,9 @@ export default function DashboardPage() {
         </Card>
 
         <Card>
-          <CardHeader><CardTitle className="text-sm">By Category</CardTitle></CardHeader>
+          <CardHeader><p className="text-sm font-medium">By Category</p></CardHeader>
           <CardContent>
-            {isLoading ? <Skeleton className="h-32" /> : (
+            {isLoading ? <Skeleton className="h-32 w-full rounded-lg" /> : (
               <div className="space-y-2">
                 {stats?.byCategory.map((c) => (
                   <div key={c.name} className="flex items-center justify-between">
@@ -91,15 +90,15 @@ export default function DashboardPage() {
 function StatCard({ title, value, icon: Icon, loading, accent }: any) {
   return (
     <Card className={cn('shadow-sm hover:shadow-md transition-shadow', accent && 'ring-1 ring-brand/20')}>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-slate">{title}</CardTitle>
+      <CardHeader className="flex items-center justify-between pb-2">
+        <span className="text-sm font-medium text-muted-slate">{title}</span>
         <Icon className={cn('h-4 w-4', accent ? 'text-brand' : 'text-muted-slate')} />
       </CardHeader>
       <CardContent>
         {loading ? (
-          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-20 rounded-lg" />
         ) : (
-          <div className={cn('text-2xl font-heading font-medium', accent ? 'text-foreground' : 'text-foreground')}>{value ?? 0}</div>
+          <p className={cn('text-2xl font-heading font-medium', accent ? 'text-foreground' : 'text-foreground')}>{value ?? 0}</p>
         )}
       </CardContent>
     </Card>

@@ -7,17 +7,10 @@ import { apiClient } from '@/lib/api';
 import { useSocket } from '@/components/providers/socket-provider';
 import { useAuthStore } from '@/stores/auth-store';
 import { Role } from '@next-tickets/shared';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button, Chip, Skeleton, Card, CardHeader, CardContent } from '@heroui/react';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+  Select, SelectTrigger, SelectValue, SelectPopover, ListBox, ListBoxItem,
+} from '@heroui/react';
 import { CommentList } from '@/components/comments/comment-list';
 import { CommentInput } from '@/components/comments/comment-input';
 import { format } from 'date-fns';
@@ -27,18 +20,18 @@ import { toast } from 'sonner';
 type Tab = 'details' | 'comments';
 
 const statusColors: Record<string, string> = {
-  OPEN: 'bg-blue-500/10 text-blue-500',
-  IN_PROGRESS: 'bg-yellow-500/10 text-yellow-500',
-  WAITING_ON_CUSTOMER: 'bg-orange-500/10 text-orange-500',
-  RESOLVED: 'bg-green-500/10 text-green-500',
-  CLOSED: 'bg-gray-500/10 text-gray-500',
+  OPEN: 'accent',
+  IN_PROGRESS: 'warning',
+  WAITING_ON_CUSTOMER: 'warning',
+  RESOLVED: 'success',
+  CLOSED: 'default',
 };
 
 const priorityColors: Record<string, string> = {
-  LOW: 'bg-gray-500/10 text-gray-500',
-  MEDIUM: 'bg-blue-500/10 text-blue-500',
-  HIGH: 'bg-orange-500/10 text-orange-500',
-  CRITICAL: 'bg-red-500/10 text-red-500',
+  LOW: 'default',
+  MEDIUM: 'accent',
+  HIGH: 'warning',
+  CRITICAL: 'danger',
 };
 
 interface TicketDetail {
@@ -144,9 +137,9 @@ export default function TicketDetailPage() {
   if (ticketLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-8 w-64" />
-        <Skeleton className="h-4 w-48" />
-        <Skeleton className="h-32 w-full" />
+        <Skeleton className="h-8 w-64 rounded-lg" />
+        <Skeleton className="h-4 w-48 rounded-lg" />
+        <Skeleton className="h-32 w-full rounded-lg" />
       </div>
     );
   }
@@ -158,7 +151,7 @@ export default function TicketDetailPage() {
         <p className="text-sm text-muted-foreground">
           The ticket may not exist or you may not have access.
         </p>
-        <Button variant="outline" onClick={() => router.push('/tickets')}>
+        <Button variant="secondary" onClick={() => router.push('/tickets')}>
           Back to Tickets
         </Button>
       </div>
@@ -185,20 +178,14 @@ export default function TicketDetailPage() {
           {ticket.title}
         </h1>
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <Badge
-            variant="secondary"
-            className={statusColors[ticket.status]}
-          >
+          <Chip color={statusColors[ticket.status] as any} variant="soft" size="sm">
             {ticket.status.replace('_', ' ')}
-          </Badge>
-          <Badge
-            variant="secondary"
-            className={priorityColors[ticket.priority]}
-          >
+          </Chip>
+          <Chip color={priorityColors[ticket.priority] as any} variant="soft" size="sm">
             {ticket.priority}
-          </Badge>
+          </Chip>
           {ticket.category && (
-            <Badge variant="outline">{ticket.category.name}</Badge>
+            <Chip variant="secondary" size="sm">{ticket.category.name}</Chip>
           )}
         </div>
       </div>
@@ -229,9 +216,7 @@ export default function TicketDetailPage() {
         <div className="grid gap-6 md:grid-cols-3">
           <div className="space-y-4 md:col-span-2">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Description</CardTitle>
-              </CardHeader>
+              <CardHeader><p className="text-sm font-medium">Description</p></CardHeader>
               <CardContent>
                 {ticket.description ? (
                   <p className="text-sm whitespace-pre-wrap">
@@ -248,9 +233,7 @@ export default function TicketDetailPage() {
 
           <div className="space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Details</CardTitle>
-              </CardHeader>
+              <CardHeader><p className="text-sm font-medium">Details</p></CardHeader>
               <CardContent className="space-y-3">
                 <div>
                   <p className="text-xs text-muted-foreground">Customer</p>
@@ -284,28 +267,27 @@ export default function TicketDetailPage() {
 
             {isAgent && (
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">Agent Actions</CardTitle>
-                </CardHeader>
+                <CardHeader><p className="text-sm font-medium">Agent Actions</p></CardHeader>
                 <CardContent className="space-y-3">
                   <div className="space-y-1">
                     <p className="text-xs text-muted-foreground">Status</p>
                     <Select
-                      value={ticket.status}
-                      onValueChange={(v) => v && statusMutation.mutate(v)}
+                      selectedKey={ticket.status}
+                      onSelectionChange={(keys) => {
+                        const v = String(keys);
+                        if (v) statusMutation.mutate(v);
+                      }}
                     >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="OPEN">Open</SelectItem>
-                        <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                        <SelectItem value="WAITING_ON_CUSTOMER">
-                          Waiting on Customer
-                        </SelectItem>
-                        <SelectItem value="RESOLVED">Resolved</SelectItem>
-                        <SelectItem value="CLOSED">Closed</SelectItem>
-                      </SelectContent>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectPopover>
+                        <ListBox>
+                          <ListBoxItem id="OPEN">Open</ListBoxItem>
+                          <ListBoxItem id="IN_PROGRESS">In Progress</ListBoxItem>
+                          <ListBoxItem id="WAITING_ON_CUSTOMER">Waiting on Customer</ListBoxItem>
+                          <ListBoxItem id="RESOLVED">Resolved</ListBoxItem>
+                          <ListBoxItem id="CLOSED">Closed</ListBoxItem>
+                        </ListBox>
+                      </SelectPopover>
                     </Select>
                   </div>
                 </CardContent>
@@ -323,7 +305,7 @@ export default function TicketDetailPage() {
             {commentsLoading ? (
               <div className="space-y-3">
                 {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-20 w-full" />
+                  <Skeleton key={i} className="h-20 w-full rounded-lg" />
                 ))}
               </div>
             ) : (

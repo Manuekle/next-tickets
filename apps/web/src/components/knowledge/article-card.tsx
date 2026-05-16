@@ -1,7 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, Chip } from '@heroui/react';
 import { ThumbsUp, User } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -32,9 +31,9 @@ export function ArticleCard({
           <div className="flex items-start justify-between gap-2">
             <h3 className="font-medium leading-snug line-clamp-2">{title}</h3>
             {category && (
-              <Badge variant="secondary" className="shrink-0">
+              <Chip variant="soft" size="sm" className="shrink-0">
                 {category.name}
-              </Badge>
+              </Chip>
             )}
           </div>
           {excerpt && (

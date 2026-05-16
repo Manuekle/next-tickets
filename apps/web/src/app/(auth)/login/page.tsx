@@ -6,10 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth-store';
 import { apiClient } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button, Input, Card, CardHeader, CardContent, TextField, Label, FieldError } from '@heroui/react';
 import { toast } from 'sonner';
 import { useState } from 'react';
 
@@ -47,23 +44,23 @@ export default function LoginPage() {
 
   return (
     <Card className="shadow-lg border-border-light">
-      <CardHeader>
-        <CardTitle className="font-heading font-medium">Sign in</CardTitle>
-        <CardDescription className="text-muted-slate">Enter your credentials to access your account</CardDescription>
+      <CardHeader className="flex flex-col items-start gap-1">
+        <p className="font-heading font-medium text-xl">Sign in</p>
+        <p className="text-sm text-muted-slate">Enter your credentials to access your account</p>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-xs font-label text-foreground">Email</Label>
-            <Input id="email" type="email" className="rounded-lg border-input bg-background" aria-describedby="email-error" {...register('email')} />
-            {errors.email && <p id="email-error" className="text-sm text-destructive" aria-live="polite">{errors.email.message}</p>}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password" className="text-xs font-label text-foreground">Password</Label>
-            <Input id="password" type="password" className="rounded-lg border-input bg-background" aria-describedby="password-error" {...register('password')} />
-            {errors.password && <p id="password-error" className="text-sm text-destructive" aria-live="polite">{errors.password.message}</p>}
-          </div>
-          <Button type="submit" className="w-full rounded-lg bg-brand text-deep-forest hover:brightness-95 font-medium" loading={loading}>
+          <TextField isInvalid={!!errors.email}>
+            <Label>Email</Label>
+            <Input type="email" {...register('email')} />
+            {errors.email && <FieldError>{errors.email.message}</FieldError>}
+          </TextField>
+          <TextField isInvalid={!!errors.password}>
+            <Label>Password</Label>
+            <Input type="password" {...register('password')} />
+            {errors.password && <FieldError>{errors.password.message}</FieldError>}
+          </TextField>
+          <Button type="submit" className="w-full rounded-lg bg-brand text-deep-forest hover:brightness-95 font-medium" isDisabled={loading}>
             Sign in
           </Button>
         </form>

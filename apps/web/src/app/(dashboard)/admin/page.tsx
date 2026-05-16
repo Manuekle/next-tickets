@@ -4,37 +4,13 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { apiClient } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogClose,
-} from '@/components/ui/dialog';
+import { Button, Input, Chip, Skeleton, useOverlayState, TextField, Label } from '@heroui/react';
+import { Modal, ModalDialog, ModalHeader, ModalHeading, ModalBody, ModalFooter, ModalCloseTrigger } from '@heroui/react';
+import { Select, SelectTrigger, SelectValue, SelectPopover, ListBox, ListBoxItem } from '@heroui/react';
 import { toast } from 'sonner';
 import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { Key } from 'react-aria-components';
 
 interface AdminUser {
   id: string;
@@ -49,10 +25,10 @@ interface AdminUser {
 type ApiListResponse<T> = { data: T; meta: { total: number; totalPages: number } };
 
 const roleColors: Record<string, string> = {
-  SUPER_ADMIN: 'bg-red-500/10 text-red-500',
-  ADMIN: 'bg-orange-500/10 text-orange-500',
-  AGENT: 'bg-blue-500/10 text-blue-500',
-  CUSTOMER: 'bg-green-500/10 text-green-500',
+  SUPER_ADMIN: 'danger',
+  ADMIN: 'warning',
+  AGENT: 'accent',
+  CUSTOMER: 'success',
 };
 
 export default function AdminUsersPage() {
@@ -64,10 +40,10 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState('');
   const [page, setPage] = useState(1);
 
-  const [createOpen, setCreateOpen] = useState(false);
+  const createState = useOverlayState();
+  const editState = useOverlayState();
   const [createForm, setCreateForm] = useState({ name: '', email: '', password: '', role: 'AGENT' });
 
-  const [editOpen, setEditOpen] = useState(false);
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
   const [editForm, setEditForm] = useState({ name: '', email: '', role: '', isActive: true });
 
@@ -89,7 +65,7 @@ export default function AdminUsersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       toast.success('User created');
-      setCreateOpen(false);
+      createState.close();
       setCreateForm({ name: '', email: '', password: '', role: 'AGENT' });
     },
     onError: () => toast.error('Failed to create user'),
@@ -101,7 +77,7 @@ export default function AdminUsersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       toast.success('User updated');
-      setEditOpen(false);
+      editState.close();
       setEditUser(null);
     },
     onError: () => toast.error('Failed to update user'),
@@ -123,7 +99,7 @@ export default function AdminUsersPage() {
   const handleEdit = (user: AdminUser) => {
     setEditUser(user);
     setEditForm({ name: user.name, email: user.email, role: user.role, isActive: user.isActive });
-    setEditOpen(true);
+    editState.open();
   };
 
   if (error) {
@@ -131,7 +107,7 @@ export default function AdminUsersPage() {
       <div className="flex flex-col items-center justify-center py-16">
         <p className="text-destructive font-medium">Failed to load users</p>
         <p className="text-sm text-muted-foreground mt-1">Please try again later.</p>
-        <Button variant="outline" className="mt-4" onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-users'] })}>
+        <Button variant="secondary" className="mt-4" onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-users'] })}>
           Retry
         </Button>
       </div>
@@ -147,14 +123,14 @@ export default function AdminUsersPage() {
             {data?.meta?.total || 0} total users
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
+        <Button onClick={createState.open}>
           <Plus className="mr-2 h-4 w-4" /> Create User
         </Button>
       </div>
 
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
           <Input
             placeholder="Search by name or email..."
             className="pl-9"
@@ -162,77 +138,75 @@ export default function AdminUsersPage() {
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           />
         </div>
-        <Select
-          value={roleFilter}
-          onValueChange={(v) => { setRoleFilter(v ?? ''); setPage(1); }}
-        >
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="Role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value=" ">All</SelectItem>
-            <SelectItem value="ADMIN">Admin</SelectItem>
-            <SelectItem value="AGENT">Agent</SelectItem>
-            <SelectItem value="CUSTOMER">Customer</SelectItem>
-          </SelectContent>
+        <Select onSelectionChange={(keys) => { setRoleFilter(String(keys) || ''); setPage(1); }}>
+          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+          <SelectPopover>
+            <ListBox>
+              <ListBoxItem id=" ">All</ListBoxItem>
+              <ListBoxItem id="ADMIN">Admin</ListBoxItem>
+              <ListBoxItem id="AGENT">Agent</ListBoxItem>
+              <ListBoxItem id="CUSTOMER">Customer</ListBoxItem>
+            </ListBox>
+          </SelectPopover>
         </Select>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Tickets</TableHead>
-              <TableHead>Created</TableHead>
-              <TableHead className="w-24">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <div className="rounded-md border overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <th className="px-4 py-3 text-left font-medium">Name</th>
+              <th className="px-4 py-3 text-left font-medium">Email</th>
+              <th className="px-4 py-3 text-left font-medium">Role</th>
+              <th className="px-4 py-3 text-left font-medium">Status</th>
+              <th className="px-4 py-3 text-left font-medium">Tickets</th>
+              <th className="px-4 py-3 text-left font-medium">Created</th>
+              <th className="px-4 py-3 text-left font-medium w-24">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
             {isLoading
               ? Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell colSpan={7}><Skeleton className="h-8 w-full" /></TableCell>
-                  </TableRow>
+                  <tr key={i} className="border-b last:border-0">
+                    <td colSpan={7} className="px-4 py-3"><Skeleton className="h-8 w-full rounded-lg" /></td>
+                  </tr>
                 ))
               : users.length === 0
                 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
+                  <tr className="border-b last:border-0">
+                    <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                       No users found
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 )
                 : users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{user.email}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className={roleColors[user.role]}>
+                  <tr key={user.id} className="border-b last:border-0">
+                    <td className="px-4 py-3 font-medium">{user.name}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{user.email}</td>
+                    <td className="px-4 py-3">
+                      <Chip color={roleColors[user.role] as any} variant="soft" size="sm">
                         {user.role === 'SUPER_ADMIN' ? 'Super Admin' : user.role.charAt(0) + user.role.slice(1).toLowerCase()}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={user.isActive ? 'default' : 'secondary'}>
+                      </Chip>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Chip color={user.isActive ? 'success' : 'default'} variant="soft" size="sm">
                         {user.isActive ? 'Active' : 'Inactive'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{user.ticketCount ?? 0}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                      </Chip>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{user.ticketCount ?? 0}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
                       {format(new Date(user.createdAt), 'MMM d, yyyy')}
-                    </TableCell>
-                    <TableCell>
+                    </td>
+                    <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon-sm" onClick={() => handleEdit(user)}>
+                        <Button variant="ghost" isIconOnly size="sm" onClick={() => handleEdit(user)}>
                           <Pencil className="h-4 w-4" />
                         </Button>
                         {isSuperAdmin && (
                           <Button
                             variant="ghost"
-                            size="icon-sm"
+                            isIconOnly
+                            size="sm"
                             onClick={() => {
                               if (window.confirm('Are you sure you want to deactivate this user?')) {
                                 deleteMutation.mutate(user.id);
@@ -243,156 +217,118 @@ export default function AdminUsersPage() {
                           </Button>
                         )}
                       </div>
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))}
-          </TableBody>
-        </Table>
+          </tbody>
+        </table>
       </div>
 
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
-          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+          <Button variant="secondary" size="sm" isDisabled={page <= 1} onClick={() => setPage(page - 1)}>
             Previous
           </Button>
           <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+          <Button variant="secondary" size="sm" isDisabled={page >= totalPages} onClick={() => setPage(page + 1)}>
             Next
           </Button>
         </div>
       )}
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Create User</DialogTitle>
-          </DialogHeader>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              createMutation.mutate(createForm);
-            }}
-            className="space-y-4"
-          >
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={createForm.name}
-                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={createForm.email}
-                onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={createForm.password}
-                onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Role</Label>
-              <Select
-                value={createForm.role}
-                onValueChange={(v) => setCreateForm({ ...createForm, role: v || 'AGENT' })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
-                  <SelectItem value="AGENT">Agent</SelectItem>
-                  <SelectItem value="CUSTOMER">Customer</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <DialogFooter>
-              <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-              <Button type="submit" loading={createMutation.isPending}>Create</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={editOpen} onOpenChange={(open) => { if (!open) { setEditOpen(false); setEditUser(null); }}}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
-          </DialogHeader>
-          {editUser && (
+      <Modal state={createState}>
+        <ModalDialog>
+          <ModalCloseTrigger />
+          <ModalHeader>
+            <ModalHeading>Create User</ModalHeading>
+          </ModalHeader>
+          <ModalBody>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                updateMutation.mutate({ id: editUser.id, body: editForm });
+                createMutation.mutate(createForm);
               }}
               className="space-y-4"
             >
-              <div className="space-y-2">
-                <Label htmlFor="edit-name">Name</Label>
-                <Input
-                  id="edit-name"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-email">Email</Label>
-                <Input
-                  id="edit-email"
-                  type="email"
-                  value={editForm.email}
-                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Role</Label>
-                <Select
-                  value={editForm.role}
-                  onValueChange={(v) => setEditForm({ ...editForm, role: v || 'AGENT' })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ADMIN">Admin</SelectItem>
-                    <SelectItem value="AGENT">Agent</SelectItem>
-                    <SelectItem value="CUSTOMER">Customer</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="edit-active"
-                  checked={editForm.isActive}
-                  onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })}
-                  className="h-4 w-4"
-                />
-                <Label htmlFor="edit-active">Active</Label>
-              </div>
-              <DialogFooter>
-                <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-                <Button type="submit" loading={updateMutation.isPending}>Save</Button>
-              </DialogFooter>
+              <TextField isRequired>
+              <Label>Name</Label>
+              <Input value={createForm.name} onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })} />
+            </TextField>
+            <TextField isRequired>
+              <Label>Email</Label>
+              <Input type="email" value={createForm.email} onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })} />
+            </TextField>
+            <TextField isRequired>
+              <Label>Password</Label>
+              <Input type="password" value={createForm.password} onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })} />
+            </TextField>
+              <Select onSelectionChange={(keys) => setCreateForm({ ...createForm, role: String(keys) || 'AGENT' })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectPopover>
+                  <ListBox>
+                    <ListBoxItem id="ADMIN">Admin</ListBoxItem>
+                    <ListBoxItem id="AGENT">Agent</ListBoxItem>
+                    <ListBoxItem id="CUSTOMER">Customer</ListBoxItem>
+                  </ListBox>
+                </SelectPopover>
+              </Select>
+              <Button type="submit" isDisabled={createMutation.isPending}>Create</Button>
             </form>
-          )}
-        </DialogContent>
-      </Dialog>
+          </ModalBody>
+        </ModalDialog>
+      </Modal>
+
+      <Modal state={editState}>
+        <ModalDialog>
+          <ModalCloseTrigger />
+          <ModalHeader>
+            <ModalHeading>Edit User</ModalHeading>
+          </ModalHeader>
+          <ModalBody>
+            {editUser && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  updateMutation.mutate({ id: editUser.id, body: editForm });
+                }}
+                className="space-y-4"
+              >
+                <TextField isRequired>
+                  <Label>Name</Label>
+                  <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
+                </TextField>
+                <TextField isRequired>
+                  <Label>Email</Label>
+                  <Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+                </TextField>
+                <Select
+                  selectedKey={editForm.role}
+                  onSelectionChange={(keys) => setEditForm({ ...editForm, role: String(keys) || 'AGENT' })}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectPopover>
+                    <ListBox>
+                      <ListBoxItem id="ADMIN">Admin</ListBoxItem>
+                      <ListBoxItem id="AGENT">Agent</ListBoxItem>
+                      <ListBoxItem id="CUSTOMER">Customer</ListBoxItem>
+                    </ListBox>
+                  </SelectPopover>
+                </Select>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={editForm.isActive}
+                    onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })}
+                    className="h-4 w-4"
+                  />
+                  Active
+                </label>
+                <Button type="submit" isDisabled={updateMutation.isPending}>Save</Button>
+              </form>
+            )}
+          </ModalBody>
+        </ModalDialog>
+      </Modal>
     </div>
   );
 }

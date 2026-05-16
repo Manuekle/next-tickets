@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Ticket, BookOpen, BarChart3, Settings, ChevronLeft, Workflow, Gauge, Shield,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '@heroui/react';
 import { useState } from 'react';
 
 const navItems: { href: string; label: string; icon: any; disabled?: boolean }[] = [
@@ -36,11 +36,10 @@ export function Sidebar() {
         )}
         <Button
           variant="ghost"
-          size="icon"
-          className={cn('ml-auto h-8 w-8 text-muted-slate hover:text-foreground', collapsed && 'mx-auto')}
+          isIconOnly
+          className={cn('ml-auto h-8 w-8 min-w-8 text-muted-slate hover:text-foreground', collapsed && 'mx-auto')}
           onClick={() => setCollapsed(!collapsed)}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          aria-expanded={!collapsed}
         >
           <ChevronLeft className={cn('h-4 w-4 transition-transform', collapsed && 'rotate-180')} />
         </Button>

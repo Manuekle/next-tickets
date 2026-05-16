@@ -1,5 +1,5 @@
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback } from '@heroui/react';
+import { Chip } from '@heroui/react';
 import { format } from 'date-fns';
 
 interface Comment {
@@ -34,12 +34,7 @@ export function CommentList({ comments }: { comments: Comment[] }) {
               {format(new Date(comment.createdAt), 'MMM d, HH:mm')}
             </span>
             {comment.isInternal && (
-              <Badge
-                variant="secondary"
-                className="bg-purple-500/10 text-purple-500"
-              >
-                Internal
-              </Badge>
+              <Chip color="accent" variant="soft" size="sm">Internal</Chip>
             )}
           </div>
           <p className="text-sm whitespace-pre-wrap">{comment.content}</p>

@@ -3,10 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button, Input, Chip, Skeleton } from '@heroui/react';
 import { ArticleCard } from '@/components/knowledge/article-card';
 import { useAuthStore } from '@/stores/auth-store';
 import { Role } from '@next-tickets/shared';
@@ -86,7 +83,7 @@ export default function KnowledgePage() {
       </div>
 
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
         <Input
           placeholder="Search articles..."
           className="pl-9"
@@ -97,8 +94,9 @@ export default function KnowledgePage() {
 
       {categoriesRes?.data && categoriesRes.data.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          <Badge
-            variant={!categoryId ? 'default' : 'outline'}
+          <Chip
+            color={!categoryId ? 'accent' : 'default'}
+            variant={!categoryId ? 'primary' : 'soft'}
             className="cursor-pointer"
             onClick={() => {
               setCategoryId('');
@@ -106,11 +104,12 @@ export default function KnowledgePage() {
             }}
           >
             All
-          </Badge>
+          </Chip>
           {categoriesRes.data.map((cat) => (
-            <Badge
+            <Chip
               key={cat.id}
-              variant={categoryId === cat.id ? 'default' : 'outline'}
+              color={categoryId === cat.id ? 'accent' : 'default'}
+              variant={categoryId === cat.id ? 'primary' : 'soft'}
               className="cursor-pointer"
               onClick={() => {
                 setCategoryId(cat.id);
@@ -118,7 +117,7 @@ export default function KnowledgePage() {
               }}
             >
               {cat.name} ({cat._count.articles})
-            </Badge>
+            </Chip>
           ))}
         </div>
       )}
@@ -126,7 +125,7 @@ export default function KnowledgePage() {
       {error && (
         <div className="flex flex-col items-center justify-center gap-4 py-20">
           <p className="text-lg text-destructive">Failed to load articles</p>
-          <Button variant="outline" onClick={() => refetch()}>
+          <Button variant="secondary" onClick={() => refetch()}>
             Retry
           </Button>
         </div>
@@ -136,12 +135,12 @@ export default function KnowledgePage() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="rounded-xl border p-4">
-              <Skeleton className="mb-2 h-5 w-3/4" />
-              <Skeleton className="mb-1 h-4 w-full" />
-              <Skeleton className="mb-4 h-4 w-1/2" />
+              <Skeleton className="mb-2 h-5 w-3/4 rounded-lg" />
+              <Skeleton className="mb-1 h-4 w-full rounded-lg" />
+              <Skeleton className="mb-4 h-4 w-1/2 rounded-lg" />
               <div className="flex gap-2">
-                <Skeleton className="h-3 w-20" />
-                <Skeleton className="h-3 w-16" />
+                <Skeleton className="h-3 w-20 rounded-lg" />
+                <Skeleton className="h-3 w-16 rounded-lg" />
               </div>
             </div>
           ))}
@@ -169,9 +168,9 @@ export default function KnowledgePage() {
           {data.meta.totalPages > 1 && (
             <div className="flex items-center justify-center gap-2">
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
-                disabled={page <= 1}
+                isDisabled={page <= 1}
                 onClick={() => setPage(page - 1)}
               >
                 Previous
@@ -180,9 +179,9 @@ export default function KnowledgePage() {
                 Page {page} of {data.meta.totalPages}
               </span>
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
-                disabled={page >= data.meta.totalPages}
+                isDisabled={page >= data.meta.totalPages}
                 onClick={() => setPage(page + 1)}
               >
                 Next

@@ -5,8 +5,7 @@ import { apiClient } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { Role } from '@next-tickets/shared';
 import { ArticleForm } from '@/components/knowledge/article-form';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
+import { Skeleton, Button } from '@heroui/react';
 import { useEffect } from 'react';
 
 export default function EditArticlePage() {
@@ -38,8 +37,8 @@ export default function EditArticlePage() {
   if (isLoading) {
     return (
       <div className="mx-auto max-w-2xl space-y-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-8 w-48 rounded-lg" />
+        <Skeleton className="h-64 w-full rounded-lg" />
       </div>
     );
   }
@@ -48,7 +47,7 @@ export default function EditArticlePage() {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-20">
         <p className="text-lg text-destructive">Article not found</p>
-        <Button variant="outline" onClick={() => router.push('/knowledge')}>
+        <Button variant="secondary" onClick={() => router.push('/knowledge')}>
           Back to Knowledge Base
         </Button>
       </div>

@@ -1,12 +1,8 @@
 'use client';
 import { useAuthStore } from '@/stores/auth-store';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button, Avatar, AvatarFallback, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from '@heroui/react';
 import { useTheme } from 'next-themes';
-import { LogOut, Moon, Sun, User } from 'lucide-react';
+import { LogOut, Sun, Moon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export function Header() {
@@ -21,28 +17,28 @@ export function Header() {
 
   return (
     <header role="banner" className="flex h-14 items-center justify-end gap-4 border-b border-border-light px-6 bg-card">
-      <DropdownMenu>
-        <DropdownMenuTrigger aria-label="User menu">
-          <Avatar className="h-8 w-8 ring-1 ring-border cursor-pointer">
-            <AvatarFallback className="text-xs bg-brand/10 text-foreground">
-              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-            </AvatarFallback>
+      <Dropdown>
+        <DropdownTrigger>
+          <Avatar className="h-8 w-8 ring-1 ring-border cursor-pointer" size="sm">
+            <AvatarFallback>{user?.name?.charAt(0)?.toUpperCase() || 'U'}</AvatarFallback>
           </Avatar>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg border-border-light p-1.5">
-          <div className="px-2 py-1.5 text-sm font-medium text-foreground">{user?.name}</div>
-          <div className="px-2 pb-2 text-xs text-muted-slate">{user?.email}</div>
+        </DropdownTrigger>
+        <DropdownMenu>
+          <DropdownItem key="user-info" className="h-14 gap-2" textValue={user?.name}>
+            <p className="font-medium">{user?.name}</p>
+            <p className="text-xs text-muted-slate">{user?.email}</p>
+          </DropdownItem>
           {resolvedTheme && (
-            <DropdownMenuItem onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="rounded-lg cursor-pointer">
-              {resolvedTheme === 'dark' ? <Sun className="mr-2 h-4 w-4" /> : <Moon className="mr-2 h-4 w-4" />}
+            <DropdownItem key="theme" onPress={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+              {resolvedTheme === 'dark' ? <Sun className="h-4 w-4 inline mr-2" /> : <Moon className="h-4 w-4 inline mr-2" />}
               {resolvedTheme === 'dark' ? 'Light mode' : 'Dark mode'}
-            </DropdownMenuItem>
+            </DropdownItem>
           )}
-          <DropdownMenuItem onClick={handleLogout} className="rounded-lg cursor-pointer text-destructive focus:text-destructive">
-            <LogOut className="mr-2 h-4 w-4" /> Sign out
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          <DropdownItem key="logout" onPress={handleLogout}>
+            <LogOut className="h-4 w-4 inline mr-2" /> Sign out
+          </DropdownItem>
+        </DropdownMenu>
+      </Dropdown>
     </header>
   );
 }

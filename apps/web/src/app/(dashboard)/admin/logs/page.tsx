@@ -3,18 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { apiClient } from '@/lib/api';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
+import { Button, Input, Chip, Skeleton } from '@heroui/react';
 import { Search } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -31,10 +20,10 @@ interface AuditLog {
 type ApiListResponse<T> = { data: T; meta: { total: number; totalPages: number } };
 
 const actionColors: Record<string, string> = {
-  CREATE: 'bg-green-500/10 text-green-500',
-  UPDATE: 'bg-blue-500/10 text-blue-500',
-  DELETE: 'bg-red-500/10 text-red-500',
-  LOGIN: 'bg-purple-500/10 text-purple-500',
+  CREATE: 'success',
+  UPDATE: 'accent',
+  DELETE: 'danger',
+  LOGIN: 'secondary',
 };
 
 export default function AuditLogsPage() {
@@ -72,70 +61,70 @@ export default function AuditLogsPage() {
         </p>
       </div>
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
         <Input
           placeholder="Search actions..."
-          className="pl-9 max-w-sm"
+          className="pl-9"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
         />
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Timestamp</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Action</TableHead>
-              <TableHead>Entity</TableHead>
-              <TableHead>Entity ID</TableHead>
-              <TableHead>IP</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+      <div className="rounded-md border overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <th className="px-4 py-3 text-left font-medium">Timestamp</th>
+              <th className="px-4 py-3 text-left font-medium">User</th>
+              <th className="px-4 py-3 text-left font-medium">Action</th>
+              <th className="px-4 py-3 text-left font-medium">Entity</th>
+              <th className="px-4 py-3 text-left font-medium">Entity ID</th>
+              <th className="px-4 py-3 text-left font-medium">IP</th>
+            </tr>
+          </thead>
+          <tbody>
             {isLoading
               ? Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell colSpan={6}><Skeleton className="h-8 w-full" /></TableCell>
-                  </TableRow>
+                  <tr key={i} className="border-b last:border-0">
+                    <td colSpan={6} className="px-4 py-3"><Skeleton className="h-8 w-full rounded-lg" /></td>
+                  </tr>
                 ))
               : logs.length === 0
                 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                  <tr className="border-b last:border-0">
+                    <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                       No audit logs found
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 )
                 : logs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell className="text-sm text-muted-foreground">
+                  <tr key={log.id} className="border-b last:border-0">
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
                       {format(new Date(log.createdAt), 'MMM d, yyyy HH:mm')}
-                    </TableCell>
-                    <TableCell className="text-sm">{log.user?.name || 'System'}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className={actionColors[log.action] || ''}>
+                    </td>
+                    <td className="px-4 py-3 text-sm">{log.user?.name || 'System'}</td>
+                    <td className="px-4 py-3">
+                      <Chip color={(actionColors[log.action] || 'default') as any} variant="soft" size="sm">
                         {log.action}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm capitalize">{log.entity}</TableCell>
-                    <TableCell className="text-sm font-mono text-muted-foreground">{log.entityId}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{log.ip}</TableCell>
-                  </TableRow>
+                      </Chip>
+                    </td>
+                    <td className="px-4 py-3 text-sm capitalize">{log.entity}</td>
+                    <td className="px-4 py-3 text-sm font-mono text-muted-foreground">{log.entityId}</td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">{log.ip}</td>
+                  </tr>
                 ))}
-          </TableBody>
-        </Table>
+          </tbody>
+        </table>
       </div>
 
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
-          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+          <Button variant="secondary" size="sm" isDisabled={page <= 1} onClick={() => setPage(page - 1)}>
             Previous
           </Button>
           <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>
+          <Button variant="secondary" size="sm" isDisabled={page >= totalPages} onClick={() => setPage(page + 1)}>
             Next
           </Button>
         </div>

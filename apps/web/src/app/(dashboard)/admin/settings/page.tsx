@@ -2,13 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardHeader, CardContent, Skeleton } from '@heroui/react';
 import { Users, Ticket, MessageSquare, Activity } from 'lucide-react';
 
 interface SystemStats {
@@ -50,12 +44,10 @@ export default function AdminSettingsPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-sm">Users by Role</CardTitle>
-        </CardHeader>
+        <CardHeader><p className="text-sm font-medium">Users by Role</p></CardHeader>
         <CardContent>
           {isLoading ? (
-            <Skeleton className="h-32" />
+            <Skeleton className="h-32 rounded-lg" />
           ) : (
             <div className="space-y-2">
               {stats?.usersByRole.map((r) => (
@@ -77,15 +69,15 @@ export default function AdminSettingsPage() {
 function StatCard({ title, value, icon: Icon, loading }: any) {
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+      <CardHeader className="flex items-center justify-between pb-2">
+        <span className="text-sm font-medium text-muted-foreground">{title}</span>
         <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
         {loading ? (
-          <Skeleton className="h-8 w-20" />
+          <Skeleton className="h-8 w-20 rounded-lg" />
         ) : (
-          <div className="text-2xl font-bold">{value ?? 0}</div>
+          <p className="text-2xl font-bold">{value ?? 0}</p>
         )}
       </CardContent>
     </Card>

@@ -4,10 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button, Input, Card, CardHeader, CardContent, TextField, Label, FieldError } from '@heroui/react';
 import { toast } from 'sonner';
 import { useState } from 'react';
 
@@ -42,11 +39,11 @@ export default function ForgotPasswordPage() {
   if (sent) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Check your email</CardTitle>
-          <CardDescription>
+        <CardHeader className="flex flex-col items-start gap-1">
+          <p className="font-heading font-medium text-xl">Check your email</p>
+          <p className="text-sm text-muted-slate">
             If an account with that email exists, we&apos;ve sent password reset instructions.
-          </CardDescription>
+          </p>
         </CardHeader>
         <CardContent>
           <Link href="/login" className="text-sm text-primary hover:underline">
@@ -59,23 +56,23 @@ export default function ForgotPasswordPage() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Forgot password?</CardTitle>
-        <CardDescription>Enter your email and we&apos;ll send you a reset link</CardDescription>
+      <CardHeader className="flex flex-col items-start gap-1">
+        <p className="font-heading font-medium text-xl">Forgot password?</p>
+        <p className="text-sm text-muted-slate">Enter your email and we&apos;ll send you a reset link</p>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" aria-describedby="email-error" {...register('email')} />
-            {errors.email && <p id="email-error" className="text-sm text-destructive" aria-live="polite">{errors.email.message}</p>}
-          </div>
-          <Button type="submit" className="w-full" loading={loading}>
+          <TextField isInvalid={!!errors.email}>
+            <Label>Email</Label>
+            <Input type="email" {...register('email')} />
+            {errors.email && <FieldError>{errors.email.message}</FieldError>}
+          </TextField>
+          <Button type="submit" className="w-full" isDisabled={loading}>
             Send reset link
           </Button>
         </form>
-        <div className="mt-4 text-center text-sm text-muted-foreground">
-          <Link href="/login" className="text-primary hover:underline">Back to sign in</Link>
+        <div className="mt-4 text-center text-sm text-muted-slate">
+          <Link href="/login" className="text-foreground hover:text-brand font-medium transition-colors">Back to sign in</Link>
         </div>
       </CardContent>
     </Card>

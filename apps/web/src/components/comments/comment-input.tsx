@@ -3,8 +3,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Button, TextArea } from '@heroui/react';
 import { toast } from 'sonner';
 
 export function CommentInput({
@@ -37,7 +36,7 @@ export function CommentInput({
 
   return (
     <div className="space-y-2">
-      <Textarea
+      <TextArea
         placeholder="Write a comment... (use @ to mention someone)"
         aria-label="Write a comment"
         value={content}
@@ -57,8 +56,9 @@ export function CommentInput({
         )}
         <Button
           size="sm"
+         
           onClick={() => mutation.mutate()}
-          disabled={!content.trim() || mutation.isPending}
+          isDisabled={!content.trim() || mutation.isPending}
         >
           {mutation.isPending ? 'Sending...' : 'Send'}
         </Button>

@@ -2,9 +2,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button, Chip, Skeleton } from '@heroui/react';
 import { useAuthStore } from '@/stores/auth-store';
 import { Role } from '@next-tickets/shared';
 import { format } from 'date-fns';
@@ -71,13 +69,13 @@ export default function ArticleDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-5 w-24" />
-        <Skeleton className="h-10 w-3/4" />
+        <Skeleton className="h-5 w-24 rounded-lg" />
+        <Skeleton className="h-10 w-3/4 rounded-lg" />
         <div className="flex gap-2">
-          <Skeleton className="h-5 w-20" />
-          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-5 w-20 rounded-lg" />
+          <Skeleton className="h-5 w-32 rounded-lg" />
         </div>
-        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-64 w-full rounded-lg" />
       </div>
     );
   }
@@ -89,7 +87,7 @@ export default function ArticleDetailPage() {
         <p className="text-sm text-muted-foreground">
           The article may have been removed or does not exist.
         </p>
-        <Button variant="outline" onClick={() => router.push('/knowledge')}>
+        <Button variant="secondary" onClick={() => router.push('/knowledge')}>
           Back to Knowledge Base
         </Button>
       </div>
@@ -111,7 +109,7 @@ export default function ArticleDetailPage() {
           <h1 className="text-3xl font-bold tracking-tight">{article.title}</h1>
           {isAdminOrAgent && (
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={() => router.push(`/knowledge/${article.slug}/edit`)}
             >
@@ -121,7 +119,7 @@ export default function ArticleDetailPage() {
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           {article.category && (
-            <Badge variant="secondary">{article.category.name}</Badge>
+            <Chip variant="soft" size="sm">{article.category.name}</Chip>
           )}
           {article.author && (
             <span className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -143,9 +141,9 @@ export default function ArticleDetailPage() {
       {article.tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {article.tags.map((tag) => (
-            <Badge key={tag.id} variant="outline">
+            <Chip key={tag.id} variant="secondary" size="sm">
               {tag.name}
-            </Badge>
+            </Chip>
           ))}
         </div>
       )}
@@ -164,19 +162,19 @@ export default function ArticleDetailPage() {
       <div className="flex items-center gap-4 border-t pt-6">
         <span className="text-sm text-muted-foreground">Was this article helpful?</span>
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => helpfulMutation.mutate()}
-          loading={helpfulMutation.isPending}
+          isDisabled={helpfulMutation.isPending}
         >
           <ThumbsUp className="mr-1 h-4 w-4" />
           Yes ({article.helpfulCount})
         </Button>
         <Button
-          variant="outline"
+          variant="secondary"
           size="sm"
           onClick={() => notHelpfulMutation.mutate()}
-          loading={notHelpfulMutation.isPending}
+          isDisabled={notHelpfulMutation.isPending}
         >
           <ThumbsDown className="mr-1 h-4 w-4" />
           No ({article.notHelpfulCount})

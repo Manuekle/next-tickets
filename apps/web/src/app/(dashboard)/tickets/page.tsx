@@ -4,41 +4,23 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Button, Input, Chip, Skeleton, Select, SelectTrigger, SelectValue, SelectPopover, ListBox, ListBoxItem } from '@heroui/react';
 import { Plus, Search } from 'lucide-react';
 import { format } from 'date-fns';
 
 const statusColors: Record<string, string> = {
-  OPEN: 'bg-blue-500/10 text-blue-500',
-  IN_PROGRESS: 'bg-yellow-500/10 text-yellow-500',
-  WAITING_ON_CUSTOMER: 'bg-orange-500/10 text-orange-500',
-  RESOLVED: 'bg-green-500/10 text-green-500',
-  CLOSED: 'bg-gray-500/10 text-gray-500',
+  OPEN: 'accent',
+  IN_PROGRESS: 'warning',
+  WAITING_ON_CUSTOMER: 'warning',
+  RESOLVED: 'success',
+  CLOSED: 'default',
 };
 
 const priorityColors: Record<string, string> = {
-  LOW: 'bg-gray-500/10 text-gray-500',
-  MEDIUM: 'bg-blue-500/10 text-blue-500',
-  HIGH: 'bg-orange-500/10 text-orange-500',
-  CRITICAL: 'bg-red-500/10 text-red-500',
+  LOW: 'default',
+  MEDIUM: 'accent',
+  HIGH: 'warning',
+  CRITICAL: 'danger',
 };
 
 interface Ticket {
@@ -56,23 +38,23 @@ interface Ticket {
 
 function getSlaStatus(ticket: Ticket) {
   if (!ticket.slaDueAt) return null;
-  if (ticket.slaBreached) return { label: 'BREACHED', className: 'bg-red-500/10 text-red-500', urgent: true };
+  if (ticket.slaBreached) return { label: 'BREACHED', color: 'danger' as const };
 
   const due = new Date(ticket.slaDueAt).getTime();
   const created = new Date(ticket.createdAt).getTime();
   const now = Date.now();
   const remaining = due - now;
 
-  if (remaining <= 0) return { label: 'BREACHED', className: 'bg-red-500/10 text-red-500', urgent: true };
+  if (remaining <= 0) return { label: 'BREACHED', color: 'danger' as const };
 
   const total = due - created;
   const ratio = remaining / total;
   const hours = remaining / (1000 * 60 * 60);
   const label = hours >= 1 ? `${Math.round(hours)}h left` : `${Math.round(remaining / (1000 * 60))}m left`;
 
-  if (ratio > 0.5) return { label, className: 'bg-green-500/10 text-green-500', urgent: false };
-  if (ratio > 0.25) return { label, className: 'bg-yellow-500/10 text-yellow-500', urgent: false };
-  return { label, className: 'bg-orange-500/10 text-orange-500', urgent: true };
+  if (ratio > 0.5) return { label, color: 'success' as const };
+  if (ratio > 0.25) return { label, color: 'warning' as const };
+  return { label, color: 'danger' as const };
 }
 
 export default function TicketsPage() {
@@ -115,155 +97,129 @@ export default function TicketsPage() {
 
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
           <Input
             placeholder="Search tickets..."
             aria-label="Search tickets"
             className="pl-9"
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
+            onChange={(e) => { const v = e.target.value;
+              setSearch(v);
               setPage(1);
             }}
           />
         </div>
-        <Select
-          value={status}
-          onValueChange={(v) => {
-            setStatus(v ?? '');
-            setPage(1);
-          }}
-        >
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value=" ">All</SelectItem>
-            <SelectItem value="OPEN">Open</SelectItem>
-            <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-            <SelectItem value="WAITING_ON_CUSTOMER">Waiting</SelectItem>
-            <SelectItem value="RESOLVED">Resolved</SelectItem>
-            <SelectItem value="CLOSED">Closed</SelectItem>
-          </SelectContent>
+        <Select onSelectionChange={(keys) => {
+          setStatus(String(keys || ''));
+          setPage(1);
+        }}>
+          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+          <SelectPopover>
+            <ListBox>
+              <ListBoxItem id=" ">All</ListBoxItem>
+              <ListBoxItem id="OPEN">Open</ListBoxItem>
+              <ListBoxItem id="IN_PROGRESS">In Progress</ListBoxItem>
+              <ListBoxItem id="WAITING_ON_CUSTOMER">Waiting</ListBoxItem>
+              <ListBoxItem id="RESOLVED">Resolved</ListBoxItem>
+              <ListBoxItem id="CLOSED">Closed</ListBoxItem>
+            </ListBox>
+          </SelectPopover>
         </Select>
-        <Select
-          value={priority}
-          onValueChange={(v) => {
-            setPriority(v ?? '');
-            setPage(1);
-          }}
-        >
-          <SelectTrigger className="w-36">
-            <SelectValue placeholder="Priority" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value=" ">All</SelectItem>
-            <SelectItem value="LOW">Low</SelectItem>
-            <SelectItem value="MEDIUM">Medium</SelectItem>
-            <SelectItem value="HIGH">High</SelectItem>
-            <SelectItem value="CRITICAL">Critical</SelectItem>
-          </SelectContent>
+        <Select onSelectionChange={(keys) => {
+          setPriority(String(keys || ''));
+          setPage(1);
+        }}>
+          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+          <SelectPopover>
+            <ListBox>
+              <ListBoxItem id=" ">All</ListBoxItem>
+              <ListBoxItem id="LOW">Low</ListBoxItem>
+              <ListBoxItem id="MEDIUM">Medium</ListBoxItem>
+              <ListBoxItem id="HIGH">High</ListBoxItem>
+              <ListBoxItem id="CRITICAL">Critical</ListBoxItem>
+            </ListBox>
+          </SelectPopover>
         </Select>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Priority</TableHead>
-              <TableHead>SLA</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Assigned To</TableHead>
-              <TableHead>Created</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading
-              ? Array.from({ length: 5 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell colSpan={7}>
-                      <Skeleton className="h-8 w-full" />
-                    </TableCell>
-                  </TableRow>
-                ))
-              : data?.data.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      className="py-8 text-center text-muted-foreground"
-                    >
-                      No tickets found
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  data?.data.map((ticket) => (
-                    <TableRow
-                      key={ticket.id}
-                      className="cursor-pointer"
-                      onClick={() =>
-                        (window.location.href = `/tickets/${ticket.id}`)
-                      }
-                    >
-                      <TableCell className="font-medium">
-                        <Link
-                          href={`/tickets/${ticket.id}`}
-                          className="hover:text-primary"
-                        >
-                          {ticket.title}
-                        </Link>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="secondary"
-                          className={statusColors[ticket.status]}
-                        >
-                          {ticket.status.replace('_', ' ')}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant="secondary"
-                          className={priorityColors[ticket.priority]}
-                        >
-                          {ticket.priority}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {(() => {
-                          const sla = getSlaStatus(ticket);
-                          return sla ? (
-                            <Badge variant="secondary" className={sla.className}>
-                              {sla.label}
-                            </Badge>
-                          ) : (
-                            <span className="text-sm text-muted-foreground">-</span>
-                          );
-                        })()}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {ticket.customer?.name}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {ticket.assignedTo?.name || '-'}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {format(new Date(ticket.createdAt), 'MMM d, yyyy')}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-          </TableBody>
-        </Table>
+      <div className="rounded-md border overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <th className="px-4 py-3 text-left font-medium">Title</th>
+              <th className="px-4 py-3 text-left font-medium">Status</th>
+              <th className="px-4 py-3 text-left font-medium">Priority</th>
+              <th className="px-4 py-3 text-left font-medium">SLA</th>
+              <th className="px-4 py-3 text-left font-medium">Customer</th>
+              <th className="px-4 py-3 text-left font-medium">Assigned To</th>
+              <th className="px-4 py-3 text-left font-medium">Created</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="border-b last:border-0">
+                  <td colSpan={7} className="px-4 py-3"><Skeleton className="h-8 w-full rounded-lg" /></td>
+                </tr>
+              ))
+            ) : data?.data.length === 0 ? (
+              <tr className="border-b last:border-0">
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                  No tickets found
+                </td>
+              </tr>
+            ) : (
+              data?.data.map((ticket) => (
+                <tr
+                  key={ticket.id}
+                  className="border-b last:border-0 cursor-pointer hover:bg-muted/50"
+                  onClick={() => (window.location.href = `/tickets/${ticket.id}`)}
+                >
+                  <td className="px-4 py-3 font-medium">
+                    <Link href={`/tickets/${ticket.id}`} className="hover:text-primary">
+                      {ticket.title}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Chip color={statusColors[ticket.status] as any} variant="soft" size="sm">
+                      {ticket.status.replace('_', ' ')}
+                    </Chip>
+                  </td>
+                  <td className="px-4 py-3">
+                    <Chip color={priorityColors[ticket.priority] as any} variant="soft" size="sm">
+                      {ticket.priority}
+                    </Chip>
+                  </td>
+                  <td className="px-4 py-3">
+                    {(() => {
+                      const sla = getSlaStatus(ticket);
+                      return sla ? (
+                        <Chip color={sla.color} variant="soft" size="sm">
+                          {sla.label}
+                        </Chip>
+                      ) : (
+                        <span className="text-sm text-muted-foreground">-</span>
+                      );
+                    })()}
+                  </td>
+                  <td className="px-4 py-3 text-sm">{ticket.customer?.name}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">{ticket.assignedTo?.name || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-muted-foreground">
+                    {format(new Date(ticket.createdAt), 'MMM d, yyyy')}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       {data?.meta && data.meta.totalPages > 1 && (
         <div className="flex items-center justify-center gap-2">
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
-            disabled={page <= 1}
+            isDisabled={page <= 1}
             onClick={() => setPage(page - 1)}
             aria-label="Previous page"
           >
@@ -273,9 +229,9 @@ export default function TicketsPage() {
             Page {page} of {data.meta.totalPages}
           </span>
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
-            disabled={page >= data.meta.totalPages}
+            isDisabled={page >= data.meta.totalPages}
             onClick={() => setPage(page + 1)}
             aria-label="Next page"
           >

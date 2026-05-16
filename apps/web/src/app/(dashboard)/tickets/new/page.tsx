@@ -6,19 +6,9 @@ import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
+import { Button, Input, TextArea, Card, CardContent, Select, SelectTrigger, SelectValue, SelectPopover, ListBox, ListBoxItem, TextField, Label, FieldError } from '@heroui/react';
 import { toast } from 'sonner';
+import { Key } from 'react-aria-components';
 
 const ticketSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200),
@@ -75,62 +65,53 @@ export default function NewTicketPage() {
       <Card>
         <CardContent className="pt-6">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
-              <Input id="title" {...register('title')} />
-              {errors.title && (
-                <p className="text-sm text-destructive">
-                  {errors.title.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea id="description" {...register('description')} rows={5} />
-            </div>
+            <TextField isInvalid={!!errors.title}>
+              <Label>Title</Label>
+              <Input {...register('title')} />
+              {errors.title && <FieldError>{errors.title.message}</FieldError>}
+            </TextField>
+            <TextField>
+              <Label>Description</Label>
+              <TextArea {...register('description')} rows={5} />
+            </TextField>
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Priority</Label>
-                <Select
-                  defaultValue="MEDIUM"
-                  onValueChange={(v) => v && setValue('priority', v as any)}
-                >
-                  <SelectTrigger aria-label="Priority">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="LOW">Low</SelectItem>
-                    <SelectItem value="MEDIUM">Medium</SelectItem>
-                    <SelectItem value="HIGH">High</SelectItem>
-                    <SelectItem value="CRITICAL">Critical</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Category</Label>
-                <Select onValueChange={(v) => setValue('categoryId', typeof v === 'string' ? v : undefined)}>
-                  <SelectTrigger aria-label="Category">
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
+              <Select onSelectionChange={(keys) => {
+                const v = String(keys);
+                if (v) setValue('priority', v as any);
+              }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectPopover>
+                  <ListBox>
+                    <ListBoxItem id="LOW">Low</ListBoxItem>
+                    <ListBoxItem id="MEDIUM">Medium</ListBoxItem>
+                    <ListBoxItem id="HIGH">High</ListBoxItem>
+                    <ListBoxItem id="CRITICAL">Critical</ListBoxItem>
+                  </ListBox>
+                </SelectPopover>
+              </Select>
+              <Select onSelectionChange={(keys) => {
+                const v = String(keys);
+                setValue('categoryId', v || undefined);
+              }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectPopover>
+                  <ListBox>
                     {categories?.data.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>
+                      <ListBoxItem key={c.id} id={c.id}>{c.name}</ListBoxItem>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                  </ListBox>
+                </SelectPopover>
+              </Select>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button
                 type="button"
-                variant="outline"
+                variant="secondary"
                 onClick={() => router.back()}
               >
                 Cancel
               </Button>
-              <Button type="submit" loading={mutation.isPending}>
+              <Button type="submit" isDisabled={mutation.isPending}>
                 Create Ticket
               </Button>
             </div>

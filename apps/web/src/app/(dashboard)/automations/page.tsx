@@ -6,40 +6,18 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { apiClient } from '@/lib/api';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
-  DialogClose,
-} from '@/components/ui/dialog';
+
+import { Button, Input, TextArea, Chip, Card, CardHeader, CardContent, CardFooter, Skeleton, Switch, useOverlayState, TextField, Label, FieldError } from '@heroui/react';
+
+
+import { Select, SelectTrigger, SelectValue, SelectPopover, ListBox, ListBoxItem } from '@heroui/react';
+
+
+import { Modal, ModalDialog, ModalHeader, ModalHeading, ModalBody, ModalCloseTrigger } from '@heroui/react';
+
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Workflow, GripVertical } from 'lucide-react';
+import { Plus, Pencil, Trash2, Workflow } from 'lucide-react';
+import { Key } from 'react-aria-components';
 
 const triggerOptions = [
   { value: 'ticket.created', label: 'Ticket Created' },
@@ -134,10 +112,6 @@ function getTriggerLabel(trigger: string) {
   return triggerOptions.find((o) => o.value === trigger)?.label || trigger;
 }
 
-function getActionLabel(type: string) {
-  return actionTypeOptions.find((o) => o.value === type)?.label || type;
-}
-
 function getActionParamsSummary(action: { type: string; params: Record<string, any> }) {
   const p = action.params || {};
   switch (action.type) {
@@ -175,6 +149,7 @@ function AutomationFormDialog({
 }) {
   const queryClient = useQueryClient();
   const isEdit = !!editRule;
+  const state = useOverlayState({ isOpen: open, onOpenChange });
 
   const { data: users } = useQuery({
     queryKey: ['users'],
@@ -210,7 +185,6 @@ function AutomationFormDialog({
     fields: actionFields,
     append: addAction,
     remove: removeAction,
-    update: updateAction,
   } = useFieldArray({
     control,
     name: 'actions',
@@ -256,9 +230,8 @@ function AutomationFormDialog({
     }
   };
 
-  const handleOpen = (open: boolean) => {
-    onOpenChange(open);
-    if (open && editRule) {
+  const handleOpen = (isOpen: boolean) => {
+    if (isOpen && editRule) {
       reset({
         name: editRule.name,
         description: editRule.description || '',
@@ -274,7 +247,7 @@ function AutomationFormDialog({
         })),
         isActive: editRule.isActive,
       });
-    } else if (open && !editRule) {
+    } else if (isOpen && !editRule) {
       reset({
         name: '',
         description: '',
@@ -284,6 +257,7 @@ function AutomationFormDialog({
         isActive: true,
       });
     }
+    onOpenChange(isOpen);
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -297,20 +271,23 @@ function AutomationFormDialog({
       case 'assign_user':
         return (
           <div className="space-y-2">
-            <Label>User</Label>
+            <p className="text-sm font-medium">User</p>
             <Controller
               control={control}
               name={`actions.${index}.params.userId`}
               render={({ field }) => (
-                <Select value={field.value || ''} onValueChange={(v) => field.onChange(v || '')}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select user" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {users?.data.map((u) => (
-                      <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
-                    ))}
-                  </SelectContent>
+                <Select
+                  selectedKey={field.value || null}
+                  onSelectionChange={(keys) => field.onChange(String(keys) || '')}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectPopover>
+                    <ListBox>
+                      {users?.data.map((u) => (
+                        <ListBoxItem key={u.id} id={u.id}>{u.name}</ListBoxItem>
+                      ))}
+                    </ListBox>
+                  </SelectPopover>
                 </Select>
               )}
             />
@@ -319,20 +296,23 @@ function AutomationFormDialog({
       case 'set_priority':
         return (
           <div className="space-y-2">
-            <Label>Priority</Label>
+            <p className="text-sm font-medium">Priority</p>
             <Controller
               control={control}
               name={`actions.${index}.params.priority`}
               render={({ field }) => (
-                <Select value={field.value || ''} onValueChange={(v) => field.onChange(v || '')}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {priorityOptions.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                    ))}
-                  </SelectContent>
+                <Select
+                  selectedKey={field.value || null}
+                  onSelectionChange={(keys) => field.onChange(String(keys) || '')}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectPopover>
+                    <ListBox>
+                      {priorityOptions.map((o) => (
+                        <ListBoxItem key={o.value} id={o.value}>{o.label}</ListBoxItem>
+                      ))}
+                    </ListBox>
+                  </SelectPopover>
                 </Select>
               )}
             />
@@ -341,20 +321,23 @@ function AutomationFormDialog({
       case 'set_status':
         return (
           <div className="space-y-2">
-            <Label>Status</Label>
+            <p className="text-sm font-medium">Status</p>
             <Controller
               control={control}
               name={`actions.${index}.params.status`}
               render={({ field }) => (
-                <Select value={field.value || ''} onValueChange={(v) => field.onChange(v || '')}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {statusOptions.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                    ))}
-                  </SelectContent>
+                <Select
+                  selectedKey={field.value || null}
+                  onSelectionChange={(keys) => field.onChange(String(keys) || '')}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectPopover>
+                    <ListBox>
+                      {statusOptions.map((o) => (
+                        <ListBoxItem key={o.value} id={o.value}>{o.label}</ListBoxItem>
+                      ))}
+                    </ListBox>
+                  </SelectPopover>
                 </Select>
               )}
             />
@@ -363,46 +346,49 @@ function AutomationFormDialog({
       case 'add_tags':
         return (
           <div className="space-y-2">
-            <Label>Tag Name</Label>
+            <p className="text-sm font-medium">Tag Name</p>
             <Input {...register(`actions.${index}.params.tagName`)} placeholder="e.g. urgent" />
           </div>
         );
       case 'add_note':
         return (
           <div className="space-y-2">
-            <Label>Note Content</Label>
-            <Textarea {...register(`actions.${index}.params.note`)} rows={3} placeholder="Internal note text..." />
+            <p className="text-sm font-medium">Note Content</p>
+            <TextArea {...register(`actions.${index}.params.note`)} rows={3} placeholder="Internal note text..." />
           </div>
         );
       case 'send_notification':
         return (
           <>
             <div className="space-y-2">
-              <Label>User</Label>
+              <p className="text-sm font-medium">User</p>
               <Controller
                 control={control}
                 name={`actions.${index}.params.userId`}
                 render={({ field }) => (
-                  <Select value={field.value || ''} onValueChange={(v) => field.onChange(v || '')}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select user" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {users?.data.map((u) => (
-                        <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
-                      ))}
-                    </SelectContent>
+                  <Select
+                    selectedKey={field.value || null}
+                    onSelectionChange={(keys) => field.onChange(String(keys) || '')}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectPopover>
+                      <ListBox>
+                        {users?.data.map((u) => (
+                          <ListBoxItem key={u.id} id={u.id}>{u.name}</ListBoxItem>
+                        ))}
+                      </ListBox>
+                    </SelectPopover>
                   </Select>
                 )}
               />
             </div>
             <div className="space-y-2">
-              <Label>Title</Label>
+              <p className="text-sm font-medium">Title</p>
               <Input {...register(`actions.${index}.params.title`)} placeholder="Notification title" />
             </div>
             <div className="space-y-2">
-              <Label>Body</Label>
-              <Textarea {...register(`actions.${index}.params.body`)} rows={2} placeholder="Notification body" />
+              <p className="text-sm font-medium">Body</p>
+              <TextArea {...register(`actions.${index}.params.body`)} rows={2} placeholder="Notification body" />
             </div>
           </>
         );
@@ -415,176 +401,175 @@ function AutomationFormDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit Automation Rule' : 'Create Automation Rule'}</DialogTitle>
-          <DialogDescription>
-            {isEdit ? 'Modify the automation rule settings below.' : 'Define a new automation rule for ticket workflows.'}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" {...register('name')} placeholder="Rule name" />
-            {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-          </div>
+    <Modal state={state}>
+      <ModalDialog>
+        <ModalCloseTrigger />
+        <ModalHeader>
+          <ModalHeading>{isEdit ? 'Edit Automation Rule' : 'Create Automation Rule'}</ModalHeading>
+        </ModalHeader>
+        <ModalBody>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+             <TextField isInvalid={!!errors.name}>
+              <Label>Name</Label>
+              <Input {...register('name')} placeholder="Rule name" />
+              {errors.name && <FieldError>{errors.name.message}</FieldError>}
+            </TextField>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea id="description" {...register('description')} rows={2} placeholder="Optional description" />
-          </div>
+            <TextField>
+              <Label>Description</Label>
+              <TextArea {...register('description')} rows={2} placeholder="Optional description" />
+            </TextField>
 
-          <div className="space-y-2">
-            <Label>Trigger</Label>
             <Controller
               control={control}
               name="trigger"
               render={({ field }) => (
-                <Select value={field.value || ''} onValueChange={(v) => field.onChange(v || '')}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select trigger" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {triggerOptions.map((o) => (
-                      <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                    ))}
-                  </SelectContent>
+                <Select
+                  selectedKey={field.value || null}
+                  onSelectionChange={(keys) => field.onChange(String(keys) || '')}
+                >
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectPopover>
+                    <ListBox>
+                      {triggerOptions.map((o) => (
+                        <ListBoxItem key={o.value} id={o.value}>{o.label}</ListBoxItem>
+                      ))}
+                    </ListBox>
+                  </SelectPopover>
                 </Select>
               )}
             />
             {errors.trigger && <p className="text-sm text-destructive">{errors.trigger.message}</p>}
-          </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label>Conditions</Label>
-              <Button type="button" variant="outline" size="sm" onClick={() => addCondition({ field: 'priority', operator: 'equals', value: '' })}>
-                <Plus className="h-3 w-3 mr-1" /> Add Condition
-              </Button>
-            </div>
-            {conditionFields.map((field, index) => (
-              <div key={field.id} className="flex items-start gap-2 rounded-lg border p-3">
-                <div className="flex-1 space-y-2">
-                  <Controller
-                    control={control}
-                    name={`conditions.${index}.field`}
-                    render={({ field: f }) => (
-                      <Select value={f.value || ''} onValueChange={(v) => f.onChange(v || '')}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Field" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {conditionFieldOptions.map((o) => (
-                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  <Controller
-                    control={control}
-                    name={`conditions.${index}.operator`}
-                    render={({ field: f }) => (
-                      <Select value={f.value || ''} onValueChange={(v) => f.onChange(v || '')}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Operator" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {operatorOptions.map((o) => (
-                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                  <Input {...register(`conditions.${index}.value`)} placeholder="Value" />
-                </div>
-                <Button type="button" variant="ghost" size="icon" className="mt-1 shrink-0" onClick={() => removeCondition(index)}>
-                  <Trash2 className="h-4 w-4 text-destructive" />
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">Conditions</p>
+                <Button type="button" variant="secondary" size="sm" onClick={() => addCondition({ field: 'priority', operator: 'equals', value: '' })}>
+                  <Plus className="h-3 w-3 mr-1" /> Add Condition
                 </Button>
               </div>
-            ))}
-            {errors.conditions && <p className="text-sm text-destructive">{errors.conditions.message}</p>}
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label>Actions</Label>
-              <Button type="button" variant="outline" size="sm" onClick={() => addAction({ type: 'assign_user', params: { userId: '' } } as any)}>
-                <Plus className="h-3 w-3 mr-1" /> Add Action
-              </Button>
-            </div>
-            {actionFields.map((field, index) => {
-              const action = watchActions?.[index];
-              return (
-                <div key={field.id} className="space-y-3 rounded-lg border p-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex-1">
-                      <Controller
-                        control={control}
-                        name={`actions.${index}.type`}
-                        render={({ field: f }) => (
-                          <Select
-                            value={f.value || ''}
-                            onValueChange={(v) => {
-                              const type = v as keyof typeof defaultActionParams;
-                              f.onChange(type);
-                              const params = defaultActionParams[type] || {};
-                              setValue(`actions.${index}.params`, params as any);
-                            }}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Action type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {actionTypeOptions.map((o) => (
-                                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+              {conditionFields.map((field, index) => (
+                <div key={field.id} className="flex items-start gap-2 rounded-lg border p-3">
+                  <div className="flex-1 space-y-2">
+                    <Controller
+                      control={control}
+                      name={`conditions.${index}.field`}
+                      render={({ field: f }) => (
+                        <Select
+                          selectedKey={f.value || null}
+                          onSelectionChange={(keys) => f.onChange(String(keys) || '')}
+                        >
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectPopover>
+                            <ListBox>
+                              {conditionFieldOptions.map((o) => (
+                                <ListBoxItem key={o.value} id={o.value}>{o.label}</ListBoxItem>
                               ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                    </div>
-                    <Button type="button" variant="ghost" size="icon" className="shrink-0" onClick={() => removeAction(index)}>
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+                            </ListBox>
+                          </SelectPopover>
+                        </Select>
+                      )}
+                    />
+                    <Controller
+                      control={control}
+                      name={`conditions.${index}.operator`}
+                      render={({ field: f }) => (
+                        <Select
+                          selectedKey={f.value || null}
+                          onSelectionChange={(keys) => f.onChange(String(keys) || '')}
+                        >
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectPopover>
+                            <ListBox>
+                              {operatorOptions.map((o) => (
+                                <ListBoxItem key={o.value} id={o.value}>{o.label}</ListBoxItem>
+                              ))}
+                            </ListBox>
+                          </SelectPopover>
+                        </Select>
+                      )}
+                    />
+                    <Input {...register(`conditions.${index}.value`)} placeholder="Value" />
                   </div>
-                  {action && renderActionParams(index)}
+                  <Button type="button" variant="ghost" isIconOnly className="mt-6 shrink-0" onClick={() => removeCondition(index)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
                 </div>
-              );
-            })}
-            {errors.actions && <p className="text-sm text-destructive">{errors.actions.message}</p>}
-          </div>
+              ))}
+              {errors.conditions && <p className="text-sm text-destructive">{errors.conditions.message}</p>}
+            </div>
 
-          <div className="flex items-center gap-2">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium">Actions</p>
+                <Button type="button" variant="secondary" size="sm" onClick={() => addAction({ type: 'assign_user', params: { userId: '' } } as any)}>
+                  <Plus className="h-3 w-3 mr-1" /> Add Action
+                </Button>
+              </div>
+              {actionFields.map((field, index) => {
+                return (
+                  <div key={field.id} className="space-y-3 rounded-lg border p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex-1">
+                        <Controller
+                          control={control}
+                          name={`actions.${index}.type`}
+                          render={({ field: f }) => (
+                            <Select
+                              selectedKey={f.value || null}
+                              onSelectionChange={(keys) => {
+                                const type = keys as keyof typeof defaultActionParams;
+                                f.onChange(type);
+                                const params = defaultActionParams[type] || {};
+                                setValue(`actions.${index}.params`, params as any);
+                              }}
+                            >
+                              <SelectTrigger><SelectValue /></SelectTrigger>
+                              <SelectPopover>
+                                <ListBox>
+                                  {actionTypeOptions.map((o) => (
+                                    <ListBoxItem key={o.value} id={o.value}>{o.label}</ListBoxItem>
+                                  ))}
+                                </ListBox>
+                              </SelectPopover>
+                            </Select>
+                          )}
+                        />
+                      </div>
+                      <Button type="button" variant="ghost" isIconOnly className="mt-6 shrink-0" onClick={() => removeAction(index)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                    {renderActionParams(index)}
+                  </div>
+                );
+              })}
+              {errors.actions && <p className="text-sm text-destructive">{errors.actions.message}</p>}
+            </div>
+
             <Controller
               control={control}
               name="isActive"
               render={({ field }) => (
-                <Switch checked={field.value || false} onCheckedChange={(checked) => field.onChange(checked)} />
+                <Switch isSelected={field.value || false} onChange={(checked) => field.onChange(checked)}>
+                  Active
+                </Switch>
               )}
             />
-            <Label>Active</Label>
-          </div>
 
-          <DialogFooter>
-            <DialogClose render={<Button type="button" variant="outline" />}>
-              Cancel
-            </DialogClose>
-            <Button type="submit" loading={isPending}>
+            <Button type="submit" isDisabled={isPending}>
               {isEdit ? 'Update Rule' : 'Create Rule'}
             </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+          </form>
+        </ModalBody>
+      </ModalDialog>
+    </Modal>
   );
 }
 
 export default function AutomationsPage() {
   const queryClient = useQueryClient();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const state = useOverlayState();
   const [editRule, setEditRule] = useState<AutomationRule | null>(null);
 
   const { data, isLoading, error } = useQuery({
@@ -620,12 +605,12 @@ export default function AutomationsPage() {
 
   const handleEdit = (rule: AutomationRule) => {
     setEditRule(rule);
-    setDialogOpen(true);
+    state.open();
   };
 
   const handleCreate = () => {
     setEditRule(null);
-    setDialogOpen(true);
+    state.open();
   };
 
   if (error) {
@@ -633,7 +618,7 @@ export default function AutomationsPage() {
       <div className="flex flex-col items-center justify-center py-16">
         <p className="text-destructive font-medium">Failed to load automations</p>
         <p className="text-sm text-muted-foreground mt-1">Please try again later.</p>
-        <Button variant="outline" className="mt-4" onClick={() => queryClient.invalidateQueries({ queryKey: ['automations'] })}>
+        <Button variant="secondary" className="mt-4" onClick={() => queryClient.invalidateQueries({ queryKey: ['automations'] })}>
           Retry
         </Button>
       </div>
@@ -659,16 +644,16 @@ export default function AutomationsPage() {
           {Array.from({ length: 6 }).map((_, i) => (
             <Card key={i}>
               <CardHeader>
-                <Skeleton className="h-5 w-2/3" />
-                <Skeleton className="h-4 w-full mt-1" />
+                <Skeleton className="h-5 w-2/3 rounded-lg" />
+                <Skeleton className="h-4 w-full mt-1 rounded-lg" />
               </CardHeader>
               <CardContent>
-                <Skeleton className="h-4 w-1/3" />
-                <Skeleton className="h-4 w-2/3 mt-2" />
-                <Skeleton className="h-4 w-1/2 mt-2" />
+                <Skeleton className="h-4 w-1/3 rounded-lg" />
+                <Skeleton className="h-4 w-2/3 mt-2 rounded-lg" />
+                <Skeleton className="h-4 w-1/2 mt-2 rounded-lg" />
               </CardContent>
               <CardFooter>
-                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full rounded-lg" />
               </CardFooter>
             </Card>
           ))}
@@ -691,26 +676,26 @@ export default function AutomationsPage() {
               <CardHeader>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <CardTitle className="truncate">{rule.name}</CardTitle>
+                    <p className="font-medium truncate">{rule.name}</p>
                     {rule.description && (
-                      <CardDescription className="mt-1 line-clamp-2">{rule.description}</CardDescription>
+                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{rule.description}</p>
                     )}
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="flex-1 space-y-3">
-                <Badge variant="secondary" className="w-fit">
+                <Chip variant="soft" size="sm" className="w-fit">
                   {getTriggerLabel(rule.trigger)}
-                </Badge>
+                </Chip>
 
                 {rule.conditions && rule.conditions.length > 0 && (
                   <div className="space-y-1">
                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Conditions</p>
                     <div className="flex flex-wrap gap-1">
                       {rule.conditions.map((c, i) => (
-                        <Badge key={i} variant="outline" className="text-xs">
+                        <Chip key={i} variant="secondary" size="sm">
                           {c.field} {c.operator.replace('_', ' ')} {String(c.value)}
-                        </Badge>
+                        </Chip>
                       ))}
                     </div>
                   </div>
@@ -720,9 +705,9 @@ export default function AutomationsPage() {
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</p>
                   <div className="flex flex-wrap gap-1">
                     {rule.actions.map((a, i) => (
-                      <Badge key={i} variant="outline" className="text-xs">
+                      <Chip key={i} variant="secondary" size="sm">
                         {getActionParamsSummary(a)}
-                      </Badge>
+                      </Chip>
                     ))}
                   </div>
                 </div>
@@ -731,22 +716,25 @@ export default function AutomationsPage() {
                 <div className="flex w-full items-center justify-between">
                   <div className="flex items-center gap-2">
                     <Switch
-                      checked={rule.isActive}
-                      onCheckedChange={(checked) =>
+                      isSelected={rule.isActive}
+                      onChange={(checked) =>
                         toggleMutation.mutate({ id: rule.id, isActive: checked })
                       }
-                    />
-                    <span className="text-xs text-muted-foreground">
-                      {rule.isActive ? 'Active' : 'Inactive'}
-                    </span>
+                      size="sm"
+                    >
+                      <span className="text-xs text-muted-foreground">
+                        {rule.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </Switch>
                   </div>
                   <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon-sm" onClick={() => handleEdit(rule)}>
+                    <Button variant="ghost" isIconOnly size="sm" onClick={() => handleEdit(rule)}>
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
-                      size="icon-sm"
+                      isIconOnly
+                      size="sm"
                       onClick={() => {
                         if (window.confirm('Are you sure you want to delete this rule?')) {
                           deleteMutation.mutate(rule.id);
@@ -764,8 +752,11 @@ export default function AutomationsPage() {
       )}
 
       <AutomationFormDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        open={state.isOpen}
+        onOpenChange={(open) => {
+          if (!open) { state.close(); setEditRule(null); }
+          else { state.open(); }
+        }}
         editRule={editRule}
       />
     </div>

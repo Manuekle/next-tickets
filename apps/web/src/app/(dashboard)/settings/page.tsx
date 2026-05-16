@@ -1,9 +1,7 @@
 'use client';
 import { useAuthStore } from '@/stores/auth-store';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardHeader, CardContent, Chip, Button } from '@heroui/react';
 import { useTheme } from 'next-themes';
-import { Button } from '@/components/ui/button';
 import { Sun, Moon, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -25,9 +23,9 @@ export default function SettingsPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>Your account information</CardDescription>
+        <CardHeader className="flex flex-col items-start gap-1">
+          <p className="font-medium">Profile</p>
+          <p className="text-sm text-muted-foreground">Your account information</p>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex justify-between">
@@ -40,19 +38,19 @@ export default function SettingsPage() {
           </div>
           <div className="flex justify-between">
             <span className="text-sm text-muted-foreground">Role</span>
-            <Badge variant="secondary">{user?.role || '—'}</Badge>
+            <Chip variant="soft" size="sm">{user?.role || '—'}</Chip>
           </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Appearance</CardTitle>
-          <CardDescription>Toggle between light and dark mode</CardDescription>
+        <CardHeader className="flex flex-col items-start gap-1">
+          <p className="font-medium">Appearance</p>
+          <p className="text-sm text-muted-foreground">Toggle between light and dark mode</p>
         </CardHeader>
         <CardContent>
           <Button
-            variant="outline"
+            variant="secondary"
             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             className="w-full"
           >
@@ -63,12 +61,12 @@ export default function SettingsPage() {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Session</CardTitle>
-          <CardDescription>Sign out of your account</CardDescription>
+        <CardHeader className="flex flex-col items-start gap-1">
+          <p className="font-medium">Session</p>
+          <p className="text-sm text-muted-foreground">Sign out of your account</p>
         </CardHeader>
         <CardContent>
-          <Button variant="destructive" onClick={handleLogout} className="w-full">
+          <Button variant="primary" onClick={handleLogout} className="w-full">
             <LogOut className="mr-2 h-4 w-4" /> Sign Out
           </Button>
         </CardContent>
