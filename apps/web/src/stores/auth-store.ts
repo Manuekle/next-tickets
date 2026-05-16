@@ -13,6 +13,14 @@ interface AuthState {
   logout: () => void;
 }
 
+function setAuthCookie(value: string) {
+  document.cookie = `auth-storage=${encodeURIComponent(value)};path=/;max-age=604800;samesite=lax`;
+}
+
+function clearAuthCookie() {
+  document.cookie = 'auth-storage=;path=/;max-age=0';
+}
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
@@ -20,11 +28,29 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       isLoading: true,
-      setUser: (user) => set({ user }),
-      setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
+      setUser: (user) => {
+        set({ user });
+        const state = useAuthStore.getState();
+        setAuthCookie(JSON.stringify({ user: state.user, accessToken: state.accessToken, refreshToken: state.refreshToken }));
+      },
+      setTokens: (accessToken, refreshToken) => {
+        set({ accessToken, refreshToken });
+        const state = useAuthStore.getState();
+        setAuthCookie(JSON.stringify({ user: state.user, accessToken: state.accessToken, refreshToken: state.refreshToken }));
+      },
       setLoading: (isLoading) => set({ isLoading }),
-      logout: () => set({ user: null, accessToken: null, refreshToken: null }),
+      logout: () => {
+        set({ user: null, accessToken: null, refreshToken: null });
+        clearAuthCookie();
+      },
     }),
-    { name: 'auth-storage', partialize: (state) => ({ refreshToken: state.refreshToken }) },
+    {
+      name: 'auth-storage',
+      partialize: (state) => ({
+        refreshToken: state.refreshToken,
+        user: state.user,
+        accessToken: state.accessToken,
+      }),
+    },
   ),
 );
