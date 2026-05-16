@@ -22,7 +22,10 @@ jobs:
         with: { node-version: '22', cache: 'npm' }
       - run: npm ci
       - run: npx prisma generate --schema=apps/api/prisma/schema.prisma
-      - run: npx turbo typecheck --filter=@next-tickets/api --filter=@next-tickets/web --filter=@next-tickets/shared
+      - run: npx turbo build --filter=@next-tickets/shared
+      - run: cd apps/api && npx tsc --noEmit
+      - run: cd apps/web && npx tsc --noEmit
+      - run: cd packages/shared && npx tsc --noEmit
 
   test:
     runs-on: ubuntu-latest
