@@ -4,6 +4,7 @@ import { apiClient } from '@/lib/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Ticket, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface DashboardStats {
   openCount: number;
@@ -18,7 +19,7 @@ interface DashboardStats {
 export default function DashboardPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['dashboard-stats'],
-    queryFn: () => apiClient<{ data: DashboardStats }>('/dashboard/stats'),
+    queryFn: () => apiClient<{ data: DashboardStats }>('/analytics/stats'),
   });
 
   const stats = data?.data;
@@ -32,14 +33,14 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">Overview of your support queue</p>
+        <h1 className="text-2xl font-heading font-medium tracking-tight">Dashboard</h1>
+        <p className="mt-1 text-sm text-muted-slate">Overview of your support queue</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Open Tickets" value={stats?.openCount} icon={Ticket} loading={isLoading} />
+        <StatCard title="Open Tickets" value={stats?.openCount} icon={Ticket} loading={isLoading} accent />
         <StatCard title="Closed" value={stats?.closedCount} icon={CheckCircle} loading={isLoading} />
         <StatCard title="Pending" value={stats?.pendingCount} icon={Clock} loading={isLoading} />
         <StatCard
@@ -87,18 +88,18 @@ export default function DashboardPage() {
   );
 }
 
-function StatCard({ title, value, icon: Icon, loading }: any) {
+function StatCard({ title, value, icon: Icon, loading, accent }: any) {
   return (
-    <Card>
+    <Card className={cn('shadow-sm hover:shadow-md transition-shadow', accent && 'ring-1 ring-brand/20')}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <CardTitle className="text-sm font-medium text-muted-slate">{title}</CardTitle>
+        <Icon className={cn('h-4 w-4', accent ? 'text-brand' : 'text-muted-slate')} />
       </CardHeader>
       <CardContent>
         {loading ? (
           <Skeleton className="h-8 w-20" />
         ) : (
-          <div className="text-2xl font-bold">{value ?? 0}</div>
+          <div className={cn('text-2xl font-heading font-medium', accent ? 'text-foreground' : 'text-foreground')}>{value ?? 0}</div>
         )}
       </CardContent>
     </Card>

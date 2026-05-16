@@ -46,32 +46,32 @@ export default function LoginPage() {
   };
 
   return (
-    <Card>
+    <Card className="shadow-lg border-border-light">
       <CardHeader>
-        <CardTitle>Sign in</CardTitle>
-        <CardDescription>Enter your credentials to access your account</CardDescription>
+        <CardTitle className="font-heading font-medium">Sign in</CardTitle>
+        <CardDescription className="text-muted-slate">Enter your credentials to access your account</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" aria-describedby="email-error" {...register('email')} />
+            <Label htmlFor="email" className="text-xs font-label text-foreground">Email</Label>
+            <Input id="email" type="email" className="rounded-lg border-input bg-background" aria-describedby="email-error" {...register('email')} />
             {errors.email && <p id="email-error" className="text-sm text-destructive" aria-live="polite">{errors.email.message}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" aria-describedby="password-error" {...register('password')} />
+            <Label htmlFor="password" className="text-xs font-label text-foreground">Password</Label>
+            <Input id="password" type="password" className="rounded-lg border-input bg-background" aria-describedby="password-error" {...register('password')} />
             {errors.password && <p id="password-error" className="text-sm text-destructive" aria-live="polite">{errors.password.message}</p>}
           </div>
-          <Button type="submit" className="w-full" loading={loading}>
+          <Button type="submit" className="w-full rounded-lg bg-brand text-deep-forest hover:brightness-95 font-medium" loading={loading}>
             Sign in
           </Button>
         </form>
-        <div className="mt-4 text-center text-sm text-muted-foreground">
+        <div className="mt-4 text-center text-sm text-muted-slate">
           Don&apos;t have an account?{' '}
-          <Link href="/register" className="text-primary hover:underline">Sign up</Link>
+          <Link href="/register" className="text-foreground hover:text-brand font-medium transition-colors">Sign up</Link>
           <br />
-          <Link href="/forgot-password" className="text-primary hover:underline">Forgot password?</Link>
+          <Link href="/forgot-password" className="text-foreground hover:text-brand font-medium transition-colors">Forgot password?</Link>
         </div>
       </CardContent>
     </Card>
