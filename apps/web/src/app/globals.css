@@ -1,37 +1,64 @@
 @import "tailwindcss";
 @import "@heroui/styles";
+@import "@fontsource/plus-jakarta-sans/400.css";
+@import "@fontsource/plus-jakarta-sans/500.css";
+@import "@fontsource/plus-jakarta-sans/600.css";
+@import "@fontsource/plus-jakarta-sans/700.css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: Inter, system-ui, sans-serif;
-  --font-mono: ui-monospace, monospace;
-  --color-brand: #36f4a4;
-  --color-deep-forest: #061a1c;
-  --color-cloud: #e5e7eb;
-  --color-muted-slate: #a1a1aa;
-  --color-border-light: #f4f4f5;
+  --font-sans: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", monospace;
 }
 
-/* Override HeroUI theme with brand colors */
 :root, .light, [data-theme="light"] {
-  --accent: 0.85 0.25 160;         /* #36f4a4 in OKLCH approximation */
-  --accent-foreground: 0.15 0.02 200; /* #061a1c deep forest */
-  --background: 1 0 0;              /* white */
-  --foreground: 0 0 0;              /* black */
+  --accent: 0.55 0.2 250;        /* #0052CC Jira Blue */
+  --accent-foreground: 1 0 0;
+  --background: 0.97 0 0;         /* #f4f5f7 Jira bg */
+  --foreground: 0.15 0 0;         /* #172B4D Jira text */
+  --surface: 1 0 0;               /* white cards */
+  --surface-foreground: 0.15 0 0;
+  --surface-secondary: 0.97 0 0;  /* #f4f5f7 */
+  --surface-tertiary: 0.95 0 0;   /* #e9ecef */
+  --overlay: 1 0 0;
+  --overlay-foreground: 0.15 0 0;
+  --muted: 0.6 0.02 250;          /* #6B778C */
+  --default: 0.92 0 250;          /* #DFE1E6 */
+  --default-foreground: 0.3 0 0;
+  --success: 0.65 0.2 150;        /* #36B37E */
+  --warning: 0.75 0.2 80;         /* #FFAB00 */
+  --danger: 0.6 0.25 25;          /* #DE350B */
+  --field-background: 1 0 0;
+  --field-border: 0.88 0 250;     /* #E1E4E8 */
+  --border-width: 1px;
+  --radius: 0.375rem;
 }
 
 .dark, [data-theme="dark"] {
-  --accent: 0.85 0.25 160;
-  --accent-foreground: 0.15 0.02 200;
-  --background: 0.12 0.02 200;     /* deep forest */
-  --foreground: 1 0 0;             /* white */
-  --surface: 0.15 0.02 200;
-  --surface-secondary: 0.18 0.02 200;
+  --accent: 0.6 0.2 250;
+  --accent-foreground: 1 0 0;
+  --background: 0.1 0 250;
+  --foreground: 0.95 0 0;
+  --surface: 0.14 0 250;
+  --surface-foreground: 0.95 0 0;
+  --surface-secondary: 0.12 0 250;
+  --overlay: 0.14 0 250;
+  --overlay-foreground: 0.95 0 0;
+  --muted: 0.5 0.02 250;
+  --default: 0.2 0 250;
+  --default-foreground: 0.8 0 0;
+  --field-background: 0.12 0 250;
+  --field-border: 0.25 0 250;
 }
 
 @layer base {
+  * { border-color: #DFE1E6; }
   body {
-    @apply antialiased;
+    @apply bg-[#f4f5f7] text-[#172B4D] antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+  h1 { @apply text-2xl font-semibold tracking-tight text-[#172B4D]; }
+  h2 { @apply text-xl font-semibold text-[#172B4D]; }
+  h3 { @apply text-lg font-medium text-[#172B4D]; }
 }

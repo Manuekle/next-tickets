@@ -43,35 +43,43 @@ export default function LoginPage() {
   };
 
   return (
-    <Card className="w-full">
+    <Card className="w-full rounded-[3px] border border-[#DFE1E6] bg-[#ffffff]">
       <CardHeader className="flex flex-col items-start gap-1 pb-2">
-        <p className="text-xl font-semibold">Sign in</p>
-        <p className="text-sm text-default-500">Enter your credentials to access your account</p>
+        <p className="text-xl font-semibold text-[#172B4D]">Sign in</p>
+        <p className="text-sm text-[#6B778C]">Enter your credentials to access your account</p>
       </CardHeader>
       <CardContent className="pt-2">
         <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <TextField isInvalid={!!errors.email} isRequired>
-            <Label>Email</Label>
-            <Input type="email" {...register('email')} />
-            {errors.email && <FieldError>{errors.email.message}</FieldError>}
+            <Label className="text-sm font-medium text-[#172B4D]">Email</Label>
+            <Input
+              type="email"
+              {...register('email')}
+              className="rounded-[3px]"
+            />
+            {errors.email && <FieldError className="text-xs text-[#DE350B]">{errors.email.message}</FieldError>}
           </TextField>
           <TextField isInvalid={!!errors.password} isRequired>
-            <Label>Password</Label>
-            <Input type="password" {...register('password')} />
-            {errors.password && <FieldError>{errors.password.message}</FieldError>}
+            <Label className="text-sm font-medium text-[#172B4D]">Password</Label>
+            <Input
+              type="password"
+              {...register('password')}
+              className="rounded-[3px]"
+            />
+            {errors.password && <FieldError className="text-xs text-[#DE350B]">{errors.password.message}</FieldError>}
           </TextField>
-          <Button type="submit" variant="primary" size="lg" isDisabled={loading} className="mt-2 w-full font-medium">
+          <Button type="submit" variant="primary" isDisabled={loading} className="mt-2 w-full rounded-[3px] bg-[#0052CC] font-medium text-white">
             {loading ? 'Signing in...' : 'Sign in'}
           </Button>
         </form>
-        <div className="mt-6 flex flex-col items-center gap-2 text-sm text-default-500">
+        <div className="mt-6 flex flex-col items-center gap-2 text-sm text-[#6B778C]">
           <span>
             Don&apos;t have an account?{' '}
-            <Link href="/register" className="font-medium text-foreground hover:text-accent transition-colors">
+            <Link href="/register" className="font-medium text-[#172B4D] transition-colors hover:text-[#0052CC]">
               Sign up
             </Link>
           </span>
-          <Link href="/forgot-password" className="font-medium text-foreground hover:text-accent transition-colors">
+          <Link href="/forgot-password" className="font-medium text-[#172B4D] transition-colors hover:text-[#0052CC]">
             Forgot password?
           </Link>
         </div>

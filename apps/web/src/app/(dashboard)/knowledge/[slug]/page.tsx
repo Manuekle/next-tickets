@@ -1,4 +1,5 @@
 'use client';
+
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
@@ -8,7 +9,6 @@ import { Role } from '@next-tickets/shared';
 import { format } from 'date-fns';
 import { ArrowLeft, ThumbsUp, ThumbsDown, User, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
-import { useState } from 'react';
 
 interface ArticleDetail {
   id: string;
@@ -39,16 +39,14 @@ export default function ArticleDetailPage() {
 
   const { data: res, isLoading, error } = useQuery({
     queryKey: ['knowledge-article', slug],
-    queryFn: () =>
-      apiClient<{ data: ArticleDetail }>(`/knowledge/slug/${slug}`),
+    queryFn: () => apiClient<{ data: ArticleDetail }>(`/knowledge/slug/${slug}`),
     enabled: !!slug,
   });
 
   const article = res?.data;
 
   const helpfulMutation = useMutation({
-    mutationFn: () =>
-      apiClient(`/knowledge/${article!.id}/helpful`, { method: 'POST' }),
+    mutationFn: () => apiClient(`/knowledge/${article!.id}/helpful`, { method: 'POST' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-article', slug] });
       toast.success('Marked as helpful');
@@ -57,8 +55,7 @@ export default function ArticleDetailPage() {
   });
 
   const notHelpfulMutation = useMutation({
-    mutationFn: () =>
-      apiClient(`/knowledge/${article!.id}/not-helpful`, { method: 'POST' }),
+    mutationFn: () => apiClient(`/knowledge/${article!.id}/not-helpful`, { method: 'POST' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-article', slug] });
       toast.success('Feedback recorded');
@@ -69,13 +66,10 @@ export default function ArticleDetailPage() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-5 w-24 rounded-lg" />
-        <Skeleton className="h-10 w-3/4 rounded-lg" />
-        <div className="flex gap-2">
-          <Skeleton className="h-5 w-20 rounded-lg" />
-          <Skeleton className="h-5 w-32 rounded-lg" />
-        </div>
-        <Skeleton className="h-64 w-full rounded-lg" />
+        <Skeleton className="h-5 w-24 rounded-sm" />
+        <Skeleton className="h-10 w-3/4 rounded-sm" />
+        <div className="flex gap-2"><Skeleton className="h-5 w-20 rounded-sm" /><Skeleton className="h-5 w-32 rounded-sm" /></div>
+        <Skeleton className="h-64 w-full rounded-sm" />
       </div>
     );
   }
@@ -83,13 +77,9 @@ export default function ArticleDetailPage() {
   if (error || !article) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 py-20">
-        <p className="text-lg text-destructive">Article not found</p>
-        <p className="text-sm text-muted-foreground">
-          The article may have been removed or does not exist.
-        </p>
-        <Button variant="secondary" onClick={() => router.push('/knowledge')}>
-          Back to Knowledge Base
-        </Button>
+        <p className="text-lg font-medium text-[#DE350B]">Article not found</p>
+        <p className="text-sm text-[#6B778C]">The article may have been removed or does not exist.</p>
+        <Button variant="secondary" onClick={() => router.push('/knowledge')}>Back to Knowledge Base</Button>
       </div>
     );
   }
@@ -97,43 +87,30 @@ export default function ArticleDetailPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mb-2 -ml-2"
-          onClick={() => router.push('/knowledge')}
-        >
+        <Button variant="ghost" size="sm" className="mb-2 -ml-2 text-[#6B778C]" onClick={() => router.push('/knowledge')}>
           <ArrowLeft className="mr-1 h-4 w-4" /> Back to Knowledge Base
         </Button>
         <div className="flex items-start justify-between gap-4">
-          <h1 className="text-3xl font-bold tracking-tight">{article.title}</h1>
+          <h1 className="text-2xl font-semibold text-[#172B4D]">{article.title}</h1>
           {isAdminOrAgent && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => router.push(`/knowledge/${article.slug}/edit`)}
-            >
+            <Button variant="secondary" size="sm" onClick={() => router.push(`/knowledge/${article.slug}/edit`)}>
               <Pencil className="mr-1 h-4 w-4" /> Edit
             </Button>
           )}
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-3">
           {article.category && (
-            <Chip variant="soft" size="sm">{article.category.name}</Chip>
+            <Chip variant="soft" size="sm" className="bg-[#f4f5f7] text-[#172B4D]">{article.category.name}</Chip>
           )}
           {article.author && (
-            <span className="flex items-center gap-1 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1 text-sm text-[#6B778C]">
               <User className="h-3.5 w-3.5" />
               {article.author.name}
             </span>
           )}
-          <span className="text-sm text-muted-foreground">
-            {format(new Date(article.createdAt), 'MMM d, yyyy')}
-          </span>
+          <span className="text-sm text-[#6B778C]">{format(new Date(article.createdAt), 'MMM d, yyyy')}</span>
           {article.updatedAt !== article.createdAt && (
-            <span className="text-sm text-muted-foreground">
-              Updated {format(new Date(article.updatedAt), 'MMM d, yyyy')}
-            </span>
+            <span className="text-sm text-[#6B778C]">Updated {format(new Date(article.updatedAt), 'MMM d, yyyy')}</span>
           )}
         </div>
       </div>
@@ -141,43 +118,26 @@ export default function ArticleDetailPage() {
       {article.tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {article.tags.map((tag) => (
-            <Chip key={tag.id} variant="secondary" size="sm">
-              {tag.name}
-            </Chip>
+            <Chip key={tag.id} variant="soft" size="sm" className="bg-[#f4f5f7] text-[#172B4D]">{tag.name}</Chip>
           ))}
         </div>
       )}
 
-      <div className="max-w-none">
+      <div className="max-w-none rounded-sm border border-[#DFE1E6] bg-white p-6">
         {article.content ? (
-          <div
-            className="prose prose-sm dark:prose-invert max-w-none"
-            dangerouslySetInnerHTML={{ __html: article.content }}
-          />
+          <div className="prose prose-sm max-w-none text-[#172B4D]" dangerouslySetInnerHTML={{ __html: article.content }} />
         ) : (
-          <p className="text-muted-foreground italic">No content</p>
+          <p className="text-[#6B778C] italic">No content</p>
         )}
       </div>
 
-      <div className="flex items-center gap-4 border-t pt-6">
-        <span className="text-sm text-muted-foreground">Was this article helpful?</span>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => helpfulMutation.mutate()}
-          isDisabled={helpfulMutation.isPending}
-        >
-          <ThumbsUp className="mr-1 h-4 w-4" />
-          Yes ({article.helpfulCount})
+      <div className="flex items-center gap-4 border-t border-[#DFE1E6] pt-6">
+        <span className="text-sm text-[#6B778C]">Was this helpful?</span>
+        <Button variant="secondary" size="sm" onClick={() => helpfulMutation.mutate()} isDisabled={helpfulMutation.isPending}>
+          <ThumbsUp className="mr-1 h-4 w-4" /> Yes ({article.helpfulCount})
         </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => notHelpfulMutation.mutate()}
-          isDisabled={notHelpfulMutation.isPending}
-        >
-          <ThumbsDown className="mr-1 h-4 w-4" />
-          No ({article.notHelpfulCount})
+        <Button variant="secondary" size="sm" onClick={() => notHelpfulMutation.mutate()} isDisabled={notHelpfulMutation.isPending}>
+          <ThumbsDown className="mr-1 h-4 w-4" /> No ({article.notHelpfulCount})
         </Button>
       </div>
     </div>

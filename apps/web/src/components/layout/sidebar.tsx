@@ -23,11 +23,13 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <aside className="flex flex-col border-r border-default-200 bg-surface transition-all duration-200 h-dvh sticky top-0">
-      <div className="flex h-14 items-center gap-2 border-b border-default-200 px-3">
+    <aside
+      className={`flex flex-col border-r border-[#DFE1E6] bg-[#ffffff] transition-all duration-200 h-dvh sticky top-0 ${collapsed ? 'w-14' : 'w-60'}`}
+    >
+      <div className="flex h-14 items-center gap-2 border-b border-[#DFE1E6] px-3">
         {!collapsed && (
-          <Link href="/" className="flex-1 text-base font-semibold tracking-tight truncate">
-            next<span className="text-accent">tickets</span>
+          <Link href="/" className="flex-1 text-base font-bold tracking-tight text-[#172B4D] truncate">
+            next<span className="text-[#0052CC]">tickets</span>
           </Link>
         )}
         <Button
@@ -38,7 +40,7 @@ export function Sidebar() {
           onPress={() => setCollapsed(!collapsed)}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          <ChevronLeft className={`h-4 w-4 transition-transform ${collapsed ? 'rotate-180' : ''}`} />
+          <ChevronLeft className={`h-4 w-4 text-[#6B778C] transition-transform ${collapsed ? 'rotate-180' : ''}`} />
         </Button>
       </div>
       <nav aria-label="Main navigation" className="flex flex-col gap-0.5 p-2 flex-1 overflow-y-auto">
@@ -49,14 +51,14 @@ export function Sidebar() {
             <Link
               key={item.label}
               href={item.href}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              className={`flex items-center gap-3 rounded-[3px] px-3 py-2 text-sm font-medium transition-colors ${
                 isActive
-                  ? 'bg-accent/10 text-foreground'
-                  : 'text-default-500 hover:bg-default-100 hover:text-foreground'
-              } ${collapsed ? 'justify-center px-2' : ''}`}
+                  ? 'bg-[#0052CC]/10 text-[#0052CC] border-l-[3px] border-[#0052CC] ml-0 pl-[9px]'
+                  : 'text-[#6B778C] hover:bg-[#f4f5f7] hover:text-[#172B4D]'
+              } ${collapsed ? 'justify-center px-2 border-l-0 ml-0' : 'ml-0'}`}
               aria-current={isActive ? 'page' : undefined}
             >
-              <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-accent' : ''}`} />
+              <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-[#0052CC]' : ''}`} />
               {!collapsed && <span>{item.label}</span>}
             </Link>
           );
