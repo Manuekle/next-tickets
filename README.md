@@ -1,3 +1,14 @@
+---
+title: Next Tickets API
+emoji: 🎫
+colorFrom: indigo
+colorTo: blue
+sdk: docker
+pinned: false
+license: mit
+app_port: 7860
+---
+
 # Next Tickets 🎫
 
 > Modern SaaS ticket management platform — a Jira + Zendesk + Linear hybrid.
