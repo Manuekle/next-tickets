@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Add01Icon, Alert02Icon, CheckmarkCircle01Icon, Clock01Icon, InboxIcon,
-  FilterIcon, ArrowRight01Icon, BubbleChatIcon, Send01Icon,
+  FilterIcon, ArrowRight01Icon, BubbleChatIcon, MailSend01Icon,
 } from '@hugeicons/core-free-icons';
 import { toast } from 'sonner';
 
@@ -508,7 +508,7 @@ function TicketDetailPanel({ ticketId }: { ticketId: string }) {
                     transition:   'all 100ms',
                   }}
                 >
-                  <HugeiconsIcon icon={Send01Icon} size={12} />
+                  <HugeiconsIcon icon={MailSend01Icon} size={12} />
                   {commentMutation.isPending ? 'Sending…' : 'Send'}
                 </button>
               </div>
