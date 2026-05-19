@@ -129,7 +129,7 @@ export function CommandPalette() {
             </div>
             {filtered.length === 0 ? (
               <div style={{ padding: '32px 18px', textAlign: 'center', fontSize: '13px', color: 'var(--mute)' }}>
-                No results for "{query}"
+                No results for &ldquo;{query}&rdquo;
               </div>
             ) : (
               filtered.map((a) => {
