@@ -100,6 +100,15 @@ export class AuthService {
     }
   }
 
+  async updateMe(userId: string, dto: { name?: string }) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { name: dto.name },
+      select: { id: true, email: true, name: true, role: true, avatarUrl: true, isActive: true, createdAt: true },
+    });
+    return user;
+  }
+
   async me(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },

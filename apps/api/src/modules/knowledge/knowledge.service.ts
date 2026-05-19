@@ -88,15 +88,16 @@ export class KnowledgeService {
   }
 
   async getCategories() {
-    const categories = await this.prisma.knowledgeArticle.groupBy({
+    const grouped = await this.prisma.knowledgeArticle.groupBy({
       by: ['categoryId'],
       where: { published: true, categoryId: { not: null } },
-      _count: true,
+      _count: { _all: true },
     });
-    const categoryIds = categories.map((c) => c.categoryId).filter(Boolean);
-    return this.prisma.category.findMany({
-      where: { id: { in: categoryIds as string[] } },
+    const countMap = new Map(grouped.map((g) => [g.categoryId, g._count._all]));
+    const categories = await this.prisma.category.findMany({
+      where: { id: { in: [...countMap.keys()].filter(Boolean) as string[] } },
       select: { id: true, name: true, slug: true, color: true },
     });
+    return categories.map((cat) => ({ ...cat, _count: { articles: countMap.get(cat.id) ?? 0 } }));
   }
 }

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  DashboardSquare01Icon, Ticket01Icon, Book01Icon, BarChartIcon, Settings01Icon,
+  DashboardSquare01Icon, Ticket01Icon, Book01Icon, BarChartIcon,
   WorkflowSquare01Icon, DashboardSpeed01Icon, SecurityLockIcon, ArrowRight01Icon, Cancel01Icon,
 } from '@hugeicons/core-free-icons';
 import { useAuthStore } from '@/stores/auth-store';
@@ -19,12 +19,6 @@ const navItems = [
   { href: '/admin',        label: 'Admin',       icon: SecurityLockIcon                 },
 ];
 
-const savedViews = [
-  { label: 'My open tickets',    count: 7,  hue: 235 },
-  { label: 'SLA at risk',        count: 3,  hue: 22  },
-  { label: 'Unassigned billing', count: 5,  hue: 28  },
-  { label: 'Enterprise tickets', count: 12, hue: 265 },
-];
 
 interface SidebarProps {
   onClose?: () => void;
@@ -131,56 +125,10 @@ export function Sidebar({ onClose }: SidebarProps) {
           );
         })}
 
-        <SectionLabel style={{ marginTop: '18px' }}>Saved views</SectionLabel>
-        {savedViews.map((v) => (
-          <button
-            type="button"
-            key={v.label}
-            aria-label={`${v.label}, ${v.count} items`}
-            style={{
-              display:      'flex', alignItems: 'center', gap: '11px',
-              padding:      '6px 10px', fontSize: '12.5px',
-              border:       0, background: 'transparent',
-              color:        'var(--sb-ink-soft)', cursor: 'pointer',
-              borderRadius: '9px', textAlign: 'left', width: '100%',
-              transition:   'all 100ms',
-            }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--sb-surface)'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
-          >
-            <span aria-hidden="true" style={{
-              width: '7px', height: '7px', borderRadius: '999px', flexShrink: 0,
-              background: `oklch(0.62 0.16 ${v.hue})`,
-              boxShadow:  '0 0 0 2px rgba(255,255,255,0.08)',
-            }} />
-            <span style={{ flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {v.label}
-            </span>
-            <span aria-hidden="true" style={{
-              fontSize: '10.5px', color: 'var(--sb-mute)',
-              background: 'rgba(255,255,255,0.05)',
-              padding: '1px 7px', borderRadius: '5px',
-              fontFeatureSettings: '"tnum"', fontWeight: 600,
-            }}>
-              {v.count}
-            </span>
-          </button>
-        ))}
       </nav>
 
       {/* Footer */}
       <div style={{ marginTop: 'auto', paddingTop: '10px', display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
-        <Link href="/settings" aria-current={pathname === '/settings' ? 'page' : undefined} onClick={onClose} style={{ textDecoration: 'none' }}>
-          <NavItem active={pathname === '/settings'}>
-            <span style={{ display: 'flex', color: pathname === '/settings' ? '#fff' : 'var(--sb-mute)', flexShrink: 0 }} aria-hidden="true">
-              <HugeiconsIcon icon={Settings01Icon} size={15} />
-            </span>
-            <span style={{ flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              Settings
-            </span>
-          </NavItem>
-        </Link>
-
         <Link
           href="/settings"
           onClick={onClose}

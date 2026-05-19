@@ -150,7 +150,7 @@ export default function KnowledgePage() {
               <CategoryChip
                 key={cat.id}
                 label={cat.name}
-                count={cat._count.articles}
+                count={cat._count?.articles ?? 0}
                 active={categoryId === cat.id}
                 onClick={() => { setCategoryId(cat.id); setPage(1); }}
               />

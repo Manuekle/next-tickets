@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Patch, Body, Get, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginSchema } from './dto/login.dto';
 import { RegisterSchema } from './dto/register.dto';
@@ -51,5 +51,10 @@ export class AuthController {
   @UseGuards(JwtAuthGuard) @Get('me')
   me(@CurrentUser('id') userId: string) {
     return this.authService.me(userId);
+  }
+
+  @UseGuards(JwtAuthGuard) @Patch('me') @HttpCode(HttpStatus.OK)
+  updateMe(@CurrentUser('id') userId: string, @Body() dto: { name?: string }) {
+    return this.authService.updateMe(userId, dto);
   }
 }

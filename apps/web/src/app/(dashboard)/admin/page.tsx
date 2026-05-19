@@ -15,7 +15,7 @@ interface AdminUser {
   email: string;
   role: string;
   isActive: boolean;
-  ticketCount?: number;
+  _count?: { createdTickets: number; assignedTickets: number; comments: number };
   createdAt: string;
 }
 
@@ -229,7 +229,7 @@ export default function AdminUsersPage() {
                       {user.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td style={{ padding: '10px 16px', color: 'var(--mute)' }}>{user.ticketCount ?? 0}</td>
+                  <td style={{ padding: '10px 16px', color: 'var(--mute)' }}>{(user._count?.createdTickets ?? 0) + (user._count?.assignedTickets ?? 0)}</td>
                   <td style={{ padding: '10px 16px', color: 'var(--mute)' }}>{format(new Date(user.createdAt), 'MMM d, yyyy')}</td>
                   <td style={{ padding: '10px 16px' }}>
                     <div style={{ display: 'flex', gap: '4px' }}>
