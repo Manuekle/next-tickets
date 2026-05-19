@@ -64,22 +64,19 @@ export function Sidebar() {
             flexShrink: 0,
           }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-            <path d="M5 4c4 3 10 3 14 0" />
-            <path d="M5 12c4-3 10-3 14 0" />
-            <path d="M5 20c4-3 10-3 14 0" />
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="2" y="6" width="20" height="12" rx="2" />
+            <path d="M2 10h4M18 10h4" />
           </svg>
         </div>
-        <div style={{ fontSize: '14px', letterSpacing: '-0.01em', color: 'var(--sb-ink)', fontWeight: 500 }}>
-          <span style={{ fontWeight: 600 }}>Helix</span>
-          <span style={{ color: 'var(--sb-mute)', margin: '0 1px' }}>/</span>
-          <span>support</span>
+        <div style={{ fontSize: '13.5px', letterSpacing: '-0.02em', color: 'var(--sb-ink)', fontWeight: 600 }}>
+          open<span style={{ color: 'var(--accent-2)', fontWeight: 700 }}>-tickets</span>
         </div>
       </div>
 
       {/* Search trigger */}
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => window.dispatchEvent(new CustomEvent('ot:open-palette'))}
         style={{
           display:        'flex',
           alignItems:     'center',

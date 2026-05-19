@@ -6,759 +6,584 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { apiClient } from '@/lib/api';
-
-import { Button, Input, TextArea, Chip, Card, CardHeader, CardContent, CardFooter, Skeleton, Switch, useOverlayState, TextField, Label, FieldError } from '@heroui/react';
-
-
-import { Select, SelectTrigger, SelectValue, SelectPopover, ListBox, ListBoxItem } from '@heroui/react';
-
-
-import { Modal, ModalDialog, ModalHeader, ModalHeading, ModalBody, ModalCloseTrigger } from '@heroui/react';
-
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Workflow } from 'lucide-react';
-import { Key } from 'react-aria-components';
+import { Plus, Pencil, Trash2, Workflow, X, ChevronDown } from 'lucide-react';
+
+/* ─── constants ─── */
 
 const triggerOptions = [
-  { value: 'ticket.created', label: 'Ticket Created' },
-  { value: 'ticket.updated', label: 'Ticket Updated' },
-  { value: 'ticket.status_changed', label: 'Status Changed' },
-  { value: 'ticket.priority_changed', label: 'Priority Changed' },
-  { value: 'sla.breached', label: 'SLA Breached' },
+  { value: 'ticket.created',        label: 'Ticket Created'       },
+  { value: 'ticket.updated',        label: 'Ticket Updated'       },
+  { value: 'ticket.status_changed', label: 'Status Changed'       },
+  { value: 'ticket.priority_changed', label: 'Priority Changed'   },
+  { value: 'sla.breached',          label: 'SLA Breached'         },
 ] as const;
 
 const conditionFieldOptions = [
-  { value: 'priority', label: 'Priority' },
-  { value: 'status', label: 'Status' },
-  { value: 'category', label: 'Category' },
+  { value: 'priority',   label: 'Priority'    },
+  { value: 'status',     label: 'Status'      },
+  { value: 'category',   label: 'Category'    },
   { value: 'assignedTo', label: 'Assigned To' },
 ] as const;
 
 const operatorOptions = [
-  { value: 'equals', label: 'Equals' },
+  { value: 'equals',     label: 'Equals'     },
   { value: 'not_equals', label: 'Not Equals' },
-  { value: 'contains', label: 'Contains' },
+  { value: 'contains',   label: 'Contains'   },
 ] as const;
 
 const actionTypeOptions = [
-  { value: 'assign_user', label: 'Assign to User' },
-  { value: 'assign_team', label: 'Assign to Team' },
-  { value: 'set_priority', label: 'Set Priority' },
-  { value: 'set_status', label: 'Set Status' },
-  { value: 'add_tags', label: 'Add Tags' },
-  { value: 'add_note', label: 'Add Internal Note' },
-  { value: 'send_notification', label: 'Send Notification' },
-  { value: 'close_ticket', label: 'Close Ticket' },
+  { value: 'assign_user',       label: 'Assign to User'       },
+  { value: 'assign_team',       label: 'Assign to Team'       },
+  { value: 'set_priority',      label: 'Set Priority'         },
+  { value: 'set_status',        label: 'Set Status'           },
+  { value: 'add_tags',          label: 'Add Tags'             },
+  { value: 'add_note',          label: 'Add Internal Note'    },
+  { value: 'send_notification', label: 'Send Notification'    },
+  { value: 'close_ticket',      label: 'Close Ticket'         },
 ] as const;
 
 const priorityOptions = [
-  { value: 'LOW', label: 'Low' },
-  { value: 'MEDIUM', label: 'Medium' },
-  { value: 'HIGH', label: 'High' },
+  { value: 'LOW',      label: 'Low'      },
+  { value: 'MEDIUM',   label: 'Medium'   },
+  { value: 'HIGH',     label: 'High'     },
   { value: 'CRITICAL', label: 'Critical' },
 ] as const;
 
 const statusOptions = [
-  { value: 'OPEN', label: 'Open' },
-  { value: 'IN_PROGRESS', label: 'In Progress' },
+  { value: 'OPEN',                label: 'Open'                },
+  { value: 'IN_PROGRESS',         label: 'In Progress'         },
   { value: 'WAITING_ON_CUSTOMER', label: 'Waiting on Customer' },
-  { value: 'RESOLVED', label: 'Resolved' },
-  { value: 'CLOSED', label: 'Closed' },
+  { value: 'RESOLVED',            label: 'Resolved'            },
+  { value: 'CLOSED',              label: 'Closed'              },
 ] as const;
 
+const defaultActionParams: Record<string, Record<string, string>> = {
+  assign_user:       { userId: '' },
+  assign_team:       {},
+  set_priority:      { priority: '' },
+  set_status:        { status: '' },
+  add_tags:          { tagName: '' },
+  add_note:          { note: '' },
+  send_notification: { userId: '', title: '', body: '' },
+  close_ticket:      {},
+};
+
+/* ─── schema ─── */
+
 const conditionSchema = z.object({
-  field: z.string().min(1, 'Field is required'),
+  field:    z.string().min(1, 'Field is required'),
   operator: z.string().min(1, 'Operator is required'),
-  value: z.string().min(1, 'Value is required'),
+  value:    z.string().min(1, 'Value is required'),
 });
 
 const actionSchema = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('assign_user'), params: z.object({ userId: z.string().min(1) }) }),
-  z.object({ type: z.literal('assign_team'), params: z.object({}).optional() }),
-  z.object({ type: z.literal('set_priority'), params: z.object({ priority: z.string().min(1) }) }),
-  z.object({ type: z.literal('set_status'), params: z.object({ status: z.string().min(1) }) }),
-  z.object({ type: z.literal('add_tags'), params: z.object({ tagName: z.string().min(1) }) }),
-  z.object({ type: z.literal('add_note'), params: z.object({ note: z.string().min(1) }) }),
-  z.object({
-    type: z.literal('send_notification'),
-    params: z.object({ userId: z.string().min(1), title: z.string().min(1), body: z.string().min(1) }),
-  }),
-  z.object({ type: z.literal('close_ticket'), params: z.object({}).optional() }),
+  z.object({ type: z.literal('assign_user'),       params: z.object({ userId: z.string().min(1) }) }),
+  z.object({ type: z.literal('assign_team'),       params: z.object({}).optional() }),
+  z.object({ type: z.literal('set_priority'),      params: z.object({ priority: z.string().min(1) }) }),
+  z.object({ type: z.literal('set_status'),        params: z.object({ status: z.string().min(1) }) }),
+  z.object({ type: z.literal('add_tags'),          params: z.object({ tagName: z.string().min(1) }) }),
+  z.object({ type: z.literal('add_note'),          params: z.object({ note: z.string().min(1) }) }),
+  z.object({ type: z.literal('send_notification'), params: z.object({ userId: z.string().min(1), title: z.string().min(1), body: z.string().min(1) }) }),
+  z.object({ type: z.literal('close_ticket'),      params: z.object({}).optional() }),
 ]);
 
 const formSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(200),
+  name:        z.string().min(1, 'Name is required').max(200),
   description: z.string().optional(),
-  trigger: z.string().min(1, 'Trigger is required'),
-  conditions: z.array(conditionSchema).optional().default([]),
-  actions: z.array(actionSchema).min(1, 'At least one action is required'),
-  isActive: z.boolean().optional().default(true),
+  trigger:     z.string().min(1, 'Trigger is required'),
+  conditions:  z.array(conditionSchema).optional().default([]),
+  actions:     z.array(actionSchema).min(1, 'At least one action is required'),
+  isActive:    z.boolean().optional().default(true),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface AutomationRule {
-  id: string;
-  name: string;
+  id:          string;
+  name:        string;
   description?: string;
-  trigger: string;
-  conditions: { field: string; operator: string; value: string }[];
-  actions: { type: string; params: Record<string, any> }[];
-  isActive: boolean;
-  createdAt: string;
+  trigger:     string;
+  conditions:  { field: string; operator: string; value: string }[];
+  actions:     { type: string; params: Record<string, any> }[];
+  isActive:    boolean;
+  createdAt:   string;
 }
+
+/* ─── helpers ─── */
 
 function getTriggerLabel(trigger: string) {
-  return triggerOptions.find((o) => o.value === trigger)?.label || trigger;
+  return triggerOptions.find((o) => o.value === trigger)?.label ?? trigger;
 }
 
-function getActionParamsSummary(action: { type: string; params: Record<string, any> }) {
+function getActionSummary(action: { type: string; params: Record<string, any> }) {
   const p = action.params || {};
   switch (action.type) {
-    case 'assign_user': return `User: ${p.userId || '?'}`;
-    case 'assign_team': return 'Auto-assign';
-    case 'set_priority': return `Priority: ${p.priority || '?'}`;
-    case 'set_status': return `Status: ${p.status || '?'}`;
-    case 'add_tags': return `Tag: ${p.tagName || '?'}`;
-    case 'add_note': return 'Add internal note';
+    case 'assign_user':       return `Assign: ${p.userId || '?'}`;
+    case 'assign_team':       return 'Auto-assign';
+    case 'set_priority':      return `Priority: ${p.priority || '?'}`;
+    case 'set_status':        return `Status: ${p.status || '?'}`;
+    case 'add_tags':          return `Tag: ${p.tagName || '?'}`;
+    case 'add_note':          return 'Add note';
     case 'send_notification': return `Notify: ${p.title || '?'}`;
-    case 'close_ticket': return 'Close ticket';
-    default: return action.type;
+    case 'close_ticket':      return 'Close ticket';
+    default:                  return action.type;
   }
 }
 
-const defaultActionParams: Record<string, Record<string, string>> = {
-  assign_user: { userId: '' },
-  assign_team: {},
-  set_priority: { priority: '' },
-  set_status: { status: '' },
-  add_tags: { tagName: '' },
-  add_note: { note: '' },
-  send_notification: { userId: '', title: '', body: '' },
-  close_ticket: {},
+/* ─── small UI primitives ─── */
+
+const inputStyle: React.CSSProperties = {
+  width:        '100%',
+  padding:      '8px 10px',
+  fontSize:     '13px',
+  color:        'var(--ink)',
+  border:       0,
+  borderRadius: '8px',
+  background:   'var(--surface)',
+  boxShadow:    'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
+  outline:      'none',
+  boxSizing:    'border-box',
+  fontFamily:   'inherit',
+  transition:   'box-shadow 100ms',
 };
 
-function AutomationFormDialog({
-  open,
-  onOpenChange,
-  editRule,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  editRule?: AutomationRule | null;
+function NativeSelect({ value, onChange, options, placeholder }: {
+  value: string; onChange: (v: string) => void;
+  options: readonly { value: string; label: string }[];
+  placeholder?: string;
+}) {
+  return (
+    <div style={{ position: 'relative' }}>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        style={{ ...inputStyle, paddingRight: '28px', appearance: 'none', cursor: 'pointer' }}
+      >
+        {placeholder && <option value="">{placeholder}</option>}
+        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+      <ChevronDown size={12} style={{ position: 'absolute', right: '9px', top: '50%', transform: 'translateY(-50%)', color: 'var(--mute)', pointerEvents: 'none' }} />
+    </div>
+  );
+}
+
+function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!checked)}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: 0, cursor: 'pointer', padding: 0 }}
+    >
+      <div style={{
+        width: '32px', height: '18px', borderRadius: '999px', position: 'relative',
+        background: checked ? 'var(--accent)' : 'var(--surface-3)',
+        transition: 'background 150ms',
+        boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.12)',
+      }}>
+        <div style={{
+          position: 'absolute', top: '2px',
+          left: checked ? '16px' : '2px',
+          width: '14px', height: '14px', borderRadius: '999px',
+          background: '#fff', transition: 'left 150ms',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
+        }} />
+      </div>
+      <span style={{ fontSize: '12px', color: 'var(--ink-soft)', fontWeight: 500 }}>{label}</span>
+    </button>
+  );
+}
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>{children}</div>;
+}
+
+/* ─── dialog ─── */
+
+function AutomationDialog({ open, onClose, editRule }: {
+  open: boolean; onClose: () => void; editRule?: AutomationRule | null;
 }) {
   const queryClient = useQueryClient();
   const isEdit = !!editRule;
-  const state = useOverlayState({ isOpen: open, onOpenChange });
 
   const { data: users } = useQuery({
     queryKey: ['users'],
-    queryFn: () => apiClient<{ data: { id: string; name: string }[] }>('/users'),
+    queryFn:  () => apiClient<{ data: { id: string; name: string }[] }>('/users'),
   });
 
-  const {
-    register,
-    handleSubmit,
-    control,
-    setValue,
-    watch,
-    reset,
-    formState: { errors },
-  } = useForm<FormValues>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: '',
-      description: '',
-      trigger: '',
-      conditions: [],
-      actions: [{ type: 'assign_user', params: { userId: '' } }],
-      isActive: true,
-    },
+  const { register, handleSubmit, control, setValue, watch, reset, formState: { errors } } = useForm<FormValues>({
+    resolver:     zodResolver(formSchema),
+    defaultValues: { name: '', description: '', trigger: '', conditions: [], actions: [{ type: 'assign_user', params: { userId: '' } }], isActive: true },
   });
 
-  const { fields: conditionFields, append: addCondition, remove: removeCondition } = useFieldArray({
-    control,
-    name: 'conditions',
-  });
-
-  const {
-    fields: actionFields,
-    append: addAction,
-    remove: removeAction,
-  } = useFieldArray({
-    control,
-    name: 'actions',
-  });
-
+  const { fields: condFields, append: addCond, remove: removeCond } = useFieldArray({ control, name: 'conditions' });
+  const { fields: actFields,  append: addAct,  remove: removeAct  } = useFieldArray({ control, name: 'actions'    });
   const watchActions = watch('actions');
+  const isActive = watch('isActive');
 
   const createMutation = useMutation({
-    mutationFn: (data: FormValues) =>
-      apiClient('/automations', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['automations'] });
-      toast.success('Automation rule created');
-      onOpenChange(false);
-      reset();
-    },
-    onError: () => toast.error('Failed to create automation'),
+    mutationFn: (data: FormValues) => apiClient('/automations', { method: 'POST', body: JSON.stringify(data) }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['automations'] }); toast.success('Rule created'); onClose(); reset(); },
+    onError:   () => toast.error('Failed to create automation'),
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: FormValues) =>
-      apiClient(`/automations/${editRule!.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['automations'] });
-      toast.success('Automation rule updated');
-      onOpenChange(false);
-      reset();
-    },
-    onError: () => toast.error('Failed to update automation'),
+    mutationFn: (data: FormValues) => apiClient(`/automations/${editRule!.id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['automations'] }); toast.success('Rule updated'); onClose(); reset(); },
+    onError:   () => toast.error('Failed to update automation'),
   });
 
-  const onSubmit = (data: FormValues) => {
-    if (isEdit) {
-      updateMutation.mutate(data);
-    } else {
-      createMutation.mutate(data);
-    }
-  };
-
-  const handleOpen = (isOpen: boolean) => {
-    if (isOpen && editRule) {
-      reset({
-        name: editRule.name,
-        description: editRule.description || '',
-        trigger: editRule.trigger,
-        conditions: editRule.conditions.map((c) => ({
-          field: c.field,
-          operator: c.operator,
-          value: String(c.value),
-        })),
-        actions: editRule.actions.map((a) => ({
-          type: a.type as any,
-          params: a.params || defaultActionParams[a.type] || {},
-        })),
-        isActive: editRule.isActive,
-      });
-    } else if (isOpen && !editRule) {
-      reset({
-        name: '',
-        description: '',
-        trigger: '',
-        conditions: [],
-        actions: [{ type: 'assign_user', params: { userId: '' } }],
-        isActive: true,
-      });
-    }
-    onOpenChange(isOpen);
-  };
-
+  const onSubmit = (data: FormValues) => isEdit ? updateMutation.mutate(data) : createMutation.mutate(data);
   const isPending = createMutation.isPending || updateMutation.isPending;
+
+  if (!open) return null;
 
   const renderActionParams = (index: number) => {
     const action = watchActions?.[index];
     if (!action) return null;
-    const type = action.type;
-
-    switch (type) {
+    switch (action.type) {
       case 'assign_user':
         return (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">User</p>
-            <Controller
-              control={control}
-              name={`actions.${index}.params.userId`}
-              render={({ field }) => (
-                <Select
-                  selectedKey={field.value || null}
-                  onSelectionChange={(keys) => field.onChange(String(keys) || '')}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectPopover>
-                    <ListBox>
-                      {users?.data.map((u) => (
-                        <ListBoxItem key={u.id} id={u.id}>{u.name}</ListBoxItem>
-                      ))}
-                    </ListBox>
-                  </SelectPopover>
-                </Select>
-              )}
-            />
+          <div>
+            <FieldLabel>User</FieldLabel>
+            <Controller control={control} name={`actions.${index}.params.userId`} render={({ field }) => (
+              <NativeSelect value={field.value || ''} onChange={field.onChange} options={users?.data.map((u) => ({ value: u.id, label: u.name })) ?? []} placeholder="Select user" />
+            )} />
           </div>
         );
       case 'set_priority':
         return (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Priority</p>
-            <Controller
-              control={control}
-              name={`actions.${index}.params.priority`}
-              render={({ field }) => (
-                <Select
-                  selectedKey={field.value || null}
-                  onSelectionChange={(keys) => field.onChange(String(keys) || '')}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectPopover>
-                    <ListBox>
-                      {priorityOptions.map((o) => (
-                        <ListBoxItem key={o.value} id={o.value}>{o.label}</ListBoxItem>
-                      ))}
-                    </ListBox>
-                  </SelectPopover>
-                </Select>
-              )}
-            />
+          <div>
+            <FieldLabel>Priority</FieldLabel>
+            <Controller control={control} name={`actions.${index}.params.priority`} render={({ field }) => (
+              <NativeSelect value={field.value || ''} onChange={field.onChange} options={priorityOptions} placeholder="Select priority" />
+            )} />
           </div>
         );
       case 'set_status':
         return (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Status</p>
-            <Controller
-              control={control}
-              name={`actions.${index}.params.status`}
-              render={({ field }) => (
-                <Select
-                  selectedKey={field.value || null}
-                  onSelectionChange={(keys) => field.onChange(String(keys) || '')}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectPopover>
-                    <ListBox>
-                      {statusOptions.map((o) => (
-                        <ListBoxItem key={o.value} id={o.value}>{o.label}</ListBoxItem>
-                      ))}
-                    </ListBox>
-                  </SelectPopover>
-                </Select>
-              )}
-            />
+          <div>
+            <FieldLabel>Status</FieldLabel>
+            <Controller control={control} name={`actions.${index}.params.status`} render={({ field }) => (
+              <NativeSelect value={field.value || ''} onChange={field.onChange} options={statusOptions} placeholder="Select status" />
+            )} />
           </div>
         );
       case 'add_tags':
         return (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Tag Name</p>
-            <Input {...register(`actions.${index}.params.tagName`)} placeholder="e.g. urgent" />
+          <div>
+            <FieldLabel>Tag Name</FieldLabel>
+            <input {...register(`actions.${index}.params.tagName`)} placeholder="e.g. urgent" style={inputStyle} />
           </div>
         );
       case 'add_note':
         return (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Note Content</p>
-            <TextArea {...register(`actions.${index}.params.note`)} rows={3} placeholder="Internal note text..." />
+          <div>
+            <FieldLabel>Note Content</FieldLabel>
+            <textarea {...register(`actions.${index}.params.note`)} rows={3} placeholder="Internal note text…" style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.5 }} />
           </div>
         );
       case 'send_notification':
         return (
           <>
-            <div className="space-y-2">
-              <p className="text-sm font-medium">User</p>
-              <Controller
-                control={control}
-                name={`actions.${index}.params.userId`}
-                render={({ field }) => (
-                  <Select
-                    selectedKey={field.value || null}
-                    onSelectionChange={(keys) => field.onChange(String(keys) || '')}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectPopover>
-                      <ListBox>
-                        {users?.data.map((u) => (
-                          <ListBoxItem key={u.id} id={u.id}>{u.name}</ListBoxItem>
-                        ))}
-                      </ListBox>
-                    </SelectPopover>
-                  </Select>
-                )}
-              />
+            <div>
+              <FieldLabel>User</FieldLabel>
+              <Controller control={control} name={`actions.${index}.params.userId`} render={({ field }) => (
+                <NativeSelect value={field.value || ''} onChange={field.onChange} options={users?.data.map((u) => ({ value: u.id, label: u.name })) ?? []} placeholder="Select user" />
+              )} />
             </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Title</p>
-              <Input {...register(`actions.${index}.params.title`)} placeholder="Notification title" />
+            <div>
+              <FieldLabel>Title</FieldLabel>
+              <input {...register(`actions.${index}.params.title`)} placeholder="Notification title" style={inputStyle} />
             </div>
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Body</p>
-              <TextArea {...register(`actions.${index}.params.body`)} rows={2} placeholder="Notification body" />
+            <div>
+              <FieldLabel>Body</FieldLabel>
+              <textarea {...register(`actions.${index}.params.body`)} rows={2} placeholder="Notification body" style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.5 }} />
             </div>
           </>
         );
       case 'assign_team':
       case 'close_ticket':
-        return <p className="text-sm text-muted-foreground">No additional parameters needed.</p>;
+        return <p style={{ fontSize: '12px', color: 'var(--mute)', fontStyle: 'italic' }}>No additional parameters needed.</p>;
       default:
         return null;
     }
   };
 
   return (
-    <Modal state={state}>
-      <ModalDialog>
-        <ModalCloseTrigger />
-        <ModalHeader>
-          <ModalHeading>{isEdit ? 'Edit Automation Rule' : 'Create Automation Rule'}</ModalHeading>
-        </ModalHeader>
-        <ModalBody>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-             <TextField isInvalid={!!errors.name}>
-              <Label>Name</Label>
-              <Input {...register('name')} placeholder="Rule name" />
-              {errors.name && <FieldError>{errors.name.message}</FieldError>}
-            </TextField>
+    <div
+      onClick={onClose}
+      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(15,18,30,0.32)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{ width: 'min(640px, 100%)', background: 'var(--surface)', borderRadius: '18px', boxShadow: '0 24px 60px -20px rgba(15,18,30,0.30)', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--hairline)' }}>
+          <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.01em', margin: 0 }}>
+            {isEdit ? 'Edit automation rule' : 'Create automation rule'}
+          </h2>
+          <button onClick={onClose} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'var(--surface-2)', color: 'var(--mute)', cursor: 'pointer' }}>
+            <X size={14} />
+          </button>
+        </div>
 
-            <TextField>
-              <Label>Description</Label>
-              <TextArea {...register('description')} rows={2} placeholder="Optional description" />
-            </TextField>
-
-            <Controller
-              control={control}
-              name="trigger"
-              render={({ field }) => (
-                <Select
-                  selectedKey={field.value || null}
-                  onSelectionChange={(keys) => field.onChange(String(keys) || '')}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectPopover>
-                    <ListBox>
-                      {triggerOptions.map((o) => (
-                        <ListBoxItem key={o.value} id={o.value}>{o.label}</ListBoxItem>
-                      ))}
-                    </ListBox>
-                  </SelectPopover>
-                </Select>
-              )}
-            />
-            {errors.trigger && <p className="text-sm text-destructive">{errors.trigger.message}</p>}
-
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">Conditions</p>
-                <Button type="button" variant="secondary" size="sm" onClick={() => addCondition({ field: 'priority', operator: 'equals', value: '' })}>
-                  <Plus className="h-3 w-3 mr-1" /> Add Condition
-                </Button>
-              </div>
-              {conditionFields.map((field, index) => (
-                <div key={field.id} className="flex items-start gap-2 rounded-lg border p-3">
-                  <div className="flex-1 space-y-2">
-                    <Controller
-                      control={control}
-                      name={`conditions.${index}.field`}
-                      render={({ field: f }) => (
-                        <Select
-                          selectedKey={f.value || null}
-                          onSelectionChange={(keys) => f.onChange(String(keys) || '')}
-                        >
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectPopover>
-                            <ListBox>
-                              {conditionFieldOptions.map((o) => (
-                                <ListBoxItem key={o.value} id={o.value}>{o.label}</ListBoxItem>
-                              ))}
-                            </ListBox>
-                          </SelectPopover>
-                        </Select>
-                      )}
-                    />
-                    <Controller
-                      control={control}
-                      name={`conditions.${index}.operator`}
-                      render={({ field: f }) => (
-                        <Select
-                          selectedKey={f.value || null}
-                          onSelectionChange={(keys) => f.onChange(String(keys) || '')}
-                        >
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectPopover>
-                            <ListBox>
-                              {operatorOptions.map((o) => (
-                                <ListBoxItem key={o.value} id={o.value}>{o.label}</ListBoxItem>
-                              ))}
-                            </ListBox>
-                          </SelectPopover>
-                        </Select>
-                      )}
-                    />
-                    <Input {...register(`conditions.${index}.value`)} placeholder="Value" />
-                  </div>
-                  <Button type="button" variant="ghost" isIconOnly className="mt-6 shrink-0" onClick={() => removeCondition(index)}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              ))}
-              {errors.conditions && <p className="text-sm text-destructive">{errors.conditions.message}</p>}
+        {/* Body */}
+        <div style={{ overflowY: 'auto', flex: 1 }}>
+          <form onSubmit={handleSubmit(onSubmit)} id="automation-form" style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+            {/* Name */}
+            <div>
+              <FieldLabel>Name *</FieldLabel>
+              <input {...register('name')} placeholder="Rule name" style={inputStyle} />
+              {errors.name && <p style={{ fontSize: '11px', color: 'oklch(0.50 0.20 22)', marginTop: '4px' }}>{errors.name.message}</p>}
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium">Actions</p>
-                <Button type="button" variant="secondary" size="sm" onClick={() => addAction({ type: 'assign_user', params: { userId: '' } } as any)}>
-                  <Plus className="h-3 w-3 mr-1" /> Add Action
-                </Button>
+            {/* Description */}
+            <div>
+              <FieldLabel>Description</FieldLabel>
+              <textarea {...register('description')} rows={2} placeholder="Optional description" style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.5 }} />
+            </div>
+
+            {/* Trigger */}
+            <div>
+              <FieldLabel>Trigger *</FieldLabel>
+              <Controller control={control} name="trigger" render={({ field }) => (
+                <NativeSelect value={field.value || ''} onChange={field.onChange} options={triggerOptions} placeholder="Select trigger" />
+              )} />
+              {errors.trigger && <p style={{ fontSize: '11px', color: 'oklch(0.50 0.20 22)', marginTop: '4px' }}>{errors.trigger.message}</p>}
+            </div>
+
+            {/* Conditions */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                <FieldLabel>Conditions</FieldLabel>
+                <button type="button" onClick={() => addCond({ field: 'priority', operator: 'equals', value: '' })} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', fontSize: '11px', fontWeight: 600, border: 0, borderRadius: '7px', background: 'var(--surface-2)', color: 'var(--ink-soft)', cursor: 'pointer' }}>
+                  <Plus size={11} /> Add
+                </button>
               </div>
-              {actionFields.map((field, index) => {
-                return (
-                  <div key={field.id} className="space-y-3 rounded-lg border p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex-1">
-                        <Controller
-                          control={control}
-                          name={`actions.${index}.type`}
-                          render={({ field: f }) => (
-                            <Select
-                              selectedKey={f.value || null}
-                              onSelectionChange={(keys) => {
-                                const type = keys as keyof typeof defaultActionParams;
-                                f.onChange(type);
-                                const params = defaultActionParams[type] || {};
-                                setValue(`actions.${index}.params`, params as any);
-                              }}
-                            >
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectPopover>
-                                <ListBox>
-                                  {actionTypeOptions.map((o) => (
-                                    <ListBoxItem key={o.value} id={o.value}>{o.label}</ListBoxItem>
-                                  ))}
-                                </ListBox>
-                              </SelectPopover>
-                            </Select>
-                          )}
-                        />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {condFields.map((field, index) => (
+                  <div key={field.id} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', background: 'var(--surface-2)', borderRadius: '10px', padding: '12px' }}>
+                    <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                      <Controller control={control} name={`conditions.${index}.field`} render={({ field: f }) => (
+                        <NativeSelect value={f.value || ''} onChange={f.onChange} options={conditionFieldOptions} placeholder="Field" />
+                      )} />
+                      <Controller control={control} name={`conditions.${index}.operator`} render={({ field: f }) => (
+                        <NativeSelect value={f.value || ''} onChange={f.onChange} options={operatorOptions} placeholder="Operator" />
+                      )} />
+                      <input {...register(`conditions.${index}.value`)} placeholder="Value" style={inputStyle} />
+                    </div>
+                    <button type="button" onClick={() => removeCond(index)} style={{ width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'transparent', color: 'oklch(0.50 0.20 22)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '1px' }}>
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                <FieldLabel>Actions *</FieldLabel>
+                <button type="button" onClick={() => addAct({ type: 'assign_user', params: { userId: '' } } as any)} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', fontSize: '11px', fontWeight: 600, border: 0, borderRadius: '7px', background: 'var(--surface-2)', color: 'var(--ink-soft)', cursor: 'pointer' }}>
+                  <Plus size={11} /> Add
+                </button>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {actFields.map((field, index) => (
+                  <div key={field.id} style={{ background: 'var(--surface-2)', borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ flex: 1 }}>
+                        <Controller control={control} name={`actions.${index}.type`} render={({ field: f }) => (
+                          <NativeSelect
+                            value={f.value || ''}
+                            onChange={(type) => {
+                              f.onChange(type);
+                              setValue(`actions.${index}.params`, (defaultActionParams[type] || {}) as any);
+                            }}
+                            options={actionTypeOptions}
+                            placeholder="Select action"
+                          />
+                        )} />
                       </div>
-                      <Button type="button" variant="ghost" isIconOnly className="mt-6 shrink-0" onClick={() => removeAction(index)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <button type="button" onClick={() => removeAct(index)} style={{ width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'transparent', color: 'oklch(0.50 0.20 22)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                     {renderActionParams(index)}
                   </div>
-                );
-              })}
-              {errors.actions && <p className="text-sm text-destructive">{errors.actions.message}</p>}
+                ))}
+              </div>
+              {errors.actions && <p style={{ fontSize: '11px', color: 'oklch(0.50 0.20 22)', marginTop: '4px' }}>{errors.actions.message as string}</p>}
             </div>
 
-            <Controller
-              control={control}
-              name="isActive"
-              render={({ field }) => (
-                <Switch isSelected={field.value || false} onChange={(checked) => field.onChange(checked)}>
-                  Active
-                </Switch>
-              )}
-            />
-
-            <Button type="submit" isDisabled={isPending}>
-              {isEdit ? 'Update Rule' : 'Create Rule'}
-            </Button>
+            {/* Active toggle */}
+            <Toggle checked={!!isActive} onChange={(v) => setValue('isActive', v)} label="Active rule" />
           </form>
-        </ModalBody>
-      </ModalDialog>
-    </Modal>
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: '14px 22px', borderTop: '1px solid var(--hairline)', display: 'flex', justifyContent: 'flex-end', gap: '10px', background: 'var(--surface-2)' }}>
+          <button type="button" onClick={onClose} style={{ padding: '8px 16px', fontSize: '13px', fontWeight: 500, border: 0, borderRadius: '9px', background: 'var(--surface)', color: 'var(--ink-soft)', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
+            Cancel
+          </button>
+          <button type="submit" form="automation-form" disabled={isPending} style={{ padding: '8px 18px', fontSize: '13px', fontWeight: 600, border: 0, borderRadius: '9px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', color: '#fff', cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.7 : 1, boxShadow: '0 4px 12px -4px var(--accent-glow)' }}>
+            {isPending ? 'Saving…' : isEdit ? 'Update rule' : 'Create rule'}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 
+/* ─── main page ─── */
+
 export default function AutomationsPage() {
   const queryClient = useQueryClient();
-  const state = useOverlayState();
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [editRule, setEditRule] = useState<AutomationRule | null>(null);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['automations'],
-    queryFn: () =>
-      apiClient<{ data: AutomationRule[] }>('/automations'),
+    queryFn:  () => apiClient<{ data: AutomationRule[] }>('/automations'),
   });
 
   const toggleMutation = useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
-      apiClient(`/automations/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ isActive }),
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['automations'] });
-      toast.success('Rule status updated');
-    },
-    onError: () => toast.error('Failed to update rule'),
+      apiClient(`/automations/${id}`, { method: 'PATCH', body: JSON.stringify({ isActive }) }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['automations'] }); toast.success('Rule status updated'); },
+    onError:   () => toast.error('Failed to update rule'),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) =>
-      apiClient(`/automations/${id}`, { method: 'DELETE' }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['automations'] });
-      toast.success('Rule deleted');
-    },
-    onError: () => toast.error('Failed to delete rule'),
+    mutationFn: (id: string) => apiClient(`/automations/${id}`, { method: 'DELETE' }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['automations'] }); toast.success('Rule deleted'); },
+    onError:   () => toast.error('Failed to delete rule'),
   });
 
-  const rules = data?.data || [];
+  const rules = data?.data ?? [];
 
-  const handleEdit = (rule: AutomationRule) => {
-    setEditRule(rule);
-    state.open();
-  };
-
-  const handleCreate = () => {
-    setEditRule(null);
-    state.open();
-  };
+  const openCreate = () => { setEditRule(null); setDialogOpen(true); };
+  const openEdit   = (rule: AutomationRule) => { setEditRule(rule); setDialogOpen(true); };
+  const closeDialog = () => { setDialogOpen(false); setEditRule(null); };
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <p className="text-destructive font-medium">Failed to load automations</p>
-        <p className="text-sm text-muted-foreground mt-1">Please try again later.</p>
-        <Button variant="secondary" className="mt-4" onClick={() => queryClient.invalidateQueries({ queryKey: ['automations'] })}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', padding: '60px 0' }}>
+        <p style={{ fontSize: '14px', fontWeight: 500, color: 'oklch(0.50 0.20 22)' }}>Failed to load automations</p>
+        <button onClick={() => queryClient.invalidateQueries({ queryKey: ['automations'] })} style={{ padding: '7px 14px', fontSize: '13px', fontWeight: 500, border: 0, borderRadius: '9px', background: 'var(--surface-2)', color: 'var(--ink-soft)', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
           Retry
-        </Button>
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {/* Page head */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Automations</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 style={{ fontSize: '36px', fontFamily: 'var(--font-display)', fontWeight: 400, color: 'var(--ink)', letterSpacing: '-0.02em', lineHeight: 1.05, margin: 0 }}>
+            Automations
+          </h1>
+          <p style={{ fontSize: '13px', color: 'var(--mute)', marginTop: '6px' }}>
             {rules.length} rule{rules.length !== 1 ? 's' : ''} configured
           </p>
         </div>
-        <Button onClick={handleCreate}>
-          <Plus className="mr-2 h-4 w-4" /> New Rule
-        </Button>
+        <button
+          onClick={openCreate}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', fontSize: '13px', fontWeight: 600, border: 0, borderRadius: '10px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', color: '#fff', cursor: 'pointer', boxShadow: '0 4px 12px -4px var(--accent-glow)' }}
+        >
+          <Plus size={14} /> New Rule
+        </button>
       </div>
 
-      {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-5 w-2/3 rounded-lg" />
-                <Skeleton className="h-4 w-full mt-1 rounded-lg" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-4 w-1/3 rounded-lg" />
-                <Skeleton className="h-4 w-2/3 mt-2 rounded-lg" />
-                <Skeleton className="h-4 w-1/2 mt-2 rounded-lg" />
-              </CardContent>
-              <CardFooter>
-                <Skeleton className="h-8 w-full rounded-lg" />
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      ) : rules.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16">
-          <Workflow className="h-12 w-12 text-muted-foreground mb-4" />
-          <p className="text-lg font-medium">No automation rules yet</p>
-          <p className="text-sm text-muted-foreground mt-1">
-            Create your first rule to automate ticket workflows.
-          </p>
-          <Button className="mt-4" onClick={handleCreate}>
-            <Plus className="mr-2 h-4 w-4" /> Create Rule
-          </Button>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {rules.map((rule) => (
-            <Card key={rule.id} className="flex flex-col">
-              <CardHeader>
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium truncate">{rule.name}</p>
-                    {rule.description && (
-                      <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{rule.description}</p>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-1 space-y-3">
-                <Chip variant="soft" size="sm" className="w-fit">
-                  {getTriggerLabel(rule.trigger)}
-                </Chip>
-
-                {rule.conditions && rule.conditions.length > 0 && (
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Conditions</p>
-                    <div className="flex flex-wrap gap-1">
-                      {rule.conditions.map((c, i) => (
-                        <Chip key={i} variant="secondary" size="sm">
-                          {c.field} {c.operator.replace('_', ' ')} {String(c.value)}
-                        </Chip>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Actions</p>
-                  <div className="flex flex-wrap gap-1">
-                    {rule.actions.map((a, i) => (
-                      <Chip key={i} variant="secondary" size="sm">
-                        {getActionParamsSummary(a)}
-                      </Chip>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter className="border-t pt-3">
-                <div className="flex w-full items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      isSelected={rule.isActive}
-                      onChange={(checked) =>
-                        toggleMutation.mutate({ id: rule.id, isActive: checked })
-                      }
-                      size="sm"
-                    >
-                      <span className="text-xs text-muted-foreground">
-                        {rule.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </Switch>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" isIconOnly size="sm" onClick={() => handleEdit(rule)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      isIconOnly
-                      size="sm"
-                      onClick={() => {
-                        if (window.confirm('Are you sure you want to delete this rule?')) {
-                          deleteMutation.mutate(rule.id);
-                        }
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </div>
-              </CardFooter>
-            </Card>
+      {/* Loading */}
+      {isLoading && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+          {[1,2,3,4,5,6].map((i) => (
+            <div key={i} style={{ background: 'var(--surface)', borderRadius: '16px', boxShadow: 'var(--shadow-sm)', padding: '18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div style={{ height: '16px', width: '60%', background: 'var(--surface-2)', borderRadius: '6px' }} />
+              <div style={{ height: '13px', width: '100%', background: 'var(--surface-2)', borderRadius: '6px' }} />
+              <div style={{ height: '13px', width: '40%', background: 'var(--surface-2)', borderRadius: '6px' }} />
+            </div>
           ))}
         </div>
       )}
 
-      <AutomationFormDialog
-        open={state.isOpen}
-        onOpenChange={(open) => {
-          if (!open) { state.close(); setEditRule(null); }
-          else { state.open(); }
-        }}
-        editRule={editRule}
-      />
+      {/* Empty */}
+      {!isLoading && rules.length === 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '80px 0' }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--mute)' }}>
+            <Workflow size={24} />
+          </div>
+          <p style={{ fontSize: '15px', fontWeight: 500, color: 'var(--ink)', margin: 0 }}>No automation rules yet</p>
+          <p style={{ fontSize: '13px', color: 'var(--mute)', margin: 0 }}>Create rules to automate repetitive ticket workflows.</p>
+          <button onClick={openCreate} style={{ marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 18px', fontSize: '13px', fontWeight: 600, border: 0, borderRadius: '10px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', color: '#fff', cursor: 'pointer', boxShadow: '0 4px 12px -4px var(--accent-glow)' }}>
+            <Plus size={14} /> Create Rule
+          </button>
+        </div>
+      )}
+
+      {/* Rules grid */}
+      {!isLoading && rules.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+          {rules.map((rule) => (
+            <div key={rule.id} style={{ background: 'var(--surface)', borderRadius: '16px', boxShadow: 'var(--shadow-sm)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+              <div style={{ padding: '16px 18px', flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px', marginBottom: '10px' }}>
+                  <p style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.005em', margin: 0, lineHeight: 1.3 }}>{rule.name}</p>
+                  <span style={{
+                    flexShrink: 0,
+                    padding: '2px 7px', fontSize: '10.5px', fontWeight: 600, borderRadius: '5px',
+                    background: rule.isActive ? 'oklch(0.92 0.06 148)' : 'var(--surface-2)',
+                    color:      rule.isActive ? 'oklch(0.40 0.16 148)' : 'var(--mute)',
+                  }}>
+                    {rule.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                {rule.description && <p style={{ fontSize: '12px', color: 'var(--mute)', margin: '0 0 12px', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{rule.description}</p>}
+
+                {/* Trigger */}
+                <div style={{ marginBottom: '8px' }}>
+                  <span style={{ display: 'inline-flex', padding: '3px 8px', fontSize: '11px', fontWeight: 500, borderRadius: '6px', background: 'var(--accent-tint)', color: 'var(--accent)' }}>
+                    ⚡ {getTriggerLabel(rule.trigger)}
+                  </span>
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                  {rule.actions.map((a, i) => (
+                    <span key={i} style={{ padding: '2px 7px', fontSize: '11px', fontWeight: 500, borderRadius: '5px', background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>
+                      {getActionSummary(a)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div style={{ padding: '10px 18px', borderTop: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Toggle
+                  checked={rule.isActive}
+                  onChange={(checked) => toggleMutation.mutate({ id: rule.id, isActive: checked })}
+                  label={rule.isActive ? 'On' : 'Off'}
+                />
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button onClick={() => openEdit(rule)} style={{ width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'transparent', color: 'var(--mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 100ms' }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--ink)'; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--mute)'; }}>
+                    <Pencil size={13} />
+                  </button>
+                  <button onClick={() => { if (window.confirm('Delete this rule?')) deleteMutation.mutate(rule.id); }} style={{ width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'transparent', color: 'var(--mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 100ms' }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'oklch(0.96 0.04 22)'; (e.currentTarget as HTMLButtonElement).style.color = 'oklch(0.50 0.20 22)'; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--mute)'; }}>
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <AutomationDialog open={dialogOpen} onClose={closeDialog} editRule={editRule} />
     </div>
   );
 }

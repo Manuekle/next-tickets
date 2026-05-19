@@ -10,8 +10,8 @@ const font = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'Helix — Ticket Management',
-  description: 'Modern support ticket management',
+  title: 'open-tickets — Open Source Support',
+  description: 'Open-source support ticket management. Self-host your own Zendesk alternative.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

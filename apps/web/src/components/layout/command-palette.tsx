@@ -33,10 +33,10 @@ export function CommandPalette() {
     };
     const onCustom = () => setOpen(true);
     window.addEventListener('keydown', onKey);
-    window.addEventListener('helix:open-palette', onCustom);
+    window.addEventListener('ot:open-palette', onCustom);
     return () => {
       window.removeEventListener('keydown', onKey);
-      window.removeEventListener('helix:open-palette', onCustom);
+      window.removeEventListener('ot:open-palette', onCustom);
     };
   }, [close]);
 

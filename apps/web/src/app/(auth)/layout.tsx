@@ -2,12 +2,49 @@ import Link from 'next/link';
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-dvh items-center justify-center bg-[#f4f5f7] p-4">
-      <div className="flex w-full max-w-sm flex-col items-center gap-6">
-        <Link href="/" className="text-xl font-bold tracking-tight text-[#172B4D]">
-          next<span className="text-[#0052CC]">tickets</span>
+    <div style={{
+      minHeight:       '100dvh',
+      display:         'flex',
+      alignItems:      'center',
+      justifyContent:  'center',
+      background:      'var(--bg)',
+      padding:         '24px 16px',
+      position:        'relative',
+      overflow:        'hidden',
+    }}>
+      {/* Mesh backdrop */}
+      <div style={{
+        position:   'absolute',
+        inset:      0,
+        background: 'radial-gradient(ellipse 80% 60% at 20% -10%, oklch(0.88 0.06 275 / 0.30) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 110%, oklch(0.90 0.07 305 / 0.18) 0%, transparent 60%)',
+        pointerEvents: 'none',
+      }} />
+
+      <div style={{ width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '28px', position: 'relative', zIndex: 1 }}>
+        {/* Logo */}
+        <Link href="/about" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{
+            width: '36px', height: '36px', borderRadius: '11px',
+            background: 'linear-gradient(135deg, oklch(0.52 0.26 275), oklch(0.60 0.25 305))',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 4px 12px -4px oklch(0.52 0.26 275 / 0.50)',
+            color: '#fff',
+          }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="6" width="20" height="12" rx="2" />
+              <path d="M2 10h4M18 10h4" />
+            </svg>
+          </div>
+          <span style={{ fontSize: '16px', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em' }}>
+            open<span style={{ color: 'oklch(0.52 0.26 275)' }}>-tickets</span>
+          </span>
         </Link>
+
         {children}
+
+        <p style={{ fontSize: '11px', color: 'var(--mute)', textAlign: 'center' }}>
+          Open-source · Self-hostable · MIT license
+        </p>
       </div>
     </div>
   );
