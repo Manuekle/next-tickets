@@ -2,7 +2,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import { Users, Ticket, MessageSquare, Activity } from 'lucide-react';
+import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
+import { UserGroupIcon, Ticket01Icon, BubbleChatIcon, Activity01Icon } from '@hugeicons/core-free-icons';
 
 interface SystemStats {
   totalUsers: number;
@@ -12,12 +13,12 @@ interface SystemStats {
   usersByRole: { role: string; count: number }[];
 }
 
-function StatCard({ title, value, icon: Icon, loading }: { title: string; value?: number; icon: React.ElementType; loading: boolean }) {
+function StatCard({ title, value, icon, loading }: { title: string; value?: number; icon: IconSvgElement; loading: boolean }) {
   return (
     <div style={{ background: 'var(--surface)', borderRadius: '14px', boxShadow: 'var(--shadow-md)', padding: '18px 20px' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
         <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--mute)' }}>{title}</span>
-        <Icon size={16} style={{ color: 'var(--mute)' }} />
+        <HugeiconsIcon icon={icon} size={16} color="var(--mute)" />
       </div>
       {loading ? (
         <div style={{ height: '28px', width: '80px', borderRadius: '6px', background: 'var(--surface-2)' }} />
@@ -52,10 +53,10 @@ export default function AdminSettingsPage() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
-        <StatCard title="Total Users"    value={stats?.totalUsers}    icon={Users}         loading={isLoading} />
-        <StatCard title="Total Tickets"  value={stats?.totalTickets}  icon={Ticket}        loading={isLoading} />
-        <StatCard title="Total Comments" value={stats?.totalComments} icon={MessageSquare} loading={isLoading} />
-        <StatCard title="Active Sessions" value={stats?.activeSessions} icon={Activity}    loading={isLoading} />
+        <StatCard title="Total Users"    value={stats?.totalUsers}    icon={UserGroupIcon}  loading={isLoading} />
+        <StatCard title="Total Tickets"  value={stats?.totalTickets}  icon={Ticket01Icon}   loading={isLoading} />
+        <StatCard title="Total Comments" value={stats?.totalComments} icon={BubbleChatIcon} loading={isLoading} />
+        <StatCard title="Active Sessions" value={stats?.activeSessions} icon={Activity01Icon} loading={isLoading} />
       </div>
 
       <div style={{ background: 'var(--surface)', borderRadius: '14px', boxShadow: 'var(--shadow-md)', overflow: 'hidden' }}>

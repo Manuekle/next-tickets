@@ -3,7 +3,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { apiClient } from '@/lib/api';
-import { Search } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Search01Icon } from '@hugeicons/core-free-icons';
 import { format } from 'date-fns';
 
 interface AuditLog {
@@ -69,7 +70,7 @@ export default function AuditLogsPage() {
       </div>
 
       <div style={{ position: 'relative', maxWidth: '360px' }}>
-        <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--mute)', pointerEvents: 'none' }} />
+        <HugeiconsIcon icon={Search01Icon} size={14} color="var(--mute)" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
         <input
           placeholder="Search actions…"
           value={search}

@@ -7,7 +7,8 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import { toast } from 'sonner';
-import { ChevronDown } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 
 const articleSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -167,7 +168,7 @@ export function ArticleForm({ initialData }: ArticleFormProps) {
                   <option key={c.id} value={c.id}>{c.name} ({c._count.articles})</option>
                 ))}
               </select>
-              <ChevronDown size={12} style={{ position: 'absolute', right: '9px', top: '50%', transform: 'translateY(-50%)', color: 'var(--mute)', pointerEvents: 'none' }} />
+              <HugeiconsIcon icon={ArrowDown01Icon} size={12} color="var(--mute)" style={{ position: 'absolute', right: '9px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
             </div>
           </div>
           <div>

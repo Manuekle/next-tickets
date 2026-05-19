@@ -1,6 +1,8 @@
 'use client';
 import Link from 'next/link';
-import { ThumbsUp, User } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+
+import { ThumbsUpIcon, User02Icon } from '@hugeicons/core-free-icons';
 import { format } from 'date-fns';
 
 interface ArticleCardProps {
@@ -94,13 +96,13 @@ export function ArticleCard({ slug, title, excerpt, category, author, createdAt,
         <div style={{ marginTop: 'auto', paddingTop: '10px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '11px', color: 'var(--mute)' }}>
           {author && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <User size={11} />
+              <HugeiconsIcon icon={User02Icon} size={11} />
               {author.name}
             </span>
           )}
           <span>{format(new Date(createdAt), 'MMM d, yyyy')}</span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
-            <ThumbsUp size={11} />
+            <HugeiconsIcon icon={ThumbsUpIcon} size={11} />
             {helpfulCount}
           </span>
         </div>

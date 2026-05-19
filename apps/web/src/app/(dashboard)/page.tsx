@@ -5,10 +5,11 @@ import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { useRouter } from 'next/navigation';
+import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  Inbox, Clock, AlertTriangle, CheckCircle,
-  Plus, Zap, ArrowRight, User, ArrowRightLeft, MessageSquare, Tag,
-} from 'lucide-react';
+  InboxIcon, Clock01Icon, Alert02Icon, CheckmarkCircle01Icon,
+  Add01Icon, ZapIcon, ArrowRight01Icon, User02Icon, ArrowLeftRightIcon, BubbleChatIcon, Tag01Icon,
+} from '@hugeicons/core-free-icons';
 
 interface DashboardStats {
   openCount: number;
@@ -284,7 +285,7 @@ function SectionHeader({ title, count, action, actionLabel }: {
             fontWeight:    500,
           }}
         >
-          {actionLabel ?? 'View all'} <ArrowRight size={12} />
+          {actionLabel ?? 'View all'} <HugeiconsIcon icon={ArrowRight01Icon} size={12} />
         </button>
       )}
     </div>
@@ -374,7 +375,7 @@ export default function DashboardPage() {
             onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'var(--surface-3)'; b.style.transform = 'translateY(-1px)'; }}
             onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'var(--surface-2)'; b.style.transform = 'translateY(0)'; }}
           >
-            <Zap size={14} />
+            <HugeiconsIcon icon={ZapIcon} size={14} />
             Triage with AI
           </button>
           <button
@@ -397,7 +398,7 @@ export default function DashboardPage() {
             onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.22), 0 8px 24px -6px var(--accent-glow)'; }}
             onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.18), 0 4px 14px -4px var(--accent-glow)'; }}
           >
-            <Plus size={14} />
+            <HugeiconsIcon icon={Add01Icon} size={14} />
             New ticket
           </button>
         </div>
@@ -412,7 +413,7 @@ export default function DashboardPage() {
           deltaTone="info"
           trend={SPARK}
           tone="indigo"
-          icon={<Inbox size={13} />}
+          icon={<HugeiconsIcon icon={InboxIcon} size={13} />}
           onClick={() => router.push('/tickets?status=OPEN')}
         />
         <KpiCard
@@ -422,7 +423,7 @@ export default function DashboardPage() {
           deltaTone="ok"
           trend={SPARK.map((v) => Math.max(0, v - 2))}
           tone="amber"
-          icon={<Clock size={13} />}
+          icon={<HugeiconsIcon icon={Clock01Icon} size={13} />}
           onClick={() => router.push('/tickets?status=IN_PROGRESS')}
         />
         <KpiCard
@@ -432,7 +433,7 @@ export default function DashboardPage() {
           deltaTone="warn"
           trend={SPARK.map((v) => Math.max(0, Math.round(v * 0.4)))}
           tone="rose"
-          icon={<AlertTriangle size={13} />}
+          icon={<HugeiconsIcon icon={Alert02Icon} size={13} />}
         />
         <KpiCard
           label="Resolved today"
@@ -441,7 +442,7 @@ export default function DashboardPage() {
           deltaTone="muted"
           trend={SPARK.map((v) => v - 3)}
           tone="emerald"
-          icon={<CheckCircle size={13} />}
+          icon={<HugeiconsIcon icon={CheckmarkCircle01Icon} size={13} />}
         />
       </div>
 

@@ -4,7 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { apiClient } from '@/lib/api';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, X, ChevronDown } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Add01Icon, PencilEdit01Icon, Delete01Icon, Cancel01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { format } from 'date-fns';
 
 interface SlaRule {
@@ -59,7 +60,7 @@ function NativeSelect({ value, onChange, options, placeholder }: { value: string
         {placeholder !== undefined && <option value="">{placeholder}</option>}
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
-      <ChevronDown size={12} style={{ position: 'absolute', right: '9px', top: '50%', transform: 'translateY(-50%)', color: 'var(--mute)', pointerEvents: 'none' }} />
+      <HugeiconsIcon icon={ArrowDown01Icon} size={12} color="var(--mute)" style={{ position: 'absolute', right: '9px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
     </div>
   );
 }
@@ -72,7 +73,7 @@ function Dialog({ open, onClose, title, children }: { open: boolean; onClose: ()
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--border)' }}>
           <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.01em' }}>{title}</span>
           <button onClick={onClose} style={{ width: '26px', height: '26px', border: 0, borderRadius: '7px', background: 'var(--surface-2)', color: 'var(--mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <X size={13} />
+            <HugeiconsIcon icon={Cancel01Icon} size={13} />
           </button>
         </div>
         <div style={{ padding: '22px' }}>{children}</div>
@@ -174,7 +175,7 @@ export default function SlaRulesPage() {
           <p style={{ fontSize: '13px', color: 'var(--mute)', marginTop: '6px' }}>Manage Service Level Agreement rules</p>
         </div>
         <button style={btnPrimary} onClick={openCreate}>
-          <Plus size={13} style={{ marginRight: '5px', verticalAlign: 'middle' }} />
+          <HugeiconsIcon icon={Add01Icon} size={13} style={{ marginRight: '5px', verticalAlign: 'middle' }} />
           Create Rule
         </button>
       </div>
@@ -237,14 +238,14 @@ export default function SlaRulesPage() {
                         onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
                         onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
                       >
-                        <Pencil size={13} />
+                        <HugeiconsIcon icon={PencilEdit01Icon} size={13} />
                       </button>
                       <button onClick={() => { setDeleteId(rule.id); setDeleteOpen(true); }}
                         style={{ width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'transparent', color: 'oklch(0.58 0.20 22)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                         onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'oklch(0.96 0.04 22)'; }}
                         onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
                       >
-                        <Trash2 size={13} />
+                        <HugeiconsIcon icon={Delete01Icon} size={13} />
                       </button>
                     </div>
                   </td>

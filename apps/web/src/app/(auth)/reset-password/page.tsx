@@ -8,7 +8,8 @@ import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { toast } from 'sonner';
 import { useState, Suspense } from 'react';
-import { Lock } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { LockPasswordIcon } from '@hugeicons/core-free-icons';
 
 const resetSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
@@ -74,7 +75,7 @@ function ResetPasswordForm() {
     <div>
       <div style={{ textAlign: 'center', marginBottom: '28px' }}>
         <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 6px 18px -6px var(--accent-glow)' }}>
-          <Lock size={20} color="#fff" />
+          <HugeiconsIcon icon={LockPasswordIcon} size={20} color="#fff" />
         </div>
         <h1 style={{ fontSize: '22px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em', margin: '0 0 6px' }}>Reset password</h1>
         <p style={{ fontSize: '13px', color: 'var(--mute)' }}>Enter your new password below</p>

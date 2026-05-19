@@ -2,7 +2,8 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
-import { Bell, Search, ChevronRight, LogOut, Menu } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Notification01Icon, Search01Icon, ArrowRight01Icon, Logout01Icon, Menu01Icon } from '@hugeicons/core-free-icons';
 import { useState } from 'react';
 
 const routeLabels: Record<string, string> = {
@@ -68,13 +69,13 @@ export function Header({ onOpenSidebar }: HeaderProps) {
         onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--ink)'; }}
         onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--mute)'; }}
       >
-        <Menu size={17} />
+        <HugeiconsIcon icon={Menu01Icon} size={17} />
       </button>
 
       {/* Breadcrumb */}
       <nav aria-label="Breadcrumb" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--mute)' }}>
         <span>Support</span>
-        <ChevronRight size={11} aria-hidden="true" />
+        <HugeiconsIcon icon={ArrowRight01Icon} size={11} aria-hidden="true" />
         <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{routeLabel}</span>
       </nav>
 
@@ -108,7 +109,7 @@ export function Header({ onOpenSidebar }: HeaderProps) {
           onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-3)'; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
         >
-          <Search size={13} aria-hidden="true" />
+          <HugeiconsIcon icon={Search01Icon} size={13} aria-hidden="true" />
           <span className="hx-search-label" style={{ flex: 1, textAlign: 'left', minWidth: '140px' }}>Search…</span>
           <kbd className="hx-hide-mobile" aria-hidden="true" style={{
             display:      'inline-flex',
@@ -145,7 +146,7 @@ export function Header({ onOpenSidebar }: HeaderProps) {
           onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'var(--surface-2)'; b.style.color = 'var(--ink)'; }}
           onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'transparent'; b.style.color = 'var(--mute)'; }}
         >
-          <Bell size={15} aria-hidden="true" />
+          <HugeiconsIcon icon={Notification01Icon} size={15} aria-hidden="true" />
           <span
             aria-hidden="true"
             style={{
@@ -238,7 +239,7 @@ export function Header({ onOpenSidebar }: HeaderProps) {
                   onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'oklch(0.96 0.04 22)'; }}
                   onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
                 >
-                  <LogOut size={14} aria-hidden="true" />
+                  <HugeiconsIcon icon={Logout01Icon} size={14} aria-hidden="true" />
                   Sign out
                 </button>
               </div>

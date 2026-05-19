@@ -2,14 +2,15 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, LayoutDashboard, Ticket, BarChart3, BookOpen, Plus, X } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Search01Icon, DashboardSquare01Icon, Ticket01Icon, BarChartIcon, Book01Icon, Add01Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
 
 const actions = [
-  { label: 'Create new ticket',  href: '/tickets/new',  icon: Plus,           kbd: '⌘N'  },
-  { label: 'Go to Inbox',        href: '/',             icon: LayoutDashboard              },
-  { label: 'Go to Tickets',      href: '/tickets',      icon: Ticket                       },
-  { label: 'Go to Analytics',    href: '/analytics',    icon: BarChart3                    },
-  { label: 'Knowledge base',     href: '/knowledge',    icon: BookOpen                     },
+  { label: 'Create new ticket',  href: '/tickets/new',  icon: Add01Icon,           kbd: '⌘N'  },
+  { label: 'Go to Inbox',        href: '/',             icon: DashboardSquare01Icon              },
+  { label: 'Go to Tickets',      href: '/tickets',      icon: Ticket01Icon                       },
+  { label: 'Go to Analytics',    href: '/analytics',    icon: BarChartIcon                       },
+  { label: 'Knowledge base',     href: '/knowledge',    icon: Book01Icon                         },
 ];
 
 export function CommandPalette() {
@@ -78,7 +79,7 @@ export function CommandPalette() {
           padding:      '14px 18px',
           borderBottom: '1px solid var(--border)',
         }}>
-          <Search size={16} color="var(--mute)" />
+          <HugeiconsIcon icon={Search01Icon} size={16} color="var(--mute)" />
           <input
             autoFocus
             value={query}
@@ -110,7 +111,7 @@ export function CommandPalette() {
               transition:      'all 100ms',
             }}
           >
-            <X size={12} />
+            <HugeiconsIcon icon={Cancel01Icon} size={12} />
           </button>
         </div>
 
@@ -133,7 +134,6 @@ export function CommandPalette() {
               </div>
             ) : (
               filtered.map((a) => {
-                const Icon = a.icon;
                 return (
                   <button
                     key={a.href}
@@ -154,7 +154,7 @@ export function CommandPalette() {
                     onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
                     onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
                   >
-                    <span style={{ color: 'var(--mute)', display: 'flex' }}><Icon size={15} /></span>
+                    <span style={{ color: 'var(--mute)', display: 'flex' }}><HugeiconsIcon icon={a.icon} size={15} /></span>
                     <span style={{ flex: 1, fontSize: '13px', fontWeight: 500, letterSpacing: '-0.005em' }}>{a.label}</span>
                     {a.kbd && (
                       <kbd style={{

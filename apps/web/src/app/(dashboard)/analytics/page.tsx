@@ -3,7 +3,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { apiClient } from '@/lib/api';
-import { TrendingUp, Users, Calendar, Shield, Download, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { TrendingUpDownIcon, UserGroupIcon, Calendar01Icon, ShieldKeyIcon, Download01Icon, ArrowUpDownIcon, ArrowUp01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { BarChart } from '@/components/analytics/bar-chart';
 import { Heatmap } from '@/components/analytics/heatmap';
 
@@ -58,10 +59,10 @@ const DAY_RANGES = [
 ] as const;
 
 const TABS = [
-  { key: 'trends',  label: 'Trends',  icon: TrendingUp },
-  { key: 'agents',  label: 'Agents',  icon: Users      },
-  { key: 'heatmap', label: 'Heatmap', icon: Calendar   },
-  { key: 'sla',     label: 'SLA',     icon: Shield     },
+  { key: 'trends',  label: 'Trends',  icon: TrendingUpDownIcon },
+  { key: 'agents',  label: 'Agents',  icon: UserGroupIcon      },
+  { key: 'heatmap', label: 'Heatmap', icon: Calendar01Icon     },
+  { key: 'sla',     label: 'SLA',     icon: ShieldKeyIcon      },
 ] as const;
 
 /* ─── small primitives ─── */
@@ -265,9 +266,9 @@ function AgentsTab() {
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                       {col.label}
                       {sortKey === col.key ? (
-                        sortDir === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />
+                        sortDir === 'asc' ? <HugeiconsIcon icon={ArrowUp01Icon} size={11} /> : <HugeiconsIcon icon={ArrowDown01Icon} size={11} />
                       ) : (
-                        <ArrowUpDown size={11} style={{ opacity: 0.4 }} />
+                        <HugeiconsIcon icon={ArrowUpDownIcon} size={11} style={{ opacity: 0.4 }} />
                       )}
                     </span>
                   </th>
@@ -507,7 +508,7 @@ function ExportButton() {
       onMouseEnter={(e) => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-3)'; }}
       onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
     >
-      <Download size={14} />
+      <HugeiconsIcon icon={Download01Icon} size={14} />
       Export CSV
     </button>
   );
@@ -544,7 +545,6 @@ export default function AnalyticsPage() {
       {/* Tab bar */}
       <div style={{ display: 'flex', gap: '4px', padding: '4px', background: 'var(--surface-2)', borderRadius: '12px', alignSelf: 'flex-start' }}>
         {TABS.map((t) => {
-          const Icon = t.icon;
           const active = tab === t.key;
           return (
             <button
@@ -566,7 +566,7 @@ export default function AnalyticsPage() {
                 boxShadow:    active ? 'var(--shadow-sm)' : 'none',
               }}
             >
-              <Icon size={14} />
+              <HugeiconsIcon icon={t.icon} size={14} />
               {t.label}
             </button>
           );

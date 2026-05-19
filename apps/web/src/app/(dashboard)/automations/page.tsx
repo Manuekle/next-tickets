@@ -7,7 +7,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { apiClient } from '@/lib/api';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Workflow, X, ChevronDown } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Add01Icon, PencilEdit01Icon, Delete01Icon, WorkflowSquare01Icon, Cancel01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons';
 
 /* ─── constants ─── */
 
@@ -163,7 +164,7 @@ function NativeSelect({ value, onChange, options, placeholder }: {
         {placeholder && <option value="">{placeholder}</option>}
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
-      <ChevronDown size={12} style={{ position: 'absolute', right: '9px', top: '50%', transform: 'translateY(-50%)', color: 'var(--mute)', pointerEvents: 'none' }} />
+      <HugeiconsIcon icon={ArrowDown01Icon} size={12} color="var(--mute)" style={{ position: 'absolute', right: '9px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
     </div>
   );
 }
@@ -325,7 +326,7 @@ function AutomationDialog({ open, onClose, editRule }: {
             {isEdit ? 'Edit automation rule' : 'Create automation rule'}
           </h2>
           <button onClick={onClose} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'var(--surface-2)', color: 'var(--mute)', cursor: 'pointer' }}>
-            <X size={14} />
+            <HugeiconsIcon icon={Cancel01Icon} size={14} />
           </button>
         </div>
 
@@ -359,7 +360,7 @@ function AutomationDialog({ open, onClose, editRule }: {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                 <FieldLabel>Conditions</FieldLabel>
                 <button type="button" onClick={() => addCond({ field: 'priority', operator: 'equals', value: '' })} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', fontSize: '11px', fontWeight: 600, border: 0, borderRadius: '7px', background: 'var(--surface-2)', color: 'var(--ink-soft)', cursor: 'pointer' }}>
-                  <Plus size={11} /> Add
+                  <HugeiconsIcon icon={Add01Icon} size={11} /> Add
                 </button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -375,7 +376,7 @@ function AutomationDialog({ open, onClose, editRule }: {
                       <input {...register(`conditions.${index}.value`)} placeholder="Value" style={inputStyle} />
                     </div>
                     <button type="button" onClick={() => removeCond(index)} style={{ width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'transparent', color: 'oklch(0.50 0.20 22)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '1px' }}>
-                      <Trash2 size={13} />
+                      <HugeiconsIcon icon={Delete01Icon} size={13} />
                     </button>
                   </div>
                 ))}
@@ -387,7 +388,7 @@ function AutomationDialog({ open, onClose, editRule }: {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
                 <FieldLabel>Actions *</FieldLabel>
                 <button type="button" onClick={() => addAct({ type: 'assign_user', params: { userId: '' } } as any)} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', fontSize: '11px', fontWeight: 600, border: 0, borderRadius: '7px', background: 'var(--surface-2)', color: 'var(--ink-soft)', cursor: 'pointer' }}>
-                  <Plus size={11} /> Add
+                  <HugeiconsIcon icon={Add01Icon} size={11} /> Add
                 </button>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -408,7 +409,7 @@ function AutomationDialog({ open, onClose, editRule }: {
                         )} />
                       </div>
                       <button type="button" onClick={() => removeAct(index)} style={{ width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'transparent', color: 'oklch(0.50 0.20 22)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <Trash2 size={13} />
+                        <HugeiconsIcon icon={Delete01Icon} size={13} />
                       </button>
                     </div>
                     {renderActionParams(index)}
@@ -495,7 +496,7 @@ export default function AutomationsPage() {
           onClick={openCreate}
           style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', fontSize: '13px', fontWeight: 600, border: 0, borderRadius: '10px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', color: '#fff', cursor: 'pointer', boxShadow: '0 4px 12px -4px var(--accent-glow)' }}
         >
-          <Plus size={14} /> New Rule
+          <HugeiconsIcon icon={Add01Icon} size={14} /> New Rule
         </button>
       </div>
 
@@ -516,12 +517,12 @@ export default function AutomationsPage() {
       {!isLoading && rules.length === 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '80px 0' }}>
           <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--mute)' }}>
-            <Workflow size={24} />
+            <HugeiconsIcon icon={WorkflowSquare01Icon} size={24} />
           </div>
           <p style={{ fontSize: '15px', fontWeight: 500, color: 'var(--ink)', margin: 0 }}>No automation rules yet</p>
           <p style={{ fontSize: '13px', color: 'var(--mute)', margin: 0 }}>Create rules to automate repetitive ticket workflows.</p>
           <button onClick={openCreate} style={{ marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 18px', fontSize: '13px', fontWeight: 600, border: 0, borderRadius: '10px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', color: '#fff', cursor: 'pointer', boxShadow: '0 4px 12px -4px var(--accent-glow)' }}>
-            <Plus size={14} /> Create Rule
+            <HugeiconsIcon icon={Add01Icon} size={14} /> Create Rule
           </button>
         </div>
       )}
@@ -571,10 +572,10 @@ export default function AutomationsPage() {
                 />
                 <div style={{ display: 'flex', gap: '4px' }}>
                   <button onClick={() => openEdit(rule)} style={{ width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'transparent', color: 'var(--mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 100ms' }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--ink)'; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--mute)'; }}>
-                    <Pencil size={13} />
+                    <HugeiconsIcon icon={PencilEdit01Icon} size={13} />
                   </button>
                   <button onClick={() => { if (window.confirm('Delete this rule?')) deleteMutation.mutate(rule.id); }} style={{ width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'transparent', color: 'var(--mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 100ms' }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'oklch(0.96 0.04 22)'; (e.currentTarget as HTMLButtonElement).style.color = 'oklch(0.50 0.20 22)'; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--mute)'; }}>
-                    <Trash2 size={13} />
+                    <HugeiconsIcon icon={Delete01Icon} size={13} />
                   </button>
                 </div>
               </div>

@@ -10,7 +10,8 @@ import { Role } from '@next-tickets/shared';
 import { CommentList } from '@/components/comments/comment-list';
 import { CommentInput } from '@/components/comments/comment-input';
 import { format } from 'date-fns';
-import { ChevronRight, MessageSquare, Info } from 'lucide-react';
+import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
+import { ArrowRight01Icon, BubbleChatIcon, InformationCircleIcon } from '@hugeicons/core-free-icons';
 import { toast } from 'sonner';
 
 type Tab = 'conversation' | 'details';
@@ -269,9 +270,9 @@ export default function TicketDetailPage() {
     );
   }
 
-  const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
-    { key: 'conversation', label: `Conversation (${ticket.commentCount ?? comments.length})`, icon: MessageSquare },
-    { key: 'details',      label: 'Details',                                                    icon: Info         },
+  const tabs: { key: Tab; label: string; icon: IconSvgElement }[] = [
+    { key: 'conversation', label: `Conversation (${ticket.commentCount ?? comments.length})`, icon: BubbleChatIcon          },
+    { key: 'details',      label: 'Details',                                                    icon: InformationCircleIcon  },
   ];
 
   return (
@@ -286,7 +287,7 @@ export default function TicketDetailPage() {
         >
           Tickets
         </button>
-        <ChevronRight size={11} />
+        <HugeiconsIcon icon={ArrowRight01Icon} size={11} />
         <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink)', fontWeight: 500 }}>{ticketId}</span>
       </div>
 
@@ -320,7 +321,6 @@ export default function TicketDetailPage() {
       {/* Tab bar */}
       <div style={{ display: 'flex', gap: '0', borderBottom: '1px solid var(--hairline)' }}>
         {tabs.map((t) => {
-          const Icon = t.icon;
           const active = activeTab === t.key;
           return (
             <button
@@ -342,7 +342,7 @@ export default function TicketDetailPage() {
                 transition:    'all 100ms',
               }}
             >
-              <Icon size={13} />
+              <HugeiconsIcon icon={t.icon} size={13} />
               {t.label}
             </button>
           );

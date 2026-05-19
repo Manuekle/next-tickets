@@ -7,7 +7,8 @@ import { apiClient } from '@/lib/api';
 import { ArticleCard } from '@/components/knowledge/article-card';
 import { useAuthStore } from '@/stores/auth-store';
 import { Role } from '@next-tickets/shared';
-import { Plus, Search, BookOpen } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Add01Icon, Search01Icon, Book01Icon } from '@hugeicons/core-free-icons';
 
 interface Article {
   id: string;
@@ -93,7 +94,7 @@ export default function KnowledgePage() {
               boxShadow:    '0 4px 12px -4px var(--accent-glow)',
               transition:   'all 120ms',
             }}>
-              <Plus size={14} />
+              <HugeiconsIcon icon={Add01Icon} size={14} />
               New Article
             </button>
           </Link>
@@ -104,12 +105,12 @@ export default function KnowledgePage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {/* Search */}
         <div style={{ position: 'relative', maxWidth: '480px' }}>
-          <Search size={13} style={{
+          <HugeiconsIcon icon={Search01Icon} size={13} color="var(--mute)" style={{
             position:  'absolute',
             left:      '12px',
             top:       '50%',
             transform: 'translateY(-50%)',
-            color:     'var(--mute)',
+            pointerEvents: 'none',
           }} />
           <input
             type="text"
@@ -212,7 +213,7 @@ export default function KnowledgePage() {
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: 'var(--mute)',
           }}>
-            <BookOpen size={24} />
+            <HugeiconsIcon icon={Book01Icon} size={24} />
           </div>
           <p style={{ fontSize: '15px', color: 'var(--ink)', fontWeight: 500, margin: 0 }}>No articles found</p>
           <p style={{ fontSize: '13px', color: 'var(--mute)', margin: 0 }}>Try adjusting your search or filter criteria.</p>

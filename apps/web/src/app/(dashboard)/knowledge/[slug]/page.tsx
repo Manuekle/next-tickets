@@ -6,7 +6,8 @@ import { apiClient } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { Role } from '@next-tickets/shared';
 import { format } from 'date-fns';
-import { ArrowLeft, ThumbsUp, ThumbsDown, User, Pencil } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { ArrowLeft01Icon, ThumbsUpIcon, ThumbsDownIcon, User02Icon, PencilEdit01Icon } from '@hugeicons/core-free-icons';
 import { toast } from 'sonner';
 
 interface ArticleDetail {
@@ -93,13 +94,13 @@ export default function ArticleDetailPage() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '780px' }}>
       <div>
         <button onClick={() => router.push('/knowledge')} style={{ ...btnSecondary, marginBottom: '12px', background: 'transparent', boxShadow: 'none', paddingLeft: 0, color: 'var(--mute)' }}>
-          <ArrowLeft size={14} /> Back to Knowledge Base
+          <HugeiconsIcon icon={ArrowLeft01Icon} size={14} /> Back to Knowledge Base
         </button>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
           <h1 style={{ fontSize: '26px', fontFamily: 'var(--font-display)', fontWeight: 400, color: 'var(--ink)', letterSpacing: '-0.02em', lineHeight: 1.1, margin: 0 }}>{article.title}</h1>
           {isAdminOrAgent && (
             <button style={{ ...btnSecondary, flexShrink: 0 }} onClick={() => router.push(`/knowledge/${article.slug}/edit`)}>
-              <Pencil size={13} /> Edit
+              <HugeiconsIcon icon={PencilEdit01Icon} size={13} /> Edit
             </button>
           )}
         </div>
@@ -111,7 +112,7 @@ export default function ArticleDetailPage() {
           )}
           {article.author && (
             <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--mute)' }}>
-              <User size={12} /> {article.author.name}
+              <HugeiconsIcon icon={User02Icon} size={12} /> {article.author.name}
             </span>
           )}
           <span style={{ fontSize: '12px', color: 'var(--mute)' }}>{format(new Date(article.createdAt), 'MMM d, yyyy')}</span>
@@ -142,10 +143,10 @@ export default function ArticleDetailPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
         <span style={{ fontSize: '13px', color: 'var(--mute)' }}>Was this helpful?</span>
         <button style={btnSecondary} onClick={() => helpfulMutation.mutate()} disabled={helpfulMutation.isPending}>
-          <ThumbsUp size={13} /> Yes ({article.helpfulCount})
+          <HugeiconsIcon icon={ThumbsUpIcon} size={13} /> Yes ({article.helpfulCount})
         </button>
         <button style={btnSecondary} onClick={() => notHelpfulMutation.mutate()} disabled={notHelpfulMutation.isPending}>
-          <ThumbsDown size={13} /> No ({article.notHelpfulCount})
+          <HugeiconsIcon icon={ThumbsDownIcon} size={13} /> No ({article.notHelpfulCount})
         </button>
       </div>
     </div>

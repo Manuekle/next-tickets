@@ -7,7 +7,8 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import { toast } from 'sonner';
-import { ChevronRight } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
 
 const ticketSchema = z.object({
   title:       z.string().min(1, 'Title is required').max(200),
@@ -102,7 +103,7 @@ export default function NewTicketPage() {
         >
           Tickets
         </button>
-        <ChevronRight size={11} />
+        <HugeiconsIcon icon={ArrowRight01Icon} size={11} />
         <span style={{ color: 'var(--ink)', fontWeight: 500 }}>New ticket</span>
       </div>
 

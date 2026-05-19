@@ -2,20 +2,21 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  LayoutDashboard, Ticket, BookOpen, BarChart3, Settings,
-  Workflow, Gauge, Shield, Search, ChevronRight, X,
-} from 'lucide-react';
+  DashboardSquare01Icon, Ticket01Icon, Book01Icon, BarChartIcon, Settings01Icon,
+  WorkflowSquare01Icon, DashboardSpeed01Icon, SecurityLockIcon, Search01Icon, ArrowRight01Icon, Cancel01Icon,
+} from '@hugeicons/core-free-icons';
 import { useAuthStore } from '@/stores/auth-store';
 
 const navItems = [
-  { href: '/',             label: 'Inbox',       icon: LayoutDashboard, count: 3  },
-  { href: '/tickets',      label: 'Tickets',     icon: Ticket,          count: 24 },
-  { href: '/analytics',    label: 'Analytics',   icon: BarChart3                  },
-  { href: '/sla',          label: 'SLA',         icon: Gauge                      },
-  { href: '/automations',  label: 'Automations', icon: Workflow                   },
-  { href: '/knowledge',    label: 'Knowledge',   icon: BookOpen                   },
-  { href: '/admin',        label: 'Admin',       icon: Shield                     },
+  { href: '/',             label: 'Inbox',       icon: DashboardSquare01Icon, count: 3  },
+  { href: '/tickets',      label: 'Tickets',     icon: Ticket01Icon,          count: 24 },
+  { href: '/analytics',    label: 'Analytics',   icon: BarChartIcon                     },
+  { href: '/sla',          label: 'SLA',         icon: DashboardSpeed01Icon             },
+  { href: '/automations',  label: 'Automations', icon: WorkflowSquare01Icon             },
+  { href: '/knowledge',    label: 'Knowledge',   icon: Book01Icon                       },
+  { href: '/admin',        label: 'Admin',       icon: SecurityLockIcon                 },
 ];
 
 const savedViews = [
@@ -83,7 +84,7 @@ export function Sidebar({ onClose }: SidebarProps) {
               display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
             }}
           >
-            <X size={13} aria-hidden="true" />
+            <HugeiconsIcon icon={Cancel01Icon} size={13} aria-hidden="true" />
           </button>
         )}
       </div>
@@ -112,7 +113,7 @@ export function Sidebar({ onClose }: SidebarProps) {
         onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--sb-surface-2)'; }}
         onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--sb-surface)'; }}
       >
-        <Search size={13} aria-hidden="true" />
+        <HugeiconsIcon icon={Search01Icon} size={13} aria-hidden="true" />
         <span style={{ flex: 1 }}>Search or jump to…</span>
         <Kbd>⌘K</Kbd>
       </button>
@@ -122,7 +123,6 @@ export function Sidebar({ onClose }: SidebarProps) {
         <SectionLabel>Workspace</SectionLabel>
 
         {navItems.map((item) => {
-          const Icon     = item.icon;
           const isActive = pathname === item.href;
           return (
             <Link
@@ -134,7 +134,7 @@ export function Sidebar({ onClose }: SidebarProps) {
             >
               <NavItem active={isActive}>
                 <span style={{ display: 'flex', color: isActive ? '#fff' : 'var(--sb-mute)', flexShrink: 0 }} aria-hidden="true">
-                  <Icon size={15} />
+                  <HugeiconsIcon icon={item.icon} size={15} />
                 </span>
                 <span style={{ flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {item.label}
@@ -202,7 +202,7 @@ export function Sidebar({ onClose }: SidebarProps) {
         <Link href="/settings" aria-current={pathname === '/settings' ? 'page' : undefined} onClick={onClose} style={{ textDecoration: 'none' }}>
           <NavItem active={pathname === '/settings'}>
             <span style={{ display: 'flex', color: pathname === '/settings' ? '#fff' : 'var(--sb-mute)', flexShrink: 0 }} aria-hidden="true">
-              <Settings size={15} />
+              <HugeiconsIcon icon={Settings01Icon} size={15} />
             </span>
             <span style={{ flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Settings
@@ -236,7 +236,7 @@ export function Sidebar({ onClose }: SidebarProps) {
               {user?.role?.toLowerCase() || 'agent'} · open-tickets
             </div>
           </div>
-          <ChevronRight size={12} color="var(--sb-mute)" aria-hidden="true" />
+          <HugeiconsIcon icon={ArrowRight01Icon} size={12} color="var(--sb-mute)" aria-hidden="true" />
         </Link>
       </div>
     </aside>

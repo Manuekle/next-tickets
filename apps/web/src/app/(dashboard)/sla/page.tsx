@@ -3,7 +3,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import { toast } from 'sonner';
-import { Gauge, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
+import { DashboardSpeed01Icon, Alert02Icon, CheckmarkCircle01Icon, Clock01Icon } from '@hugeicons/core-free-icons';
 
 interface SlaMetrics {
   totalTickets: number;
@@ -40,14 +41,14 @@ function CardHead({ title }: { title: string }) {
   );
 }
 
-function StatCard({ title, value, icon: Icon, loading, danger }: {
-  title: string; value?: number | string; icon: React.ElementType; loading: boolean; danger?: boolean;
+function StatCard({ title, value, icon, loading, danger }: {
+  title: string; value?: number | string; icon: IconSvgElement; loading: boolean; danger?: boolean;
 }) {
   return (
     <Card>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
         <div style={{ fontSize: '11px', color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>{title}</div>
-        <Icon size={15} style={{ color: danger ? 'oklch(0.50 0.20 22)' : 'var(--mute)' }} />
+        <HugeiconsIcon icon={icon} size={15} color={danger ? 'oklch(0.50 0.20 22)' : 'var(--mute)'} />
       </div>
       {loading ? (
         <div style={{ height: '32px', width: '60px', background: 'var(--surface-2)', borderRadius: '8px' }} />
@@ -135,17 +136,17 @@ export default function SlaPage() {
             transition:   'all 120ms',
           }}
         >
-          <AlertTriangle size={14} />
+          <HugeiconsIcon icon={Alert02Icon} size={14} />
           Check Breaches
         </button>
       </div>
 
       {/* KPI row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
-        <StatCard title="Compliance Rate" value={metrics ? `${metrics.slaComplianceRate}%` : undefined} icon={CheckCircle} loading={isLoading} />
-        <StatCard title="Active SLAs"     value={metrics?.totalTickets}   icon={Gauge}         loading={isLoading} />
-        <StatCard title="Breached"         value={metrics?.breachedCount}  icon={AlertTriangle}  loading={isLoading} danger />
-        <StatCard title="Avg Resolution"   value={metrics ? `${metrics.avgResolutionTime}h` : undefined} icon={Clock} loading={isLoading} />
+        <StatCard title="Compliance Rate" value={metrics ? `${metrics.slaComplianceRate}%` : undefined} icon={CheckmarkCircle01Icon} loading={isLoading} />
+        <StatCard title="Active SLAs"     value={metrics?.totalTickets}   icon={DashboardSpeed01Icon}   loading={isLoading} />
+        <StatCard title="Breached"         value={metrics?.breachedCount}  icon={Alert02Icon}            loading={isLoading} danger />
+        <StatCard title="Avg Resolution"   value={metrics ? `${metrics.avgResolutionTime}h` : undefined} icon={Clock01Icon} loading={isLoading} />
       </div>
 
       {/* Detail cards */}

@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { apiClient } from '@/lib/api';
 import { toast } from 'sonner';
 import { useState } from 'react';
-import { CheckCircle } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { CheckmarkCircle01Icon } from '@hugeicons/core-free-icons';
 
 const forgotSchema = z.object({ email: z.string().email('Invalid email') });
 type ForgotForm = z.infer<typeof forgotSchema>;
@@ -35,7 +36,7 @@ export default function ForgotPasswordPage() {
     return (
       <div style={{ width: '100%', background: 'var(--surface)', borderRadius: '18px', boxShadow: 'var(--shadow-lg)', padding: '40px 28px', textAlign: 'center' }}>
         <div style={{ width: '52px', height: '52px', borderRadius: '999px', background: 'oklch(0.94 0.06 148)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'oklch(0.52 0.18 148)' }}>
-          <CheckCircle size={24} />
+          <HugeiconsIcon icon={CheckmarkCircle01Icon} size={24} />
         </div>
         <h1 style={{ fontSize: '20px', fontFamily: 'var(--font-display)', fontWeight: 400, color: 'var(--ink)', letterSpacing: '-0.02em', margin: '0 0 8px' }}>
           Check your email

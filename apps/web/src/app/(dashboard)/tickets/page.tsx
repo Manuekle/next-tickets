@@ -4,9 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
+import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  Search, Plus, Filter, ArrowUpDown, LayoutList, Columns, CheckSquare, X,
-} from 'lucide-react';
+  Search01Icon, Add01Icon, FilterIcon, ArrowUpDownIcon, ListViewIcon, GridViewIcon, CheckmarkSquareIcon, Cancel01Icon,
+} from '@hugeicons/core-free-icons';
 
 const STATUS_META: Record<string, { label: string; hue: number; dotChroma: number }> = {
   OPEN:                { label: 'Open',        hue: 235, dotChroma: 0.18 },
@@ -220,7 +221,7 @@ export default function TicketsPage() {
               boxShadow:     'var(--shadow-sm), var(--shadow-inset)',
             }}
           >
-            <CheckSquare size={14} />
+            <HugeiconsIcon icon={CheckmarkSquareIcon} size={14} />
             Saved views
           </button>
           <button
@@ -240,7 +241,7 @@ export default function TicketsPage() {
               boxShadow:     'inset 0 1px 0 rgba(255,255,255,0.18), 0 4px 14px -4px var(--accent-glow)',
             }}
           >
-            <Plus size={14} />
+            <HugeiconsIcon icon={Add01Icon} size={14} />
             New ticket
           </button>
         </div>
@@ -297,7 +298,7 @@ export default function TicketsPage() {
           boxShadow:    'var(--shadow-inset), inset 0 0 0 1px var(--hairline)',
           transition:   'box-shadow 120ms',
         }}>
-          <Search size={13} color="var(--mute)" />
+          <HugeiconsIcon icon={Search01Icon} size={13} color="var(--mute)" />
           <input
             type="text"
             value={search}
@@ -320,7 +321,7 @@ export default function TicketsPage() {
           color: 'var(--ink)', fontSize: '12px', fontWeight: 500, borderRadius: '10px',
           cursor: 'pointer', boxShadow: 'var(--shadow-sm), var(--shadow-inset)',
         }}>
-          <Filter size={13} /> Filter
+          <HugeiconsIcon icon={FilterIcon} size={13} /> Filter
         </button>
 
         <button style={{
@@ -329,7 +330,7 @@ export default function TicketsPage() {
           color: 'var(--ink)', fontSize: '12px', fontWeight: 500, borderRadius: '10px',
           cursor: 'pointer', boxShadow: 'var(--shadow-sm), var(--shadow-inset)',
         }}>
-          <ArrowUpDown size={13} /> Sort
+          <HugeiconsIcon icon={ArrowUpDownIcon} size={13} /> Sort
         </button>
 
         <div style={{ width: '1px', height: '22px', background: 'var(--hairline)' }} />
@@ -360,7 +361,7 @@ export default function TicketsPage() {
                 transition:   'all 130ms',
               }}
             >
-              {v === 'table' ? <LayoutList size={12} /> : <Columns size={12} />}
+              {v === 'table' ? <HugeiconsIcon icon={ListViewIcon} size={12} /> : <HugeiconsIcon icon={GridViewIcon} size={12} />}
               {v.charAt(0).toUpperCase() + v.slice(1)}
             </button>
           ))}
@@ -400,7 +401,7 @@ export default function TicketsPage() {
               width: '22px', height: '22px', border: 0, borderRadius: '5px',
               background: 'transparent', color: 'var(--accent-fg-on-tint)', cursor: 'pointer',
             }}
-          ><X size={13} /></button>
+          ><HugeiconsIcon icon={Cancel01Icon} size={13} /></button>
         </div>
       )}
 
@@ -566,7 +567,7 @@ export default function TicketsPage() {
                     onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'var(--surface-3)'; b.style.color = 'var(--ink)'; }}
                     onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'transparent'; b.style.color = 'var(--mute)'; }}
                   >
-                    <Plus size={13} />
+                    <HugeiconsIcon icon={Add01Icon} size={13} />
                   </button>
                 </div>
 

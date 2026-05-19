@@ -2,7 +2,8 @@
 
 import { useAuthStore } from '@/stores/auth-store';
 import { useTheme } from 'next-themes';
-import { Sun, Moon, LogOut } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Sun01Icon, Moon01Icon, Logout01Icon } from '@hugeicons/core-free-icons';
 import { useRouter } from 'next/navigation';
 
 function SettingsCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
@@ -72,7 +73,7 @@ export default function SettingsPage() {
           onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-3)'; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
         >
-          {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
+          {theme === 'dark' ? <HugeiconsIcon icon={Sun01Icon} size={15} /> : <HugeiconsIcon icon={Moon01Icon} size={15} />}
           {theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
         </button>
       </SettingsCard>
@@ -101,7 +102,7 @@ export default function SettingsPage() {
           onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'oklch(0.92 0.06 22)'; }}
           onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'oklch(0.96 0.04 22)'; }}
         >
-          <LogOut size={14} />
+          <HugeiconsIcon icon={Logout01Icon} size={14} />
           Sign Out
         </button>
       </SettingsCard>
