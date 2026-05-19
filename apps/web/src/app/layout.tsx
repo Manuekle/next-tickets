@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Providers } from '@/components/providers';
 import './globals.css';
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans } from 'next/font/google';
 
 const font = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -10,13 +10,19 @@ const font = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'Next Tickets',
-  description: 'Ticket management system',
+  title: 'Helix — Ticket Management',
+  description: 'Modern support ticket management',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={font.variable}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={font.variable}
+      data-theme="light"
+      data-accent="indigo"
+    >
       <body>
         <Providers>{children}</Providers>
       </body>

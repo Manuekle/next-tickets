@@ -2,7 +2,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import { Card, CardHeader, CardContent, Button, Skeleton, Chip } from '@heroui/react';
 import { toast } from 'sonner';
 import { Gauge, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 
@@ -15,17 +14,70 @@ interface SlaMetrics {
   byPriority: { priority: string; total: number; breached: number }[];
 }
 
+const PRIORITY_HUE: Record<string, number> = {
+  LOW: 148, MEDIUM: 50, HIGH: 28, CRITICAL: 22,
+};
+
+function Card({ children, padded = true }: { children: React.ReactNode; padded?: boolean }) {
+  return (
+    <div style={{
+      background:   'var(--surface)',
+      borderRadius: '16px',
+      boxShadow:    'var(--shadow-md)',
+      overflow:     'hidden',
+      padding:      padded ? '20px' : 0,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+function CardHead({ title }: { title: string }) {
+  return (
+    <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--hairline)' }}>
+      <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.01em' }}>{title}</span>
+    </div>
+  );
+}
+
+function StatCard({ title, value, icon: Icon, loading, danger }: {
+  title: string; value?: number | string; icon: React.ElementType; loading: boolean; danger?: boolean;
+}) {
+  return (
+    <Card>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+        <div style={{ fontSize: '11px', color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>{title}</div>
+        <Icon size={15} style={{ color: danger ? 'oklch(0.50 0.20 22)' : 'var(--mute)' }} />
+      </div>
+      {loading ? (
+        <div style={{ height: '32px', width: '60px', background: 'var(--surface-2)', borderRadius: '8px' }} />
+      ) : (
+        <div style={{
+          fontSize:      '30px',
+          fontFamily:    'var(--font-display)',
+          fontWeight:    400,
+          color:         danger ? 'oklch(0.50 0.20 22)' : 'var(--ink)',
+          letterSpacing: '-0.03em',
+          lineHeight:    1,
+        }}>
+          {value ?? 0}
+        </div>
+      )}
+    </Card>
+  );
+}
+
 export default function SlaPage() {
   const queryClient = useQueryClient();
 
-  const { data, isLoading, error } = useQuery({
+  const { data: metrics, isLoading, error } = useQuery({
     queryKey: ['sla-metrics'],
-    queryFn: () => apiClient<SlaMetrics>('/sla/metrics'),
+    queryFn:  () => apiClient<SlaMetrics>('/sla/metrics'),
   });
 
   const breachMutation = useMutation({
     mutationFn: () => apiClient<{ breached: number }>('/sla/check-breaches', { method: 'POST' }),
-    onSuccess: (res) => {
+    onSuccess:  (res) => {
       toast.success(`Checked breaches: ${res.breached} found`);
       queryClient.invalidateQueries({ queryKey: ['sla-metrics'] });
     },
@@ -34,111 +86,147 @@ export default function SlaPage() {
 
   if (error) {
     return (
-      <div className="flex h-40 items-center justify-center text-[#DE350B]">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '160px', fontSize: '13px', color: 'oklch(0.50 0.20 22)' }}>
         Failed to load SLA metrics
       </div>
     );
   }
 
-  const metrics = data;
+  const pct = metrics?.slaComplianceRate ?? 0;
+  const R = 52, C = 2 * Math.PI * R;
+  const strokeColor = pct >= 90 ? 'oklch(0.62 0.18 148)' : pct >= 75 ? 'oklch(0.65 0.18 50)' : 'oklch(0.60 0.20 22)';
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {/* Page head */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <h1 className="text-xl font-semibold text-[#172B4D]">SLA Dashboard</h1>
-          <p className="text-sm text-[#6B778C]">Service Level Agreement metrics and compliance</p>
+          <h1 style={{
+            fontSize:      '36px',
+            fontFamily:    'var(--font-display)',
+            fontWeight:    400,
+            color:         'var(--ink)',
+            letterSpacing: '-0.02em',
+            lineHeight:    1.05,
+            margin:        0,
+          }}>
+            SLA Dashboard
+          </h1>
+          <p style={{ fontSize: '13px', color: 'var(--mute)', marginTop: '6px' }}>
+            Service Level Agreement metrics and compliance
+          </p>
         </div>
-        <Button variant="secondary" size="sm" onClick={() => breachMutation.mutate()} isDisabled={breachMutation.isPending}>
-          <AlertTriangle className="mr-2 h-4 w-4" /> Check Breaches
-        </Button>
+        <button
+          onClick={() => breachMutation.mutate()}
+          disabled={breachMutation.isPending}
+          style={{
+            display:      'inline-flex',
+            alignItems:   'center',
+            gap:          '6px',
+            padding:      '8px 14px',
+            fontSize:     '13px',
+            fontWeight:   500,
+            border:       0,
+            borderRadius: '10px',
+            background:   'var(--surface-2)',
+            color:        breachMutation.isPending ? 'var(--mute)' : 'var(--ink-soft)',
+            cursor:       breachMutation.isPending ? 'not-allowed' : 'pointer',
+            boxShadow:    'var(--shadow-sm)',
+            transition:   'all 120ms',
+          }}
+        >
+          <AlertTriangle size={14} />
+          Check Breaches
+        </button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* KPI row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
         <StatCard title="Compliance Rate" value={metrics ? `${metrics.slaComplianceRate}%` : undefined} icon={CheckCircle} loading={isLoading} />
-        <StatCard title="Active SLAs" value={metrics?.totalTickets} icon={Gauge} loading={isLoading} />
-        <StatCard title="Breached" value={metrics?.breachedCount} icon={AlertTriangle} loading={isLoading} danger />
-        <StatCard title="Avg Resolution" value={metrics ? `${metrics.avgResolutionTime}h` : undefined} icon={Clock} loading={isLoading} />
+        <StatCard title="Active SLAs"     value={metrics?.totalTickets}   icon={Gauge}         loading={isLoading} />
+        <StatCard title="Breached"         value={metrics?.breachedCount}  icon={AlertTriangle}  loading={isLoading} danger />
+        <StatCard title="Avg Resolution"   value={metrics ? `${metrics.avgResolutionTime}h` : undefined} icon={Clock} loading={isLoading} />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="rounded-sm border border-[#DFE1E6] bg-white">
-          <CardHeader><p className="text-sm font-semibold text-[#172B4D]">Compliance Overview</p></CardHeader>
-          <CardContent>
+      {/* Detail cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+        {/* Compliance ring */}
+        <Card padded={false}>
+          <CardHead title="Compliance Overview" />
+          <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px' }}>
             {isLoading ? (
-              <Skeleton className="h-32 w-full rounded-sm" />
+              <div style={{ width: '112px', height: '112px', borderRadius: '999px', background: 'var(--surface-2)' }} />
             ) : (
-              <div className="flex flex-col items-center gap-3 py-4">
-                <div className="relative h-28 w-28">
-                  <svg className="h-full w-full -rotate-90" viewBox="0 0 120 120">
-                    <circle cx="60" cy="60" r="52" fill="none" stroke="#DFE1E6" strokeWidth="10" />
+              <>
+                <div style={{ position: 'relative', width: '112px', height: '112px' }}>
+                  <svg width="112" height="112" viewBox="0 0 120 120" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle cx="60" cy="60" r={R} fill="none" stroke="var(--surface-2)" strokeWidth="10" />
                     <circle
-                      cx="60" cy="60" r="52"
+                      cx="60" cy="60" r={R}
                       fill="none"
-                      stroke={(metrics?.slaComplianceRate ?? 0) >= 90 ? '#36B37E' : (metrics?.slaComplianceRate ?? 0) >= 75 ? '#FFAB00' : '#DE350B'}
+                      stroke={strokeColor}
                       strokeWidth="10"
                       strokeLinecap="round"
-                      strokeDasharray={`${2 * Math.PI * 52}`}
-                      strokeDashoffset={`${2 * Math.PI * 52 * (1 - (metrics?.slaComplianceRate ?? 0) / 100)}`}
-                      className="transition-all duration-500"
+                      strokeDasharray={C}
+                      strokeDashoffset={C * (1 - pct / 100)}
+                      style={{ transition: 'stroke-dashoffset 600ms ease' }}
                     />
                   </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-[#172B4D]">{metrics?.slaComplianceRate ?? 0}%</span>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: '22px', fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.03em' }}>
+                      {pct}%
+                    </span>
                   </div>
                 </div>
-                <p className="text-sm text-[#6B778C]">{metrics?.withinSlaCount ?? 0} of {metrics?.totalTickets ?? 0} within SLA</p>
-              </div>
+                <p style={{ fontSize: '12px', color: 'var(--mute)', margin: 0 }}>
+                  {metrics?.withinSlaCount ?? 0} of {metrics?.totalTickets ?? 0} within SLA
+                </p>
+              </>
             )}
-          </CardContent>
+          </div>
         </Card>
 
-        <Card className="rounded-sm border border-[#DFE1E6] bg-white">
-          <CardHeader><p className="text-sm font-semibold text-[#172B4D]">By Priority</p></CardHeader>
-          <CardContent>
+        {/* By priority */}
+        <Card padded={false}>
+          <CardHead title="By Priority" />
+          <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {isLoading ? (
-              <Skeleton className="h-32 w-full rounded-sm" />
+              [1,2,3,4].map((i) => (
+                <div key={i} style={{ height: '28px', background: 'var(--surface-2)', borderRadius: '8px' }} />
+              ))
             ) : (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-xs font-semibold text-[#6B778C] uppercase tracking-wider">
+              <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', fontWeight: 600, color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                   <span>Priority</span>
                   <span>Total / Breached</span>
                 </div>
-                {metrics?.byPriority.map((p) => (
-                  <div key={p.priority} className="flex items-center justify-between">
-                    <Chip variant="soft" size="sm">{p.priority}</Chip>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-[#172B4D]">{p.total}</span>
-                      <span className="text-xs text-[#6B778C]">/</span>
-                      <span className={`text-sm ${p.breached > 0 ? 'text-[#DE350B] font-medium' : 'text-[#6B778C]'}`}>
-                        {p.breached}
+                {(metrics?.byPriority ?? []).map((p) => {
+                  const hue = PRIORITY_HUE[p.priority] ?? 270;
+                  return (
+                    <div key={p.priority} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{
+                        padding: '3px 9px', fontSize: '11px', fontWeight: 600,
+                        borderRadius: '6px',
+                        background: `oklch(0.94 0.06 ${hue})`,
+                        color:      `oklch(0.38 0.16 ${hue})`,
+                      }}>
+                        {p.priority}
                       </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                        <span style={{ color: 'var(--ink)', fontWeight: 500, fontFeatureSettings: '"tnum"' }}>{p.total}</span>
+                        <span style={{ color: 'var(--mute)' }}>/</span>
+                        <span style={{ color: p.breached > 0 ? 'oklch(0.50 0.20 22)' : 'var(--mute)', fontWeight: p.breached > 0 ? 600 : 400, fontFeatureSettings: '"tnum"' }}>
+                          {p.breached}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  );
+                })}
+              </>
             )}
-          </CardContent>
+          </div>
         </Card>
       </div>
     </div>
-  );
-}
-
-function StatCard({ title, value, icon: Icon, loading, danger }: any) {
-  return (
-    <Card className="rounded-sm border border-[#DFE1E6] bg-white">
-      <CardHeader className="flex items-center justify-between pb-2">
-        <span className="text-sm font-medium text-[#6B778C]">{title}</span>
-        <Icon className={`h-4 w-4 ${danger ? 'text-[#DE350B]' : 'text-[#6B778C]'}`} />
-      </CardHeader>
-      <CardContent>
-        {loading ? (
-          <Skeleton className="h-8 w-20 rounded-sm" />
-        ) : (
-          <p className={`text-2xl font-bold ${danger ? 'text-[#DE350B]' : 'text-[#172B4D]'}`}>{value ?? 0}</p>
-        )}
-      </CardContent>
-    </Card>
   );
 }

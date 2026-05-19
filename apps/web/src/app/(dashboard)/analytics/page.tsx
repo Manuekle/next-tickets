@@ -3,12 +3,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { apiClient } from '@/lib/api';
-import { Card, CardHeader, CardContent, Button, Skeleton, Chip } from '@heroui/react';
-import { Select, SelectTrigger, SelectValue, SelectPopover } from '@heroui/react';
-import { ListBox, ListBoxItem } from '@heroui/react';
+import { TrendingUp, Users, Calendar, Shield, Download, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { BarChart } from '@/components/analytics/bar-chart';
 import { Heatmap } from '@/components/analytics/heatmap';
-import { Download, TrendingUp, Users, Calendar, Shield, ArrowUpDown } from 'lucide-react';
 
 interface TrendDay {
   date: string;
@@ -60,6 +57,79 @@ const DAY_RANGES = [
   { label: '90 days', value: '90' },
 ] as const;
 
+const TABS = [
+  { key: 'trends',  label: 'Trends',  icon: TrendingUp },
+  { key: 'agents',  label: 'Agents',  icon: Users      },
+  { key: 'heatmap', label: 'Heatmap', icon: Calendar   },
+  { key: 'sla',     label: 'SLA',     icon: Shield     },
+] as const;
+
+/* ─── small primitives ─── */
+
+function Card({ children, padded = true }: { children: React.ReactNode; padded?: boolean }) {
+  return (
+    <div style={{
+      background:   'var(--surface)',
+      borderRadius: '16px',
+      boxShadow:    'var(--shadow-md)',
+      overflow:     'hidden',
+      padding:      padded ? '20px' : 0,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+function CardHead({ title, right }: { title: string; right?: React.ReactNode }) {
+  return (
+    <div style={{
+      display:       'flex',
+      alignItems:    'center',
+      justifyContent:'space-between',
+      padding:       '14px 20px',
+      borderBottom:  '1px solid var(--hairline)',
+    }}>
+      <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.01em' }}>{title}</span>
+      {right}
+    </div>
+  );
+}
+
+function StatCard({ title, value, loading, tone = 'ink' }: {
+  title: string; value?: number | string; loading: boolean; tone?: string;
+}) {
+  return (
+    <Card>
+      <div style={{ fontSize: '11px', color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '10px' }}>{title}</div>
+      {loading ? (
+        <div style={{ height: '32px', width: '60px', background: 'var(--surface-2)', borderRadius: '8px', animation: 'pulse 1.5s ease-in-out infinite' }} />
+      ) : (
+        <div style={{ fontSize: '30px', fontFamily: 'var(--font-display)', fontWeight: 400, color: `var(--${tone})`, letterSpacing: '-0.03em', lineHeight: 1 }}>
+          {value ?? 0}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function ErrorState({ message }: { message: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '160px', fontSize: '13px', color: 'oklch(0.50 0.20 22)' }}>
+      {message}
+    </div>
+  );
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '120px', fontSize: '13px', color: 'var(--mute)' }}>
+      {message}
+    </div>
+  );
+}
+
+/* ─── Trends tab ─── */
+
 function TrendsTab() {
   const [days, setDays] = useState('30');
   const { data, isLoading, error } = useQuery({
@@ -67,58 +137,69 @@ function TrendsTab() {
     queryFn: () => apiClient<TrendsResponse>(`/analytics/trends?days=${days}`),
   });
 
-  if (error) {
-    return <div className="flex h-40 items-center justify-center text-[#DE350B]">Failed to load trends</div>;
-  }
-
+  if (error) return <ErrorState message="Failed to load trends" />;
   const totals = data?.totals;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Select aria-label="Time range" onSelectionChange={(keys) => setDays(String(keys) || '30')}>
-          <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
-          <SelectPopover>
-            <ListBox>
-              {DAY_RANGES.map((r) => (
-                <ListBoxItem key={r.value} id={r.value}>{r.label}</ListBoxItem>
-              ))}
-            </ListBox>
-          </SelectPopover>
-        </Select>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Range selector */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        {DAY_RANGES.map((r) => (
+          <button
+            key={r.value}
+            onClick={() => setDays(r.value)}
+            style={{
+              padding:      '5px 12px',
+              fontSize:     '12px',
+              fontWeight:   days === r.value ? 600 : 500,
+              border:       0,
+              borderRadius: '8px',
+              cursor:       'pointer',
+              transition:   'all 100ms',
+              background:   days === r.value ? 'var(--accent-tint)' : 'var(--surface-2)',
+              color:        days === r.value ? 'var(--accent)' : 'var(--ink-soft)',
+            }}
+          >
+            {r.label}
+          </button>
+        ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard title="Created" value={totals?.created} loading={isLoading} />
+      {/* KPI row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+        <StatCard title="Created"  value={totals?.created}  loading={isLoading} />
         <StatCard title="Resolved" value={totals?.resolved} loading={isLoading} />
-        <StatCard title="Open" value={totals?.open} loading={isLoading} />
-        <StatCard title="Critical" value={totals?.critical} loading={isLoading} />
+        <StatCard title="Open"     value={totals?.open}     loading={isLoading} />
+        <StatCard title="Critical" value={totals?.critical} loading={isLoading} tone="mute" />
       </div>
 
-      <Card className="rounded-sm border border-[#DFE1E6] bg-white">
-        <CardHeader><span className="text-sm font-semibold text-[#172B4D]">Created vs Resolved</span></CardHeader>
-        <CardContent>
+      {/* Charts */}
+      <Card padded={false}>
+        <CardHead title="Created vs Resolved" />
+        <div style={{ padding: '20px' }}>
           {isLoading ? (
-            <Skeleton className="h-48 rounded-sm" />
+            <div style={{ height: '180px', background: 'var(--surface-2)', borderRadius: '10px' }} />
           ) : data?.data && data.data.length > 0 ? (
-            <div className="grid grid-cols-2 gap-8">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
               <div>
-                <h4 className="mb-2 text-sm font-medium text-[#6B778C]">Created</h4>
+                <div style={{ fontSize: '11px', color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '10px' }}>Created</div>
                 <BarChart data={data.data.map((d) => ({ label: d.date, value: d.created }))} height={180} />
               </div>
               <div>
-                <h4 className="mb-2 text-sm font-medium text-[#6B778C]">Resolved</h4>
+                <div style={{ fontSize: '11px', color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '10px' }}>Resolved</div>
                 <BarChart data={data.data.map((d) => ({ label: d.date, value: d.resolved }))} height={180} />
               </div>
             </div>
           ) : (
-            <div className="flex h-40 items-center justify-center text-sm text-[#6B778C]">No trend data available</div>
+            <EmptyState message="No trend data available" />
           )}
-        </CardContent>
+        </div>
       </Card>
     </div>
   );
 }
+
+/* ─── Agents tab ─── */
 
 function AgentsTab() {
   const [sortKey, setSortKey] = useState<keyof AgentRow>('resolved');
@@ -139,60 +220,88 @@ function AgentsTab() {
     return sortDir === 'asc' ? (aVal as number) - (bVal as number) : (bVal as number) - (aVal as number);
   });
 
-  if (error) {
-    return <div className="flex h-40 items-center justify-center text-[#DE350B]">Failed to load agent data</div>;
-  }
+  const cols: { key: keyof AgentRow; label: string }[] = [
+    { key: 'name',                 label: 'Name'         },
+    { key: 'assigned',             label: 'Assigned'     },
+    { key: 'resolved',             label: 'Resolved'     },
+    { key: 'comments',             label: 'Comments'     },
+    { key: 'avgResponseTimeHours', label: 'Avg Response' },
+  ];
+
+  if (error) return <ErrorState message="Failed to load agent data" />;
 
   return (
-    <Card className="rounded-sm border border-[#DFE1E6] bg-white">
-      <CardHeader><span className="text-sm font-semibold text-[#172B4D]">Agent Performance</span></CardHeader>
-      <CardContent>
+    <Card padded={false}>
+      <CardHead title="Agent Performance" />
+      <div style={{ overflowX: 'auto' }}>
         {isLoading ? (
-          <div className="space-y-3">
-            <Skeleton className="h-8 w-full rounded-sm" />
-            <Skeleton className="h-8 w-full rounded-sm" />
-            <Skeleton className="h-8 w-full rounded-sm" />
-            <Skeleton className="h-8 w-full rounded-sm" />
+          <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {[1,2,3,4].map((i) => (
+              <div key={i} style={{ height: '32px', background: 'var(--surface-2)', borderRadius: '8px' }} />
+            ))}
           </div>
         ) : sorted.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-[#DFE1E6]">
-                  {(['name', 'assigned', 'resolved', 'comments', 'avgResponseTimeHours'] as const).map((col) => (
-                    <th
-                      key={col}
-                      className="cursor-pointer select-none px-3 py-2 text-left text-xs font-semibold text-[#6B778C] uppercase tracking-wider"
-                      onClick={() => handleSort(col)}
-                    >
-                      <div className="flex items-center gap-1">
-                        {col === 'name' ? 'Name' : col === 'assigned' ? 'Assigned' : col === 'resolved' ? 'Resolved' : col === 'comments' ? 'Comments' : 'Avg Response'}
-                        <ArrowUpDown className="h-3 w-3" />
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((agent) => (
-                  <tr key={agent.name} className="border-b border-[#DFE1E6] last:border-0">
-                    <td className="px-3 py-2 font-medium text-[#172B4D]">{agent.name}</td>
-                    <td className="px-3 py-2 text-[#172B4D]">{agent.assigned}</td>
-                    <td className="px-3 py-2 text-[#172B4D]">{agent.resolved}</td>
-                    <td className="px-3 py-2 text-[#172B4D]">{agent.comments}</td>
-                    <td className="px-3 py-2 text-[#6B778C]">{agent.avgResponseTimeHours != null ? `${agent.avgResponseTimeHours.toFixed(1)}h` : 'N/A'}</td>
-                  </tr>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: 'var(--surface-2)' }}>
+                {cols.map((col) => (
+                  <th
+                    key={col.key}
+                    onClick={() => handleSort(col.key)}
+                    style={{
+                      padding:       '10px 18px',
+                      textAlign:     'left',
+                      fontSize:      '11px',
+                      fontWeight:    600,
+                      color:         sortKey === col.key ? 'var(--ink)' : 'var(--mute)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.06em',
+                      cursor:        'pointer',
+                      whiteSpace:    'nowrap',
+                      userSelect:    'none',
+                      borderBottom:  '1px solid var(--hairline)',
+                    }}
+                  >
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      {col.label}
+                      {sortKey === col.key ? (
+                        sortDir === 'asc' ? <ArrowUp size={11} /> : <ArrowDown size={11} />
+                      ) : (
+                        <ArrowUpDown size={11} style={{ opacity: 0.4 }} />
+                      )}
+                    </span>
+                  </th>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </tr>
+            </thead>
+            <tbody>
+              {sorted.map((agent, i) => (
+                <tr
+                  key={agent.name}
+                  style={{ borderBottom: i === sorted.length - 1 ? 'none' : '1px solid var(--hairline)' }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = 'var(--surface-2)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'; }}
+                >
+                  <td style={{ padding: '11px 18px', fontSize: '13px', color: 'var(--ink)', fontWeight: 500 }}>{agent.name}</td>
+                  <td style={{ padding: '11px 18px', fontSize: '13px', color: 'var(--ink)', fontFeatureSettings: '"tnum"' }}>{agent.assigned}</td>
+                  <td style={{ padding: '11px 18px', fontSize: '13px', color: 'var(--ink)', fontFeatureSettings: '"tnum"' }}>{agent.resolved}</td>
+                  <td style={{ padding: '11px 18px', fontSize: '13px', color: 'var(--ink)', fontFeatureSettings: '"tnum"' }}>{agent.comments}</td>
+                  <td style={{ padding: '11px 18px', fontSize: '12px', color: 'var(--mute)' }}>
+                    {agent.avgResponseTimeHours != null ? `${agent.avgResponseTimeHours.toFixed(1)}h` : 'N/A'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         ) : (
-          <div className="flex h-20 items-center justify-center text-sm text-[#6B778C]">No agent data available</div>
+          <EmptyState message="No agent data available" />
         )}
-      </CardContent>
+      </div>
     </Card>
   );
 }
+
+/* ─── Heatmap tab ─── */
 
 function HeatmapTab() {
   const { data, isLoading, error } = useQuery({
@@ -200,25 +309,25 @@ function HeatmapTab() {
     queryFn: () => apiClient<HeatmapResponse>('/analytics/heatmap'),
   });
 
-  if (error) {
-    return <div className="flex h-40 items-center justify-center text-[#DE350B]">Failed to load heatmap</div>;
-  }
+  if (error) return <ErrorState message="Failed to load heatmap" />;
 
   return (
-    <Card className="rounded-sm border border-[#DFE1E6] bg-white">
-      <CardHeader><span className="text-sm font-semibold text-[#172B4D]">Ticket Volume by Day/Hour</span></CardHeader>
-      <CardContent>
+    <Card padded={false}>
+      <CardHead title="Ticket Volume by Day / Hour" />
+      <div style={{ padding: '20px' }}>
         {isLoading ? (
-          <Skeleton className="h-56 rounded-sm" />
+          <div style={{ height: '220px', background: 'var(--surface-2)', borderRadius: '10px' }} />
         ) : data?.data && data.data.length > 0 ? (
           <Heatmap data={data.data} />
         ) : (
-          <div className="flex h-40 items-center justify-center text-sm text-[#6B778C]">No heatmap data available</div>
+          <EmptyState message="No heatmap data available" />
         )}
-      </CardContent>
+      </div>
     </Card>
   );
 }
+
+/* ─── SLA tab ─── */
 
 function SLATab() {
   const { data, isLoading, error } = useQuery({
@@ -226,63 +335,131 @@ function SLATab() {
     queryFn: () => apiClient<SLAResponse>('/analytics/sla'),
   });
 
-  if (error) {
-    return <div className="flex h-40 items-center justify-center text-[#DE350B]">Failed to load SLA data</div>;
-  }
-
+  if (error) return <ErrorState message="Failed to load SLA data" />;
   const sla = data?.data;
 
+  const pct = sla ? Math.round(sla.complianceRate * 100) : 0;
+  const R = 56, C = 2 * Math.PI * R;
+  void C;
+
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="rounded-sm border border-[#DFE1E6] bg-white">
-          <CardHeader><span className="text-sm font-medium text-[#6B778C]">Compliance Rate</span></CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-12 w-24 rounded-sm" />
-            ) : (
-              <p className="text-3xl font-bold text-[#172B4D]">{sla ? `${(sla.complianceRate * 100).toFixed(1)}%` : 'N/A'}</p>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="rounded-sm border border-[#DFE1E6] bg-white">
-          <CardHeader><span className="text-sm font-medium text-[#6B778C]">Compliant</span></CardHeader>
-          <CardContent>
-            {isLoading ? <Skeleton className="h-8 w-16 rounded-sm" /> : <p className="text-xl font-bold text-[#36B37E]">{sla?.compliant ?? 0}</p>}
-          </CardContent>
-        </Card>
-        <Card className="rounded-sm border border-[#DFE1E6] bg-white">
-          <CardHeader><span className="text-sm font-medium text-[#6B778C]">Breached</span></CardHeader>
-          <CardContent>
-            {isLoading ? <Skeleton className="h-8 w-16 rounded-sm" /> : <p className="text-xl font-bold text-[#DE350B]">{sla?.breached ?? 0}</p>}
-          </CardContent>
-        </Card>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+        {isLoading ? (
+          [1,2,3].map((i) => (
+            <Card key={i}>
+              <div style={{ height: '40px', background: 'var(--surface-2)', borderRadius: '8px' }} />
+            </Card>
+          ))
+        ) : (
+          <>
+            <Card>
+              <div style={{ fontSize: '11px', color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '10px' }}>Compliance Rate</div>
+              <div style={{ fontSize: '30px', fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.03em', lineHeight: 1 }}>
+                {sla ? `${pct}%` : 'N/A'}
+              </div>
+            </Card>
+            <Card>
+              <div style={{ fontSize: '11px', color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '10px' }}>Compliant</div>
+              <div style={{ fontSize: '30px', fontFamily: 'var(--font-display)', color: 'oklch(0.52 0.18 155)', letterSpacing: '-0.03em', lineHeight: 1 }}>
+                {sla?.compliant ?? 0}
+              </div>
+            </Card>
+            <Card>
+              <div style={{ fontSize: '11px', color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '10px' }}>Breached</div>
+              <div style={{ fontSize: '30px', fontFamily: 'var(--font-display)', color: 'oklch(0.50 0.20 22)', letterSpacing: '-0.03em', lineHeight: 1 }}>
+                {sla?.breached ?? 0}
+              </div>
+            </Card>
+          </>
+        )}
       </div>
 
-      <Card className="rounded-sm border border-[#DFE1E6] bg-white">
-        <CardHeader><span className="text-sm font-semibold text-[#172B4D]">SLA Overview</span></CardHeader>
-        <CardContent>
+      <Card padded={false}>
+        <CardHead title="SLA Overview" />
+        <div style={{ padding: '20px' }}>
           {isLoading ? (
-            <Skeleton className="h-16 rounded-sm" />
+            <div style={{ height: '64px', background: 'var(--surface-2)', borderRadius: '10px' }} />
           ) : sla ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-[#172B4D]">Total SLA tickets: <strong>{sla.total}</strong></span>
-                <span className="text-[#6B778C]">{sla.compliant} compliant / {sla.breached} breached</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* Gauge arc */}
+              <div style={{ display: 'flex', gap: '28px', alignItems: 'center' }}>
+                <div style={{ position: 'relative', width: '130px', height: '100px', flexShrink: 0 }}>
+                  <svg width="130" height="100" viewBox="0 0 130 100">
+                    <defs>
+                      <linearGradient id="gauge-bg" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0" stopColor="oklch(0.92 0.03 155)" />
+                        <stop offset="0.5" stopColor="oklch(0.92 0.04 70)" />
+                        <stop offset="1" stopColor="oklch(0.92 0.04 22)" />
+                      </linearGradient>
+                      <linearGradient id="gauge-fg" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0"   stopColor="oklch(0.62 0.18 155)" />
+                        <stop offset="0.7" stopColor="oklch(0.65 0.18 70)" />
+                        <stop offset="1"   stopColor="oklch(0.60 0.20 22)" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M 12 88 A 53 53 0 1 1 118 88" fill="none" stroke="url(#gauge-bg)" strokeWidth="10" strokeLinecap="round" />
+                    <path
+                      d="M 12 88 A 53 53 0 1 1 118 88"
+                      fill="none" stroke="url(#gauge-fg)" strokeWidth="10" strokeLinecap="round"
+                      pathLength="100"
+                      strokeDasharray="100"
+                      strokeDashoffset={100 - pct}
+                    />
+                  </svg>
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
+                    paddingBottom: '4px',
+                  }}>
+                    <div style={{ fontSize: '28px', fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.03em', lineHeight: 1 }}>
+                      {pct}<span style={{ fontSize: '14px', color: 'var(--mute)' }}>%</span>
+                    </div>
+                    <div style={{ fontSize: '10px', color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '2px' }}>
+                      within SLA
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {[
+                    { color: 'oklch(0.62 0.18 155)', label: 'On track',   value: sla.compliant },
+                    { color: 'oklch(0.65 0.18 70)',  label: 'At risk',    value: Math.max(0, sla.total - sla.compliant - sla.breached) },
+                    { color: 'oklch(0.60 0.20 22)',  label: 'Breached',   value: sla.breached  },
+                  ].map(({ color, label, value }) => (
+                    <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '999px', background: color, display: 'inline-block' }} />
+                        <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{label}</span>
+                      </div>
+                      <span style={{ color: 'var(--ink)', fontWeight: 600, fontFeatureSettings: '"tnum"' }}>{value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="flex h-6 w-full overflow-hidden rounded-sm bg-[#DFE1E6]">
-                <div className="bg-[#36B37E] transition-all" style={{ width: `${(sla.compliant / Math.max(sla.total, 1)) * 100}%` }} />
-                <div className="bg-[#DE350B] transition-all" style={{ width: `${(sla.breached / Math.max(sla.total, 1)) * 100}%` }} />
+
+              {/* Progress bar */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--mute)' }}>
+                  <span>Total: <strong style={{ color: 'var(--ink)' }}>{sla.total}</strong></span>
+                  <span>{sla.compliant} compliant · {sla.breached} breached</span>
+                </div>
+                <div style={{ display: 'flex', height: '8px', borderRadius: '999px', overflow: 'hidden', background: 'var(--surface-2)' }}>
+                  <div style={{ background: 'oklch(0.62 0.18 155)', width: `${(sla.compliant / Math.max(sla.total, 1)) * 100}%`, transition: 'width 400ms ease' }} />
+                  <div style={{ background: 'oklch(0.60 0.20 22)', width: `${(sla.breached / Math.max(sla.total, 1)) * 100}%`, transition: 'width 400ms ease' }} />
+                </div>
               </div>
             </div>
           ) : (
-            <div className="flex h-12 items-center justify-center text-sm text-[#6B778C]">No SLA data available</div>
+            <EmptyState message="No SLA data available" />
           )}
-        </CardContent>
+        </div>
       </Card>
     </div>
   );
 }
+
+/* ─── Export button ─── */
 
 function ExportButton() {
   const [loading, setLoading] = useState(false);
@@ -309,66 +486,98 @@ function ExportButton() {
   };
 
   return (
-    <Button variant="secondary" size="sm" onClick={handleExport} isDisabled={loading}>
-      <Download className="h-4 w-4" />
-      <span className="ml-1.5">Export CSV</span>
-    </Button>
+    <button
+      onClick={handleExport}
+      disabled={loading}
+      style={{
+        display:      'inline-flex',
+        alignItems:   'center',
+        gap:          '6px',
+        padding:      '8px 14px',
+        fontSize:     '13px',
+        fontWeight:   500,
+        border:       0,
+        borderRadius: '10px',
+        background:   'var(--surface-2)',
+        color:        loading ? 'var(--mute)' : 'var(--ink-soft)',
+        cursor:       loading ? 'not-allowed' : 'pointer',
+        boxShadow:    'var(--shadow-sm)',
+        transition:   'all 120ms',
+      }}
+      onMouseEnter={(e) => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-3)'; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
+    >
+      <Download size={14} />
+      Export CSV
+    </button>
   );
 }
 
-function StatCard({ title, value, loading }: { title: string; value?: number | string; loading: boolean }) {
-  return (
-    <Card className="rounded-sm border border-[#DFE1E6] bg-white">
-      <CardHeader><span className="text-sm font-medium text-[#6B778C]">{title}</span></CardHeader>
-      <CardContent>
-        {loading ? <Skeleton className="h-6 w-16 rounded-sm" /> : <p className="text-xl font-bold text-[#172B4D]">{value ?? 0}</p>}
-      </CardContent>
-    </Card>
-  );
-}
+/* ─── Page ─── */
 
 export default function AnalyticsPage() {
-  const [tab, setTab] = useState('trends');
-
-  const tabs = [
-    { key: 'trends', label: 'Trends', icon: TrendingUp },
-    { key: 'agents', label: 'Agents', icon: Users },
-    { key: 'heatmap', label: 'Heatmap', icon: Calendar },
-    { key: 'sla', label: 'SLA', icon: Shield },
-  ] as const;
+  const [tab, setTab] = useState<'trends' | 'agents' | 'heatmap' | 'sla'>('trends');
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {/* Page head */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <div>
-          <h1 className="text-xl font-semibold text-[#172B4D]">Analytics</h1>
-          <p className="text-sm text-[#6B778C]">Insights and metrics for your support queue</p>
+          <h1 style={{
+            fontSize:      '36px',
+            fontFamily:    'var(--font-display)',
+            fontWeight:    400,
+            color:         'var(--ink)',
+            letterSpacing: '-0.02em',
+            lineHeight:    1.05,
+            margin:        0,
+          }}>
+            Analytics
+          </h1>
+          <p style={{ fontSize: '13px', color: 'var(--mute)', marginTop: '6px' }}>
+            Insights and metrics for your support queue
+          </p>
         </div>
         <ExportButton />
       </div>
 
-      <div className="flex gap-1 border-b border-[#DFE1E6]">
-        {tabs.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setTab(t.key)}
-            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors ${
-              tab === t.key
-                ? 'border-b-2 border-[#0052CC] text-[#0052CC]'
-                : 'text-[#6B778C] hover:text-[#172B4D]'
-            }`}
-          >
-            <t.icon className="h-4 w-4" />
-            {t.label}
-          </button>
-        ))}
+      {/* Tab bar */}
+      <div style={{ display: 'flex', gap: '4px', padding: '4px', background: 'var(--surface-2)', borderRadius: '12px', alignSelf: 'flex-start' }}>
+        {TABS.map((t) => {
+          const Icon = t.icon;
+          const active = tab === t.key;
+          return (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key as typeof tab)}
+              style={{
+                display:      'inline-flex',
+                alignItems:   'center',
+                gap:          '6px',
+                padding:      '7px 14px',
+                fontSize:     '13px',
+                fontWeight:   active ? 600 : 500,
+                border:       0,
+                borderRadius: '9px',
+                cursor:       'pointer',
+                transition:   'all 100ms',
+                background:   active ? 'var(--surface)' : 'transparent',
+                color:        active ? 'var(--ink)' : 'var(--mute)',
+                boxShadow:    active ? 'var(--shadow-sm)' : 'none',
+              }}
+            >
+              <Icon size={14} />
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
-      {tab === 'trends' && <TrendsTab />}
-      {tab === 'agents' && <AgentsTab />}
+      {/* Tab content */}
+      {tab === 'trends'  && <TrendsTab />}
+      {tab === 'agents'  && <AgentsTab />}
       {tab === 'heatmap' && <HeatmapTab />}
-      {tab === 'sla' && <SLATab />}
+      {tab === 'sla'     && <SLATab />}
     </div>
   );
 }
