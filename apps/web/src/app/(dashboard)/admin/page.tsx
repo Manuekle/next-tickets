@@ -4,12 +4,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { apiClient } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
-import { Button, Input, Chip, Skeleton, TextField, Label, useOverlayState } from '@heroui/react';
-import { Modal, ModalDialog, ModalHeader, ModalHeading, ModalBody, ModalFooter, ModalCloseTrigger } from '@heroui/react';
-import { Select, SelectTrigger, SelectValue, SelectPopover } from '@heroui/react';
-import { ListBox, ListBoxItem } from '@heroui/react';
 import { toast } from 'sonner';
-import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, X, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface AdminUser {
@@ -24,12 +20,64 @@ interface AdminUser {
 
 type ApiListResponse<T> = { data: T; meta: { total: number; totalPages: number } };
 
-const roleColors: Record<string, 'danger' | 'warning' | 'accent' | 'success'> = {
-  SUPER_ADMIN: 'danger',
-  ADMIN: 'warning',
-  AGENT: 'accent',
-  CUSTOMER: 'success',
+const roleBadgeStyle: Record<string, React.CSSProperties> = {
+  SUPER_ADMIN: { background: 'oklch(0.95 0.04 22)',  color: 'oklch(0.50 0.20 22)' },
+  ADMIN:       { background: 'oklch(0.96 0.06 60)',  color: 'oklch(0.50 0.18 60)' },
+  AGENT:       { background: 'var(--accent-tint)',   color: 'var(--accent)'       },
+  CUSTOMER:    { background: 'oklch(0.94 0.06 148)', color: 'oklch(0.42 0.16 148)' },
 };
+
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '8px 10px', fontSize: '13px', color: 'var(--ink)',
+  border: 0, borderRadius: '8px', background: 'var(--surface)',
+  boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
+  outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
+};
+
+function RoleBadge({ role }: { role: string }) {
+  const label = role === 'SUPER_ADMIN' ? 'Super Admin' : role.charAt(0) + role.slice(1).toLowerCase();
+  return (
+    <span style={{ ...(roleBadgeStyle[role] ?? { background: 'var(--surface-2)', color: 'var(--mute)' }), padding: '2px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600 }}>
+      {label}
+    </span>
+  );
+}
+
+function NativeSelect({ value, onChange, options, placeholder }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[]; placeholder?: string }) {
+  return (
+    <div style={{ position: 'relative' }}>
+      <select value={value} onChange={(e) => onChange(e.target.value)}
+        style={{ ...inputStyle, paddingRight: '28px', appearance: 'none', cursor: 'pointer' }}>
+        {placeholder !== undefined && <option value="">{placeholder}</option>}
+        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+      <ChevronDown size={12} style={{ position: 'absolute', right: '9px', top: '50%', transform: 'translateY(-50%)', color: 'var(--mute)', pointerEvents: 'none' }} />
+    </div>
+  );
+}
+
+function Dialog({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
+  if (!open) return null;
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(15,18,30,0.32)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', animation: 'hx-fade 140ms ease-out' }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: 'min(520px, 100%)', background: 'var(--surface)', borderRadius: '18px', boxShadow: '0 24px 60px -20px rgba(15,18,30,0.30), 0 4px 12px rgba(15,18,30,0.08)', overflow: 'hidden', animation: 'hx-pop 200ms cubic-bezier(0.2,0.8,0.2,1)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--border)' }}>
+          <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.01em' }}>{title}</span>
+          <button onClick={onClose} style={{ width: '26px', height: '26px', border: 0, borderRadius: '7px', background: 'var(--surface-2)', color: 'var(--mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <X size={13} />
+          </button>
+        </div>
+        <div style={{ padding: '22px' }}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
+const roleOptions = [
+  { value: 'ADMIN', label: 'Admin' },
+  { value: 'AGENT', label: 'Agent' },
+  { value: 'CUSTOMER', label: 'Customer' },
+];
 
 export default function AdminUsersPage() {
   const queryClient = useQueryClient();
@@ -40,8 +88,8 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState('');
   const [page, setPage] = useState(1);
 
-  const createState = useOverlayState();
-  const editState = useOverlayState();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [createForm, setCreateForm] = useState({ name: '', email: '', password: '', role: 'AGENT' });
   const [editUser, setEditUser] = useState<AdminUser | null>(null);
   const [editForm, setEditForm] = useState({ name: '', email: '', role: '', isActive: true });
@@ -63,7 +111,7 @@ export default function AdminUsersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       toast.success('User created');
-      createState.close();
+      setCreateOpen(false);
       setCreateForm({ name: '', email: '', password: '', role: 'AGENT' });
     },
     onError: () => toast.error('Failed to create user'),
@@ -75,7 +123,7 @@ export default function AdminUsersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
       toast.success('User updated');
-      editState.close();
+      setEditOpen(false);
       setEditUser(null);
     },
     onError: () => toast.error('Failed to update user'),
@@ -96,98 +144,110 @@ export default function AdminUsersPage() {
   const handleEdit = (user: AdminUser) => {
     setEditUser(user);
     setEditForm({ name: user.name, email: user.email, role: user.role, isActive: user.isActive });
-    editState.open();
+    setEditOpen(true);
   };
+
+  const formGap: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '14px' };
+  const labelStyle: React.CSSProperties = { fontSize: '12px', fontWeight: 500, color: 'var(--ink-soft)', marginBottom: '4px', display: 'block' };
+  const btnPrimary: React.CSSProperties = { padding: '9px 18px', fontSize: '13px', fontWeight: 600, border: 0, borderRadius: '10px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', color: '#fff', cursor: 'pointer', boxShadow: '0 4px 12px -4px var(--accent-glow)', transition: 'opacity 100ms' };
+  const btnSecondary: React.CSSProperties = { padding: '7px 14px', fontSize: '12px', fontWeight: 500, border: 0, borderRadius: '8px', background: 'var(--surface-2)', color: 'var(--ink-soft)', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' };
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <p className="font-medium text-[#DE350B]">Failed to load users</p>
-        <p className="text-sm text-[#6B778C] mt-1">Please try again later.</p>
-        <Button variant="secondary" className="mt-4" onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-users'] })}>Retry</Button>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '64px 0', gap: '8px' }}>
+        <p style={{ fontSize: '14px', fontWeight: 500, color: 'oklch(0.50 0.20 22)' }}>Failed to load users</p>
+        <button style={btnSecondary} onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-users'] })}>Retry</button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h1 className="text-xl font-semibold text-[#172B4D]">Users</h1>
-          <p className="text-sm text-[#6B778C]">{data?.meta?.total || 0} total</p>
+          <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.01em', margin: 0 }}>Users</h2>
+          <p style={{ fontSize: '12px', color: 'var(--mute)', marginTop: '3px' }}>{data?.meta?.total || 0} total</p>
         </div>
-        <Button variant="primary" size="sm" onClick={createState.open}>
-          <Plus className="h-4 w-4" />
-          <span className="ml-1.5">Create User</span>
-        </Button>
+        <button style={btnPrimary} onClick={() => setCreateOpen(true)}>
+          <Plus size={13} style={{ marginRight: '5px', verticalAlign: 'middle' }} />
+          Create User
+        </button>
       </div>
 
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6B778C] z-10" />
-          <Input placeholder="Search by name or email..." className="pl-9" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+      {/* Filters */}
+      <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ position: 'relative', flex: 1 }}>
+          <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--mute)', pointerEvents: 'none' }} />
+          <input
+            placeholder="Search by name or email…"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            style={{ ...inputStyle, paddingLeft: '32px' }}
+          />
         </div>
-        <Select aria-label="Filter by role" onSelectionChange={(keys) => { setRoleFilter(String(keys) || ''); setPage(1); }}>
-          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-          <SelectPopover>
-            <ListBox>
-              <ListBoxItem id=" ">All roles</ListBoxItem>
-              <ListBoxItem id="ADMIN">Admin</ListBoxItem>
-              <ListBoxItem id="AGENT">Agent</ListBoxItem>
-              <ListBoxItem id="CUSTOMER">Customer</ListBoxItem>
-            </ListBox>
-          </SelectPopover>
-        </Select>
+        <div style={{ width: '150px' }}>
+          <NativeSelect value={roleFilter} onChange={(v) => { setRoleFilter(v); setPage(1); }} placeholder="All roles" options={roleOptions} />
+        </div>
       </div>
 
-      <div className="rounded-sm border border-[#DFE1E6] bg-white overflow-x-auto">
-        <table className="w-full text-sm">
+      {/* Table */}
+      <div style={{ background: 'var(--surface)', borderRadius: '14px', boxShadow: 'var(--shadow-md)', overflow: 'hidden' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
           <thead>
-            <tr className="border-b border-[#DFE1E6] bg-[#f4f5f7]">
-              <th className="px-4 py-2.5 text-left text-xs font-semibold text-[#6B778C] uppercase tracking-wider">Name</th>
-              <th className="px-4 py-2.5 text-left text-xs font-semibold text-[#6B778C] uppercase tracking-wider">Email</th>
-              <th className="px-4 py-2.5 text-left text-xs font-semibold text-[#6B778C] uppercase tracking-wider">Role</th>
-              <th className="px-4 py-2.5 text-left text-xs font-semibold text-[#6B778C] uppercase tracking-wider">Status</th>
-              <th className="px-4 py-2.5 text-left text-xs font-semibold text-[#6B778C] uppercase tracking-wider">Tickets</th>
-              <th className="px-4 py-2.5 text-left text-xs font-semibold text-[#6B778C] uppercase tracking-wider">Created</th>
-              <th className="px-4 py-2.5 text-left text-xs font-semibold text-[#6B778C] uppercase tracking-wider w-24">Actions</th>
+            <tr style={{ borderBottom: '1px solid var(--border)' }}>
+              {['Name', 'Email', 'Role', 'Status', 'Tickets', 'Created', 'Actions'].map((h) => (
+                <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 600, color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.06em', background: 'var(--surface-2)' }}>{h}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i} className="border-b border-[#DFE1E6] last:border-0">
-                  <td colSpan={7} className="px-4 py-3"><Skeleton className="h-8 w-full rounded-sm" /></td>
+                <tr key={i} style={{ borderBottom: '1px solid var(--hairline)' }}>
+                  <td colSpan={7} style={{ padding: '12px 16px' }}>
+                    <div style={{ height: '20px', borderRadius: '6px', background: 'var(--surface-2)' }} />
+                  </td>
                 </tr>
               ))
             ) : users.length === 0 ? (
-              <tr className="border-b border-[#DFE1E6] last:border-0">
-                <td colSpan={7} className="px-4 py-8 text-center text-sm text-[#6B778C]">No users found</td>
+              <tr>
+                <td colSpan={7} style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--mute)' }}>No users found</td>
               </tr>
             ) : (
               users.map((user) => (
-                <tr key={user.id} className="border-b border-[#DFE1E6] last:border-0 hover:bg-[#f4f5f7]">
-                  <td className="px-4 py-3 font-medium text-[#172B4D]">{user.name}</td>
-                  <td className="px-4 py-3 text-sm text-[#6B778C]">{user.email}</td>
-                  <td className="px-4 py-3">
-                    <Chip color={roleColors[user.role] as any} variant="soft" size="sm" className="text-xs">
-                      {user.role === 'SUPER_ADMIN' ? 'Super Admin' : user.role.charAt(0) + user.role.slice(1).toLowerCase()}
-                    </Chip>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Chip color={user.isActive ? 'success' : 'default'} variant="soft" size="sm" className="text-xs">
+                <tr key={user.id} style={{ borderBottom: '1px solid var(--hairline)' }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = 'var(--surface-2)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'; }}
+                >
+                  <td style={{ padding: '10px 16px', fontWeight: 500, color: 'var(--ink)' }}>{user.name}</td>
+                  <td style={{ padding: '10px 16px', color: 'var(--mute)' }}>{user.email}</td>
+                  <td style={{ padding: '10px 16px' }}><RoleBadge role={user.role} /></td>
+                  <td style={{ padding: '10px 16px' }}>
+                    <span style={{ padding: '2px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: user.isActive ? 'oklch(0.94 0.06 148)' : 'var(--surface-2)', color: user.isActive ? 'oklch(0.42 0.16 148)' : 'var(--mute)' }}>
                       {user.isActive ? 'Active' : 'Inactive'}
-                    </Chip>
+                    </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-[#6B778C]">{user.ticketCount ?? 0}</td>
-                  <td className="px-4 py-3 text-sm text-[#6B778C]">{format(new Date(user.createdAt), 'MMM d, yyyy')}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" isIconOnly size="sm" onClick={() => handleEdit(user)}><Pencil className="h-4 w-4" /></Button>
+                  <td style={{ padding: '10px 16px', color: 'var(--mute)' }}>{user.ticketCount ?? 0}</td>
+                  <td style={{ padding: '10px 16px', color: 'var(--mute)' }}>{format(new Date(user.createdAt), 'MMM d, yyyy')}</td>
+                  <td style={{ padding: '10px 16px' }}>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <button onClick={() => handleEdit(user)}
+                        style={{ width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'transparent', color: 'var(--mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+                      >
+                        <Pencil size={13} />
+                      </button>
                       {isSuperAdmin && (
-                        <Button variant="ghost" isIconOnly size="sm" onClick={() => { if (window.confirm('Deactivate this user?')) deleteMutation.mutate(user.id); }}>
-                          <Trash2 className="h-4 w-4 text-[#DE350B]" />
-                        </Button>
+                        <button
+                          onClick={() => { if (window.confirm('Deactivate this user?')) deleteMutation.mutate(user.id); }}
+                          style={{ width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'transparent', color: 'oklch(0.58 0.20 22)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'oklch(0.96 0.04 22)'; }}
+                          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+                        >
+                          <Trash2 size={13} />
+                        </button>
                       )}
                     </div>
                   </td>
@@ -198,109 +258,66 @@ export default function AdminUsersPage() {
         </table>
       </div>
 
+      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-3">
-          <Button variant="secondary" size="sm" isDisabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</Button>
-          <span className="text-sm text-[#6B778C]">Page {page} of {totalPages}</span>
-          <Button variant="secondary" size="sm" isDisabled={page >= totalPages} onClick={() => setPage(page + 1)}>Next</Button>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+          <button style={btnSecondary} disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button>
+          <span style={{ fontSize: '12px', color: 'var(--mute)' }}>Page {page} of {totalPages}</span>
+          <button style={btnSecondary} disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Next</button>
         </div>
       )}
 
-      <Modal state={createState}>
-        <ModalDialog>
-          <ModalCloseTrigger />
-          <ModalHeader>
-            <ModalHeading>Create User</ModalHeading>
-          </ModalHeader>
-          <ModalBody>
-            <form
-              onSubmit={(e) => { e.preventDefault(); createMutation.mutate(createForm); }}
-              className="space-y-4"
-            >
-              <div className="space-y-1">
-                <Label className="text-sm font-medium text-[#172B4D]">Name</Label>
-                <TextField isRequired isInvalid={false}>
-                  <Input value={createForm.name} onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })} />
-                </TextField>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-sm font-medium text-[#172B4D]">Email</Label>
-                <TextField isRequired>
-                  <Input type="email" value={createForm.email} onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })} />
-                </TextField>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-sm font-medium text-[#172B4D]">Password</Label>
-                <TextField isRequired>
-                  <Input type="password" value={createForm.password} onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })} />
-                </TextField>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-sm font-medium text-[#172B4D]">Role</Label>
-                <Select onSelectionChange={(keys) => setCreateForm({ ...createForm, role: String(keys) || 'AGENT' })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectPopover>
-                    <ListBox>
-                      <ListBoxItem id="ADMIN">Admin</ListBoxItem>
-                      <ListBoxItem id="AGENT">Agent</ListBoxItem>
-                      <ListBoxItem id="CUSTOMER">Customer</ListBoxItem>
-                    </ListBox>
-                  </SelectPopover>
-                </Select>
-              </div>
-              <Button type="submit" variant="primary" isDisabled={createMutation.isPending}>Create</Button>
-            </form>
-          </ModalBody>
-        </ModalDialog>
-      </Modal>
+      {/* Create Dialog */}
+      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} title="Create User">
+        <form onSubmit={(e) => { e.preventDefault(); createMutation.mutate(createForm); }} style={formGap}>
+          <div>
+            <label style={labelStyle}>Name</label>
+            <input required value={createForm.name} onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })} style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Email</label>
+            <input required type="email" value={createForm.email} onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })} style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Password</label>
+            <input required type="password" value={createForm.password} onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })} style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Role</label>
+            <NativeSelect value={createForm.role} onChange={(v) => setCreateForm({ ...createForm, role: v })} options={roleOptions} />
+          </div>
+          <button type="submit" disabled={createMutation.isPending} style={{ ...btnPrimary, opacity: createMutation.isPending ? 0.6 : 1 }}>
+            {createMutation.isPending ? 'Creating…' : 'Create User'}
+          </button>
+        </form>
+      </Dialog>
 
-      <Modal state={editState}>
-        <ModalDialog>
-          <ModalCloseTrigger />
-          <ModalHeader>
-            <ModalHeading>Edit User</ModalHeading>
-          </ModalHeader>
-          <ModalBody>
-            {editUser && (
-              <form
-                onSubmit={(e) => { e.preventDefault(); updateMutation.mutate({ id: editUser.id, body: editForm }); }}
-                className="space-y-4"
-              >
-                <div className="space-y-1">
-                  <Label className="text-sm font-medium text-[#172B4D]">Name</Label>
-                  <TextField isRequired>
-                    <Input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
-                  </TextField>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-sm font-medium text-[#172B4D]">Email</Label>
-                  <TextField isRequired>
-                    <Input type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
-                  </TextField>
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-sm font-medium text-[#172B4D]">Role</Label>
-                  <Select selectedKey={editForm.role} onSelectionChange={(keys) => setEditForm({ ...editForm, role: String(keys) || 'AGENT' })}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectPopover>
-                      <ListBox>
-                        <ListBoxItem id="ADMIN">Admin</ListBoxItem>
-                        <ListBoxItem id="AGENT">Agent</ListBoxItem>
-                        <ListBoxItem id="CUSTOMER">Customer</ListBoxItem>
-                      </ListBox>
-                    </SelectPopover>
-                  </Select>
-                </div>
-                <label className="flex items-center gap-2 text-sm">
-                  <input type="checkbox" checked={editForm.isActive} onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })} className="h-4 w-4" />
-                  <span className="text-[#172B4D]">Active</span>
-                </label>
-                <Button type="submit" variant="primary" isDisabled={updateMutation.isPending}>Save</Button>
-              </form>
-            )}
-          </ModalBody>
-        </ModalDialog>
-      </Modal>
+      {/* Edit Dialog */}
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)} title="Edit User">
+        {editUser && (
+          <form onSubmit={(e) => { e.preventDefault(); updateMutation.mutate({ id: editUser.id, body: editForm }); }} style={formGap}>
+            <div>
+              <label style={labelStyle}>Name</label>
+              <input required value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Email</label>
+              <input required type="email" value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Role</label>
+              <NativeSelect value={editForm.role} onChange={(v) => setEditForm({ ...editForm, role: v })} options={roleOptions} />
+            </div>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--ink-soft)', cursor: 'pointer' }}>
+              <input type="checkbox" checked={editForm.isActive} onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })} />
+              Active
+            </label>
+            <button type="submit" disabled={updateMutation.isPending} style={{ ...btnPrimary, opacity: updateMutation.isPending ? 0.6 : 1 }}>
+              {updateMutation.isPending ? 'Saving…' : 'Save Changes'}
+            </button>
+          </form>
+        )}
+      </Dialog>
     </div>
   );
 }

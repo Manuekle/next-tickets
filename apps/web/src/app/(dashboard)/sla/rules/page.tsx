@@ -3,19 +3,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { apiClient } from '@/lib/api';
-
-import { Button, Input, TextArea, Chip, Skeleton, useOverlayState, TextField, Label, FieldError } from '@heroui/react';
-
-
-import { Select, SelectTrigger, SelectValue, SelectPopover, ListBox, ListBoxItem } from '@heroui/react';
-
-
-import { Modal, ModalDialog, ModalHeader, ModalHeading, ModalBody, ModalFooter, ModalCloseTrigger } from '@heroui/react';
-
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, X, ChevronDown } from 'lucide-react';
 import { format } from 'date-fns';
-import { Key } from 'react-aria-components';
 
 interface SlaRule {
   id: string;
@@ -47,11 +37,55 @@ const defaultForm: SlaForm = {
   isActive: true,
 };
 
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '8px 10px', fontSize: '13px', color: 'var(--ink)',
+  border: 0, borderRadius: '8px', background: 'var(--surface)',
+  boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
+  outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
+};
+
+const priorityColors: Record<string, React.CSSProperties> = {
+  LOW:      { background: 'oklch(0.94 0.06 148)', color: 'oklch(0.42 0.16 148)' },
+  MEDIUM:   { background: 'oklch(0.96 0.06 60)',  color: 'oklch(0.50 0.18 60)'  },
+  HIGH:     { background: 'oklch(0.95 0.08 40)',  color: 'oklch(0.52 0.22 40)'  },
+  CRITICAL: { background: 'oklch(0.95 0.04 22)',  color: 'oklch(0.50 0.20 22)'  },
+};
+
+function NativeSelect({ value, onChange, options, placeholder }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[]; placeholder?: string }) {
+  return (
+    <div style={{ position: 'relative' }}>
+      <select value={value} onChange={(e) => onChange(e.target.value)}
+        style={{ ...inputStyle, paddingRight: '28px', appearance: 'none', cursor: 'pointer' }}>
+        {placeholder !== undefined && <option value="">{placeholder}</option>}
+        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+      <ChevronDown size={12} style={{ position: 'absolute', right: '9px', top: '50%', transform: 'translateY(-50%)', color: 'var(--mute)', pointerEvents: 'none' }} />
+    </div>
+  );
+}
+
+function Dialog({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
+  if (!open) return null;
+  return (
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(15,18,30,0.32)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', animation: 'hx-fade 140ms ease-out' }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: 'min(520px, 100%)', background: 'var(--surface)', borderRadius: '18px', boxShadow: '0 24px 60px -20px rgba(15,18,30,0.30), 0 4px 12px rgba(15,18,30,0.08)', overflow: 'hidden', animation: 'hx-pop 200ms cubic-bezier(0.2,0.8,0.2,1)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--border)' }}>
+          <span style={{ fontSize: '15px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.01em' }}>{title}</span>
+          <button onClick={onClose} style={{ width: '26px', height: '26px', border: 0, borderRadius: '7px', background: 'var(--surface-2)', color: 'var(--mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <X size={13} />
+          </button>
+        </div>
+        <div style={{ padding: '22px' }}>{children}</div>
+      </div>
+    </div>
+  );
+}
+
 export default function SlaRulesPage() {
   const queryClient = useQueryClient();
-  const modalState = useOverlayState();
+  const [modalOpen, setModalOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const deleteModalState = useOverlayState();
   const [editingRule, setEditingRule] = useState<SlaRule | null>(null);
   const [form, setForm] = useState<SlaForm>(defaultForm);
 
@@ -61,13 +95,13 @@ export default function SlaRulesPage() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: (data: { id?: string; body: Partial<SlaForm> }) =>
-      data.id
-        ? apiClient(`/sla/${data.id}`, { method: 'PATCH', body: JSON.stringify(data.body) })
-        : apiClient('/sla', { method: 'POST', body: JSON.stringify(data.body) }),
+    mutationFn: (payload: { id?: string; body: Partial<SlaForm> }) =>
+      payload.id
+        ? apiClient(`/sla/${payload.id}`, { method: 'PATCH', body: JSON.stringify(payload.body) })
+        : apiClient('/sla', { method: 'POST', body: JSON.stringify(payload.body) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sla-rules'] });
-      modalState.close();
+      setModalOpen(false);
       setEditingRule(null);
       setForm(defaultForm);
       toast.success(editingRule ? 'Rule updated' : 'Rule created');
@@ -76,12 +110,11 @@ export default function SlaRulesPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) =>
-      apiClient(`/sla/${id}`, { method: 'DELETE' }),
+    mutationFn: (id: string) => apiClient(`/sla/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sla-rules'] });
       setDeleteId(null);
-      deleteModalState.close();
+      setDeleteOpen(false);
       toast.success('Rule deleted');
     },
     onError: () => toast.error('Failed to delete rule'),
@@ -90,16 +123,14 @@ export default function SlaRulesPage() {
   const toggleMutation = useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       apiClient(`/sla/${id}`, { method: 'PATCH', body: JSON.stringify({ isActive }) }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['sla-rules'] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sla-rules'] }),
     onError: () => toast.error('Failed to toggle rule'),
   });
 
   function openCreate() {
     setEditingRule(null);
     setForm(defaultForm);
-    modalState.open();
+    setModalOpen(true);
   }
 
   function openEdit(rule: SlaRule) {
@@ -112,7 +143,7 @@ export default function SlaRulesPage() {
       priority: rule.priority || '',
       isActive: rule.isActive,
     });
-    modalState.open();
+    setModalOpen(true);
   }
 
   function handleSave() {
@@ -125,83 +156,96 @@ export default function SlaRulesPage() {
     };
     if (form.priority) body.priority = form.priority;
     else body.priority = undefined as any;
-
     saveMutation.mutate({ id: editingRule?.id, body });
   }
 
+  const formGap: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: '14px' };
+  const labelStyle: React.CSSProperties = { fontSize: '12px', fontWeight: 500, color: 'var(--ink-soft)', marginBottom: '4px', display: 'block' };
+  const btnPrimary: React.CSSProperties = { padding: '9px 18px', fontSize: '13px', fontWeight: 600, border: 0, borderRadius: '10px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', color: '#fff', cursor: 'pointer', boxShadow: '0 4px 12px -4px var(--accent-glow)' };
+  const btnSecondary: React.CSSProperties = { padding: '7px 14px', fontSize: '12px', fontWeight: 500, border: 0, borderRadius: '8px', background: 'var(--surface-2)', color: 'var(--ink-soft)', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' };
+  const btnDanger: React.CSSProperties = { padding: '9px 18px', fontSize: '13px', fontWeight: 600, border: 0, borderRadius: '10px', background: 'oklch(0.50 0.20 22)', color: '#fff', cursor: 'pointer' };
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">SLA Rules</h1>
-          <p className="text-sm text-muted-foreground">Manage Service Level Agreement rules</p>
+          <h1 style={{ fontSize: '36px', fontFamily: 'var(--font-display)', fontWeight: 400, color: 'var(--ink)', letterSpacing: '-0.02em', margin: 0 }}>SLA Rules</h1>
+          <p style={{ fontSize: '13px', color: 'var(--mute)', marginTop: '6px' }}>Manage Service Level Agreement rules</p>
         </div>
-        <Button onClick={openCreate}>
-          <Plus className="mr-2 h-4 w-4" /> Create Rule
-        </Button>
+        <button style={btnPrimary} onClick={openCreate}>
+          <Plus size={13} style={{ marginRight: '5px', verticalAlign: 'middle' }} />
+          Create Rule
+        </button>
       </div>
 
-      <div className="rounded-md border overflow-x-auto">
-        <table className="w-full text-sm">
+      {/* Table */}
+      <div style={{ background: 'var(--surface)', borderRadius: '14px', boxShadow: 'var(--shadow-md)', overflow: 'hidden' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
           <thead>
-            <tr className="border-b bg-muted/50">
-              <th className="px-4 py-3 text-left font-medium">Name</th>
-              <th className="px-4 py-3 text-left font-medium">Priority</th>
-              <th className="px-4 py-3 text-left font-medium">First Response</th>
-              <th className="px-4 py-3 text-left font-medium">Resolution</th>
-              <th className="px-4 py-3 text-left font-medium">Status</th>
-              <th className="px-4 py-3 text-left font-medium">Created</th>
-              <th className="px-4 py-3 text-left font-medium w-24">Actions</th>
+            <tr style={{ borderBottom: '1px solid var(--border)' }}>
+              {['Name', 'Priority', 'First Response', 'Resolution', 'Status', 'Created', 'Actions'].map((h) => (
+                <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 600, color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.06em', background: 'var(--surface-2)' }}>{h}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               Array.from({ length: 3 }).map((_, i) => (
-                <tr key={i} className="border-b last:border-0">
-                  <td colSpan={7} className="px-4 py-3"><Skeleton className="h-8 w-full rounded-lg" /></td>
+                <tr key={i} style={{ borderBottom: '1px solid var(--hairline)' }}>
+                  <td colSpan={7} style={{ padding: '12px 16px' }}>
+                    <div style={{ height: '20px', borderRadius: '6px', background: 'var(--surface-2)' }} />
+                  </td>
                 </tr>
               ))
             ) : data?.data.length === 0 ? (
-              <tr className="border-b last:border-0">
-                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                  No SLA rules found
-                </td>
+              <tr>
+                <td colSpan={7} style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--mute)' }}>No SLA rules found</td>
               </tr>
             ) : (
               data?.data.map((rule) => (
-                <tr key={rule.id} className="border-b last:border-0">
-                  <td className="px-4 py-3 font-medium">{rule.name}</td>
-                  <td className="px-4 py-3">
+                <tr key={rule.id} style={{ borderBottom: '1px solid var(--hairline)' }}
+                  onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = 'var(--surface-2)'; }}
+                  onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'; }}
+                >
+                  <td style={{ padding: '10px 16px', fontWeight: 500, color: 'var(--ink)' }}>{rule.name}</td>
+                  <td style={{ padding: '10px 16px' }}>
                     {rule.priority ? (
-                      <Chip variant="soft" size="sm">{rule.priority}</Chip>
+                      <span style={{ ...(priorityColors[rule.priority] ?? { background: 'var(--surface-2)', color: 'var(--mute)' }), padding: '2px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600 }}>
+                        {rule.priority}
+                      </span>
                     ) : (
-                      <span className="text-sm text-muted-foreground">All</span>
+                      <span style={{ color: 'var(--mute)', fontSize: '12px' }}>All</span>
                     )}
                   </td>
-                  <td className="px-4 py-3">{rule.firstResponseHours}h</td>
-                  <td className="px-4 py-3">{rule.resolutionHours}h</td>
-                  <td className="px-4 py-3">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className={rule.isActive ? 'text-green-500' : 'text-muted-foreground'}
+                  <td style={{ padding: '10px 16px', color: 'var(--ink-soft)' }}>{rule.firstResponseHours}h</td>
+                  <td style={{ padding: '10px 16px', color: 'var(--ink-soft)' }}>{rule.resolutionHours}h</td>
+                  <td style={{ padding: '10px 16px' }}>
+                    <button
                       onClick={() => toggleMutation.mutate({ id: rule.id, isActive: !rule.isActive })}
-                      isDisabled={toggleMutation.isPending}
+                      disabled={toggleMutation.isPending}
+                      style={{ padding: '2px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, border: 0, cursor: 'pointer', background: rule.isActive ? 'oklch(0.94 0.06 148)' : 'var(--surface-2)', color: rule.isActive ? 'oklch(0.42 0.16 148)' : 'var(--mute)' }}
                     >
                       {rule.isActive ? 'Active' : 'Inactive'}
-                    </Button>
+                    </button>
                   </td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">
-                    {format(new Date(rule.createdAt), 'MMM d, yyyy')}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
-                      <Button variant="ghost" isIconOnly size="sm" onClick={() => openEdit(rule)}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" isIconOnly size="sm" onClick={() => { setDeleteId(rule.id); deleteModalState.open(); }}>
-                        <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                      </Button>
+                  <td style={{ padding: '10px 16px', color: 'var(--mute)' }}>{format(new Date(rule.createdAt), 'MMM d, yyyy')}</td>
+                  <td style={{ padding: '10px 16px' }}>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <button onClick={() => openEdit(rule)}
+                        style={{ width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'transparent', color: 'var(--mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+                      >
+                        <Pencil size={13} />
+                      </button>
+                      <button onClick={() => { setDeleteId(rule.id); setDeleteOpen(true); }}
+                        style={{ width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'transparent', color: 'oklch(0.58 0.20 22)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'oklch(0.96 0.04 22)'; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -211,84 +255,65 @@ export default function SlaRulesPage() {
         </table>
       </div>
 
-      <Modal state={modalState}>
-        <ModalDialog>
-          <ModalCloseTrigger />
-          <ModalHeader>
-            <ModalHeading>{editingRule ? 'Edit SLA Rule' : 'Create SLA Rule'}</ModalHeading>
-          </ModalHeader>
-          <ModalBody className="space-y-4">
-            <TextField>
-              <Label>Name</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Critical SLA" />
-            </TextField>
-            <TextField>
-              <Label>Description</Label>
-              <TextArea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Optional description" />
-            </TextField>
-            <div className="grid grid-cols-2 gap-4">
-              <TextField>
-                <Label>First Response (hours)</Label>
-                <Input type="number" min={0.1} step={0.1} value={String(form.firstResponseHours)} onChange={(e) => setForm({ ...form, firstResponseHours: parseFloat(e.target.value) || 0 })} />
-              </TextField>
-              <TextField>
-                <Label>Resolution (hours)</Label>
-                <Input type="number" min={0.1} step={0.1} value={String(form.resolutionHours)} onChange={(e) => setForm({ ...form, resolutionHours: parseFloat(e.target.value) || 0 })} />
-              </TextField>
+      {/* Create / Edit Dialog */}
+      <Dialog open={modalOpen} onClose={() => setModalOpen(false)} title={editingRule ? 'Edit SLA Rule' : 'Create SLA Rule'}>
+        <div style={formGap}>
+          <div>
+            <label style={labelStyle}>Name</label>
+            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="e.g. Critical SLA" style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>Description</label>
+            <textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Optional description" rows={2} style={{ ...inputStyle, resize: 'vertical', lineHeight: '1.5' }} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div>
+              <label style={labelStyle}>First Response (hours)</label>
+              <input type="number" min={0.1} step={0.1} value={form.firstResponseHours} onChange={(e) => setForm({ ...form, firstResponseHours: parseFloat(e.target.value) || 0 })} style={inputStyle} />
             </div>
-            <Select
-              selectedKey={form.priority || null}
-              onSelectionChange={(keys) => setForm({ ...form, priority: String(keys) || '' })}
-            >
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectPopover>
-                <ListBox>
-                  <ListBoxItem key="">All priorities</ListBoxItem>
-                  <ListBoxItem key="LOW">Low</ListBoxItem>
-                  <ListBoxItem key="MEDIUM">Medium</ListBoxItem>
-                  <ListBoxItem key="HIGH">High</ListBoxItem>
-                  <ListBoxItem key="CRITICAL">Critical</ListBoxItem>
-                </ListBox>
-              </SelectPopover>
-            </Select>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={form.isActive}
-                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-                className="h-4 w-4 rounded border-input"
-              />
-              Active
-            </label>
-            <Button onClick={handleSave} isDisabled={saveMutation.isPending}>
-              {editingRule ? 'Update' : 'Create'}
-            </Button>
-          </ModalBody>
-        </ModalDialog>
-      </Modal>
+            <div>
+              <label style={labelStyle}>Resolution (hours)</label>
+              <input type="number" min={0.1} step={0.1} value={form.resolutionHours} onChange={(e) => setForm({ ...form, resolutionHours: parseFloat(e.target.value) || 0 })} style={inputStyle} />
+            </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Priority filter</label>
+            <NativeSelect
+              value={form.priority}
+              onChange={(v) => setForm({ ...form, priority: v })}
+              placeholder="All priorities"
+              options={[
+                { value: 'LOW', label: 'Low' },
+                { value: 'MEDIUM', label: 'Medium' },
+                { value: 'HIGH', label: 'High' },
+                { value: 'CRITICAL', label: 'Critical' },
+              ]}
+            />
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: 'var(--ink-soft)', cursor: 'pointer' }}>
+            <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
+            Active
+          </label>
+          <button onClick={handleSave} disabled={saveMutation.isPending} style={{ ...btnPrimary, opacity: saveMutation.isPending ? 0.6 : 1 }}>
+            {saveMutation.isPending ? 'Saving…' : editingRule ? 'Update Rule' : 'Create Rule'}
+          </button>
+        </div>
+      </Dialog>
 
-      <Modal state={deleteModalState}>
-        <ModalDialog>
-          <ModalCloseTrigger />
-          <ModalHeader>
-            <ModalHeading>Delete SLA Rule</ModalHeading>
-          </ModalHeader>
-          <ModalBody>
-            <p className="text-sm text-muted-foreground">
-              Are you sure you want to delete this SLA rule? This action cannot be undone.
-            </p>
-          </ModalBody>
-          <ModalFooter>
-            <Button
-             
-              onClick={() => deleteId && deleteMutation.mutate(deleteId)}
-              isDisabled={deleteMutation.isPending}
-            >
-              Delete
-            </Button>
-          </ModalFooter>
-        </ModalDialog>
-      </Modal>
+      {/* Delete Dialog */}
+      <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} title="Delete SLA Rule">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--mute)', lineHeight: 1.6 }}>
+            Are you sure you want to delete this SLA rule? This action cannot be undone.
+          </p>
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+            <button style={btnSecondary} onClick={() => setDeleteOpen(false)}>Cancel</button>
+            <button style={{ ...btnDanger, opacity: deleteMutation.isPending ? 0.6 : 1 }} disabled={deleteMutation.isPending} onClick={() => deleteId && deleteMutation.mutate(deleteId)}>
+              {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+            </button>
+          </div>
+        </div>
+      </Dialog>
     </div>
   );
 }

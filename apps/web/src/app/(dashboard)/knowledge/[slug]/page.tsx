@@ -3,7 +3,6 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import { Button, Chip, Skeleton } from '@heroui/react';
 import { useAuthStore } from '@/stores/auth-store';
 import { Role } from '@next-tickets/shared';
 import { format } from 'date-fns';
@@ -63,82 +62,91 @@ export default function ArticleDetailPage() {
     onError: () => toast.error('Failed to submit feedback'),
   });
 
+  const btnSecondary: React.CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', gap: '5px',
+    padding: '7px 13px', fontSize: '12px', fontWeight: 500, border: 0,
+    borderRadius: '8px', background: 'var(--surface-2)', color: 'var(--ink-soft)',
+    cursor: 'pointer', boxShadow: 'var(--shadow-sm)', transition: 'background 80ms',
+  };
+
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-5 w-24 rounded-sm" />
-        <Skeleton className="h-10 w-3/4 rounded-sm" />
-        <div className="flex gap-2"><Skeleton className="h-5 w-20 rounded-sm" /><Skeleton className="h-5 w-32 rounded-sm" /></div>
-        <Skeleton className="h-64 w-full rounded-sm" />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxWidth: '780px' }}>
+        {([100, 280, 80, 400] as number[]).map((w, i) => (
+          <div key={i} style={{ height: i === 1 ? '32px' : '16px', width: `${w}px`, maxWidth: '100%', borderRadius: '6px', background: 'var(--surface-2)' }} />
+        ))}
       </div>
     );
   }
 
   if (error || !article) {
     return (
-      <div className="flex flex-col items-center justify-center gap-4 py-20">
-        <p className="text-lg font-medium text-[#DE350B]">Article not found</p>
-        <p className="text-sm text-[#6B778C]">The article may have been removed or does not exist.</p>
-        <Button variant="secondary" onClick={() => router.push('/knowledge')}>Back to Knowledge Base</Button>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '12px', padding: '80px 0' }}>
+        <p style={{ fontSize: '14px', fontWeight: 500, color: 'oklch(0.50 0.20 22)' }}>Article not found</p>
+        <p style={{ fontSize: '13px', color: 'var(--mute)' }}>The article may have been removed or does not exist.</p>
+        <button style={btnSecondary} onClick={() => router.push('/knowledge')}>Back to Knowledge Base</button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '780px' }}>
       <div>
-        <Button variant="ghost" size="sm" className="mb-2 -ml-2 text-[#6B778C]" onClick={() => router.push('/knowledge')}>
-          <ArrowLeft className="mr-1 h-4 w-4" /> Back to Knowledge Base
-        </Button>
-        <div className="flex items-start justify-between gap-4">
-          <h1 className="text-2xl font-semibold text-[#172B4D]">{article.title}</h1>
+        <button onClick={() => router.push('/knowledge')} style={{ ...btnSecondary, marginBottom: '12px', background: 'transparent', boxShadow: 'none', paddingLeft: 0, color: 'var(--mute)' }}>
+          <ArrowLeft size={14} /> Back to Knowledge Base
+        </button>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
+          <h1 style={{ fontSize: '26px', fontFamily: 'var(--font-display)', fontWeight: 400, color: 'var(--ink)', letterSpacing: '-0.02em', lineHeight: 1.1, margin: 0 }}>{article.title}</h1>
           {isAdminOrAgent && (
-            <Button variant="secondary" size="sm" onClick={() => router.push(`/knowledge/${article.slug}/edit`)}>
-              <Pencil className="mr-1 h-4 w-4" /> Edit
-            </Button>
+            <button style={{ ...btnSecondary, flexShrink: 0 }} onClick={() => router.push(`/knowledge/${article.slug}/edit`)}>
+              <Pencil size={13} /> Edit
+            </button>
           )}
         </div>
-        <div className="mt-3 flex flex-wrap items-center gap-3">
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '10px', marginTop: '12px' }}>
           {article.category && (
-            <Chip variant="soft" size="sm" className="bg-[#f4f5f7] text-[#172B4D]">{article.category.name}</Chip>
-          )}
-          {article.author && (
-            <span className="flex items-center gap-1 text-sm text-[#6B778C]">
-              <User className="h-3.5 w-3.5" />
-              {article.author.name}
+            <span style={{ padding: '3px 9px', borderRadius: '6px', fontSize: '11px', fontWeight: 600, background: 'var(--accent-tint)', color: 'var(--accent)' }}>
+              {article.category.name}
             </span>
           )}
-          <span className="text-sm text-[#6B778C]">{format(new Date(article.createdAt), 'MMM d, yyyy')}</span>
+          {article.author && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--mute)' }}>
+              <User size={12} /> {article.author.name}
+            </span>
+          )}
+          <span style={{ fontSize: '12px', color: 'var(--mute)' }}>{format(new Date(article.createdAt), 'MMM d, yyyy')}</span>
           {article.updatedAt !== article.createdAt && (
-            <span className="text-sm text-[#6B778C]">Updated {format(new Date(article.updatedAt), 'MMM d, yyyy')}</span>
+            <span style={{ fontSize: '12px', color: 'var(--mute)' }}>Updated {format(new Date(article.updatedAt), 'MMM d, yyyy')}</span>
           )}
         </div>
       </div>
 
       {article.tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
           {article.tags.map((tag) => (
-            <Chip key={tag.id} variant="soft" size="sm" className="bg-[#f4f5f7] text-[#172B4D]">{tag.name}</Chip>
+            <span key={tag.id} style={{ padding: '2px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 500, background: 'var(--surface-2)', color: 'var(--mute)' }}>
+              {tag.name}
+            </span>
           ))}
         </div>
       )}
 
-      <div className="max-w-none rounded-sm border border-[#DFE1E6] bg-white p-6">
+      <div style={{ background: 'var(--surface)', borderRadius: '14px', boxShadow: 'var(--shadow-md)', padding: '24px' }}>
         {article.content ? (
-          <div className="prose prose-sm max-w-none text-[#172B4D]" dangerouslySetInnerHTML={{ __html: article.content }} />
+          <div style={{ fontSize: '14px', lineHeight: 1.7, color: 'var(--ink)' }} dangerouslySetInnerHTML={{ __html: article.content }} />
         ) : (
-          <p className="text-[#6B778C] italic">No content</p>
+          <p style={{ color: 'var(--mute)', fontStyle: 'italic', fontSize: '13px' }}>No content</p>
         )}
       </div>
 
-      <div className="flex items-center gap-4 border-t border-[#DFE1E6] pt-6">
-        <span className="text-sm text-[#6B778C]">Was this helpful?</span>
-        <Button variant="secondary" size="sm" onClick={() => helpfulMutation.mutate()} isDisabled={helpfulMutation.isPending}>
-          <ThumbsUp className="mr-1 h-4 w-4" /> Yes ({article.helpfulCount})
-        </Button>
-        <Button variant="secondary" size="sm" onClick={() => notHelpfulMutation.mutate()} isDisabled={notHelpfulMutation.isPending}>
-          <ThumbsDown className="mr-1 h-4 w-4" /> No ({article.notHelpfulCount})
-        </Button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
+        <span style={{ fontSize: '13px', color: 'var(--mute)' }}>Was this helpful?</span>
+        <button style={btnSecondary} onClick={() => helpfulMutation.mutate()} disabled={helpfulMutation.isPending}>
+          <ThumbsUp size={13} /> Yes ({article.helpfulCount})
+        </button>
+        <button style={btnSecondary} onClick={() => notHelpfulMutation.mutate()} disabled={notHelpfulMutation.isPending}>
+          <ThumbsDown size={13} /> No ({article.notHelpfulCount})
+        </button>
       </div>
     </div>
   );
