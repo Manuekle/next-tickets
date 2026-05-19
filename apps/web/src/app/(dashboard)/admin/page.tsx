@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { apiClient } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Add01Icon, Search01Icon, PencilEdit01Icon, Delete01Icon, Cancel01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { format } from 'date-fns';
@@ -111,11 +111,11 @@ export default function AdminUsersPage() {
       apiClient('/admin/users', { method: 'POST', body: JSON.stringify(body) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast.success('User created');
+      sileo.success({ title: 'User created' });
       setCreateOpen(false);
       setCreateForm({ name: '', email: '', password: '', role: 'AGENT' });
     },
-    onError: () => toast.error('Failed to create user'),
+    onError: () => sileo.error({ title: 'Failed to create user' }),
   });
 
   const updateMutation = useMutation({
@@ -123,20 +123,20 @@ export default function AdminUsersPage() {
       apiClient(`/admin/users/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast.success('User updated');
+      sileo.success({ title: 'User updated' });
       setEditOpen(false);
       setEditUser(null);
     },
-    onError: () => toast.error('Failed to update user'),
+    onError: () => sileo.error({ title: 'Failed to update user' }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiClient(`/admin/users/${id}`, { method: 'DELETE' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
-      toast.success('User deactivated');
+      sileo.success({ title: 'User deactivated' });
     },
-    onError: () => toast.error('Failed to deactivate user'),
+    onError: () => sileo.error({ title: 'Failed to deactivate user' }),
   });
 
   const users = data?.data || [];

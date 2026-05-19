@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 import { useState, Suspense } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { LockPasswordIcon } from '@hugeicons/core-free-icons';
@@ -38,17 +38,17 @@ function ResetPasswordForm() {
   });
 
   const onSubmit = async (data: ResetForm) => {
-    if (!token) { toast.error('Invalid or missing reset token'); return; }
+    if (!token) { sileo.error({ title: 'Invalid or missing reset token' }); return; }
     setLoading(true);
     try {
       await apiClient('/auth/reset-password', {
         method: 'POST',
         body: JSON.stringify({ token, password: data.password }),
       });
-      toast.success('Password reset successfully! Please sign in.');
+      sileo.success({ title: 'Password reset successfully! Please sign in.' });
       router.push('/login');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to reset password');
+      sileo.error({ title: err.message || 'Failed to reset password' });
     } finally {
       setLoading(false);
     }

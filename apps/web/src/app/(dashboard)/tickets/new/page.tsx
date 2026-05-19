@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
 
@@ -67,10 +67,10 @@ export default function NewTicketPage() {
       apiClient('/tickets', { method: 'POST', body: JSON.stringify(data) }),
     onSuccess: (res: any) => {
       queryClient.invalidateQueries({ queryKey: ['tickets'] });
-      toast.success('Ticket created');
+      sileo.success({ title: 'Ticket created' });
       router.push(`/tickets/${res.data.id}`);
     },
-    onError: () => toast.error('Failed to create ticket'),
+    onError: () => sileo.error({ title: 'Failed to create ticket' }),
   });
 
   const onSubmit = (data: TicketForm) => mutation.mutate(data);

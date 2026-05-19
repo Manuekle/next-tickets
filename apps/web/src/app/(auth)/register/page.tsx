@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 import { useState } from 'react';
 
 const registerSchema = z.object({
@@ -53,10 +53,10 @@ export default function RegisterPage() {
         method: 'POST',
         body:   JSON.stringify({ name: data.name, email: data.email, password: data.password }),
       });
-      toast.success('Account created! Please sign in.');
+      sileo.success({ title: 'Account created! Please sign in.' });
       router.push('/login');
     } catch (err: any) {
-      toast.error(err.message || 'Registration failed');
+      sileo.error({ title: err.message || 'Registration failed' });
     } finally {
       setLoading(false);
     }

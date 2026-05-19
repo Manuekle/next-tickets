@@ -4,7 +4,7 @@ import { ThemeProvider as NextThemesProvider } from 'next-themes';
 import { QueryProvider } from './query-provider';
 import { AuthProvider } from './auth-provider';
 import { SocketProvider } from './socket-provider';
-import { Toaster } from 'sonner';
+import { Toaster } from 'sileo';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -17,7 +17,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <QueryProvider>
         <AuthProvider>
           <SocketProvider>
-            <Toaster richColors position="top-right" />
+            <Toaster position="top-right" theme="system" />
             {children}
           </SocketProvider>
         </AuthProvider>

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 
 export function CommentInput({
   ticketId,
@@ -26,9 +26,9 @@ export function CommentInput({
       setContent('');
       setIsInternal(false);
       queryClient.invalidateQueries({ queryKey: ['ticket-comments', ticketId] });
-      toast.success('Comment added');
+      sileo.success({ title: 'Comment added' });
     },
-    onError: () => toast.error('Failed to add comment'),
+    onError: () => sileo.error({ title: 'Failed to add comment' }),
   });
 
   return (

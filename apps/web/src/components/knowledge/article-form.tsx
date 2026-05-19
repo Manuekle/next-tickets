@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
 
@@ -97,10 +97,10 @@ export function ArticleForm({ initialData }: ArticleFormProps) {
       });
     },
     onSuccess: (res: any) => {
-      toast.success(isEdit ? 'Article updated' : 'Article created');
+      sileo.success({ title: isEdit ? 'Article updated' : 'Article created' });
       router.push(`/knowledge/${res.data.slug}`);
     },
-    onError: () => toast.error(isEdit ? 'Failed to update article' : 'Failed to create article'),
+    onError: () => sileo.error({ title: isEdit ? 'Failed to update article' : 'Failed to create article' }),
   });
 
   const onSubmit = (data: ArticleFormData) => mutation.mutate(data);

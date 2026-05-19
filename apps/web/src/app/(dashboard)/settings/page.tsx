@@ -7,7 +7,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { Sun01Icon, Moon01Icon, ComputerDesk01Icon, Logout01Icon, FloppyDiskIcon, PencilEdit01Icon } from '@hugeicons/core-free-icons';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 
 const ROLE_LABEL: Record<string, string> = {
   SUPER_ADMIN: 'Super Admin',
@@ -77,10 +77,10 @@ export default function SettingsPage() {
       const updated = res?.data ?? res as any;
       if (updated?.name) {
         setUser({ ...user!, name: updated.name });
-        toast.success('Name updated');
+        sileo.success({ title: 'Name updated' });
       }
     } catch {
-      toast.error('Failed to update name');
+      sileo.error({ title: 'Failed to update name' });
     } finally {
       setSaving(false);
       setEditingName(false);

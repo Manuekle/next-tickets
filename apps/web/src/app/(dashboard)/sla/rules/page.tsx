@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { apiClient } from '@/lib/api';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Add01Icon, PencilEdit01Icon, Delete01Icon, Cancel01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { format } from 'date-fns';
@@ -105,9 +105,9 @@ export default function SlaRulesPage() {
       setModalOpen(false);
       setEditingRule(null);
       setForm(defaultForm);
-      toast.success(editingRule ? 'Rule updated' : 'Rule created');
+      sileo.success({ title: editingRule ? 'Rule updated' : 'Rule created' });
     },
-    onError: () => toast.error('Failed to save rule'),
+    onError: () => sileo.error({ title: 'Failed to save rule' }),
   });
 
   const deleteMutation = useMutation({
@@ -116,16 +116,16 @@ export default function SlaRulesPage() {
       queryClient.invalidateQueries({ queryKey: ['sla-rules'] });
       setDeleteId(null);
       setDeleteOpen(false);
-      toast.success('Rule deleted');
+      sileo.success({ title: 'Rule deleted' });
     },
-    onError: () => toast.error('Failed to delete rule'),
+    onError: () => sileo.error({ title: 'Failed to delete rule' }),
   });
 
   const toggleMutation = useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       apiClient(`/sla/${id}`, { method: 'PATCH', body: JSON.stringify({ isActive }) }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['sla-rules'] }),
-    onError: () => toast.error('Failed to toggle rule'),
+    onError: () => sileo.error({ title: 'Failed to toggle rule' }),
   });
 
   function openCreate() {

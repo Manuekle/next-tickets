@@ -6,7 +6,7 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { apiClient } from '@/lib/api';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Add01Icon, PencilEdit01Icon, Delete01Icon, WorkflowSquare01Icon, Cancel01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons';
 
@@ -224,14 +224,14 @@ function AutomationDialog({ open, onClose, editRule }: {
 
   const createMutation = useMutation({
     mutationFn: (data: FormValues) => apiClient('/automations', { method: 'POST', body: JSON.stringify(data) }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['automations'] }); toast.success('Rule created'); onClose(); reset(); },
-    onError:   () => toast.error('Failed to create automation'),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['automations'] }); sileo.success({ title: 'Rule created' }); onClose(); reset(); },
+    onError:   () => sileo.error({ title: 'Failed to create automation' }),
   });
 
   const updateMutation = useMutation({
     mutationFn: (data: FormValues) => apiClient(`/automations/${editRule!.id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['automations'] }); toast.success('Rule updated'); onClose(); reset(); },
-    onError:   () => toast.error('Failed to update automation'),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['automations'] }); sileo.success({ title: 'Rule updated' }); onClose(); reset(); },
+    onError:   () => sileo.error({ title: 'Failed to update automation' }),
   });
 
   const onSubmit = (data: FormValues) => isEdit ? updateMutation.mutate(data) : createMutation.mutate(data);
@@ -453,14 +453,14 @@ export default function AutomationsPage() {
   const toggleMutation = useMutation({
     mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) =>
       apiClient(`/automations/${id}`, { method: 'PATCH', body: JSON.stringify({ isActive }) }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['automations'] }); toast.success('Rule status updated'); },
-    onError:   () => toast.error('Failed to update rule'),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['automations'] }); sileo.success({ title: 'Rule status updated' }); },
+    onError:   () => sileo.error({ title: 'Failed to update rule' }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => apiClient(`/automations/${id}`, { method: 'DELETE' }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['automations'] }); toast.success('Rule deleted'); },
-    onError:   () => toast.error('Failed to delete rule'),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['automations'] }); sileo.success({ title: 'Rule deleted' }); },
+    onError:   () => sileo.error({ title: 'Failed to delete rule' }),
   });
 
   const rules = data?.data ?? [];

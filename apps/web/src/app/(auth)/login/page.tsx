@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/stores/auth-store';
 import { apiClient } from '@/lib/api';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 import { useState } from 'react';
 
 const loginSchema = z.object({
@@ -48,10 +48,10 @@ export default function LoginPage() {
         body:   JSON.stringify(data),
       });
       authLogin(res.data.accessToken, res.data.refreshToken, res.data.user);
-      toast.success('Welcome back!');
+      sileo.success({ title: 'Welcome back!' });
       router.push('/');
     } catch {
-      toast.error('Invalid email or password');
+      sileo.error({ title: 'Invalid email or password' });
     } finally {
       setLoading(false);
     }

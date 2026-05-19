@@ -12,7 +12,7 @@ import { CommentInput } from '@/components/comments/comment-input';
 import { format } from 'date-fns';
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
 import { ArrowRight01Icon, BubbleChatIcon, InformationCircleIcon } from '@hugeicons/core-free-icons';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 
 type Tab = 'conversation' | 'details';
 
@@ -214,9 +214,9 @@ export default function TicketDetailPage() {
       apiClient(`/tickets/${ticketId}`, { method: 'PATCH', body: JSON.stringify({ status: newStatus }) }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ticket', ticketId] });
-      toast.success('Status updated');
+      sileo.success({ title: 'Status updated' });
     },
-    onError: () => toast.error('Failed to update status'),
+    onError: () => sileo.error({ title: 'Failed to update status' }),
   });
 
   const [liveComments, setLiveComments] = useState<Comment[]>([]);

@@ -10,7 +10,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 import { formatDistanceToNow } from 'date-fns';
 
 /* ─── shared types ─── */
@@ -156,11 +156,11 @@ export function CreateTicketDrawer({ open, onClose }: CreateTicketDrawerProps) {
     }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['inbox-tickets'] });
-      toast.success('Ticket created');
+      sileo.success({ title: 'Ticket created' });
       setTitle(''); setDescription(''); setPriority('MEDIUM'); setCategoryId('');
       onClose();
     },
-    onError: () => toast.error('Failed to create ticket'),
+    onError: () => sileo.error({ title: 'Failed to create ticket' }),
   });
 
   const priorities = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
@@ -310,7 +310,7 @@ export function TicketDetailDrawer({ ticketId, onClose }: TicketDetailDrawerProp
       setComment('');
       setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     },
-    onError: () => toast.error('Failed to add comment'),
+    onError: () => sileo.error({ title: 'Failed to add comment' }),
   });
 
   const meta = ticket ? [

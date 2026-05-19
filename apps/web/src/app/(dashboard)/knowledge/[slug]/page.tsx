@@ -8,7 +8,7 @@ import { Role } from '@next-tickets/shared';
 import { format } from 'date-fns';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ArrowLeft01Icon, ThumbsUpIcon, ThumbsDownIcon, User02Icon, PencilEdit01Icon } from '@hugeicons/core-free-icons';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 
 interface ArticleDetail {
   id: string;
@@ -49,18 +49,18 @@ export default function ArticleDetailPage() {
     mutationFn: () => apiClient(`/knowledge/${article!.id}/helpful`, { method: 'POST' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-article', slug] });
-      toast.success('Marked as helpful');
+      sileo.success({ title: 'Marked as helpful' });
     },
-    onError: () => toast.error('Failed to submit feedback'),
+    onError: () => sileo.error({ title: 'Failed to submit feedback' }),
   });
 
   const notHelpfulMutation = useMutation({
     mutationFn: () => apiClient(`/knowledge/${article!.id}/not-helpful`, { method: 'POST' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['knowledge-article', slug] });
-      toast.success('Feedback recorded');
+      sileo.success({ title: 'Feedback recorded' });
     },
-    onError: () => toast.error('Failed to submit feedback'),
+    onError: () => sileo.error({ title: 'Failed to submit feedback' }),
   });
 
   const btnSecondary: React.CSSProperties = {

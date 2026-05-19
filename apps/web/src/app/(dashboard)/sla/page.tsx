@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
 import { DashboardSpeed01Icon, Alert02Icon, CheckmarkCircle01Icon, Clock01Icon } from '@hugeicons/core-free-icons';
 
@@ -79,10 +79,10 @@ export default function SlaPage() {
   const breachMutation = useMutation({
     mutationFn: () => apiClient<{ breached: number }>('/sla/check-breaches', { method: 'POST' }),
     onSuccess:  (res) => {
-      toast.success(`Checked breaches: ${res.breached} found`);
+      sileo.success({ title: `Checked breaches: ${res.breached} found` });
       queryClient.invalidateQueries({ queryKey: ['sla-metrics'] });
     },
-    onError: () => toast.error('Failed to check breaches'),
+    onError: () => sileo.error({ title: 'Failed to check breaches' }),
   });
 
   if (error) {

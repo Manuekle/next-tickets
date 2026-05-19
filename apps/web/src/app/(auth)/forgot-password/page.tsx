@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Link from 'next/link';
 import { apiClient } from '@/lib/api';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 import { useState } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { CheckmarkCircle01Icon } from '@hugeicons/core-free-icons';
@@ -26,7 +26,7 @@ export default function ForgotPasswordPage() {
       await apiClient('/auth/forgot-password', { method: 'POST', body: JSON.stringify(data) });
       setSent(true);
     } catch (err: any) {
-      toast.error(err.message || 'Something went wrong');
+      sileo.error({ title: err.message || 'Something went wrong' });
     } finally {
       setLoading(false);
     }
