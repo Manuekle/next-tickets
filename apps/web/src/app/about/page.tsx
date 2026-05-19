@@ -85,10 +85,10 @@ export default function AboutPage() {
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, borderRadius: '999px', background: 'oklch(0.92 0.08 275 / 0.60)', color: 'oklch(0.40 0.22 275)', marginBottom: '28px', letterSpacing: '0.01em', textTransform: 'uppercase' }}>
             Open Source · MIT License
           </div>
-          <h1 style={{ fontSize: 'clamp(42px, 7vw, 72px)', fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400, color: 'oklch(0.18 0.030 270)', letterSpacing: '-0.03em', lineHeight: 1.0, margin: '0 0 24px' }}>
+          <h1 style={{ fontSize: 'clamp(42px, 7vw, 72px)', fontFamily: 'var(--font-display)', fontWeight: 700, color: 'oklch(0.18 0.030 270)', letterSpacing: '-0.03em', lineHeight: 1.0, margin: '0 0 24px' }}>
             Support tickets,
             <br />
-            <em style={{ fontStyle: 'italic' }}>finally open.</em>
+            <span style={{ color: 'oklch(0.52 0.26 275)' }}>finally open.</span>
           </h1>
           <p style={{ fontSize: '18px', color: 'oklch(0.52 0.020 270)', lineHeight: 1.65, maxWidth: '520px', margin: '0 auto 40px' }}>
             A modern, self-hostable ticket management system. No vendor lock-in, no SaaS pricing, no surprises — just great support tooling you own.
@@ -105,7 +105,7 @@ export default function AboutPage() {
 
         {/* Features grid */}
         <section style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 24px 80px' }}>
-          <h2 style={{ textAlign: 'center', fontSize: '32px', fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400, color: 'oklch(0.18 0.030 270)', letterSpacing: '-0.02em', margin: '0 0 48px' }}>
+          <h2 style={{ textAlign: 'center', fontSize: '32px', fontFamily: 'var(--font-display)', fontWeight: 700, color: 'oklch(0.18 0.030 270)', letterSpacing: '-0.02em', margin: '0 0 48px' }}>
             Everything a support team needs
           </h2>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '16px' }}>
@@ -121,7 +121,7 @@ export default function AboutPage() {
 
         {/* Comparison table */}
         <section style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 24px 100px' }}>
-          <h2 style={{ textAlign: 'center', fontSize: '32px', fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400, color: 'oklch(0.18 0.030 270)', letterSpacing: '-0.02em', margin: '0 0 12px' }}>
+          <h2 style={{ textAlign: 'center', fontSize: '32px', fontFamily: 'var(--font-display)', fontWeight: 700, color: 'oklch(0.18 0.030 270)', letterSpacing: '-0.02em', margin: '0 0 12px' }}>
             How we compare
           </h2>
           <p style={{ textAlign: 'center', fontSize: '15px', color: 'oklch(0.52 0.020 270)', margin: '0 0 40px' }}>
@@ -163,7 +163,7 @@ export default function AboutPage() {
         {/* CTA */}
         <section style={{ textAlign: 'center', padding: '0 24px 100px' }}>
           <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.75)', borderRadius: '24px', padding: '56px 72px', boxShadow: '0 8px 32px rgba(24,18,8,0.10)', backdropFilter: 'blur(8px)', maxWidth: '600px' }}>
-            <h2 style={{ fontSize: '36px', fontFamily: '"Instrument Serif", Georgia, serif', fontWeight: 400, color: 'oklch(0.18 0.030 270)', letterSpacing: '-0.02em', margin: '0 0 16px' }}>
+            <h2 style={{ fontSize: '36px', fontFamily: 'var(--font-display)', fontWeight: 700, color: 'oklch(0.18 0.030 270)', letterSpacing: '-0.02em', margin: '0 0 16px' }}>
               Deploy it yourself
             </h2>
             <p style={{ fontSize: '15px', color: 'oklch(0.52 0.020 270)', lineHeight: 1.65, margin: '0 0 32px' }}>

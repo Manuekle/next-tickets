@@ -14,7 +14,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <RouterProvider navigate={router.push}>
       <NextThemesProvider
-        attribute="class"
+        attribute="data-theme"
         defaultTheme="system"
         enableSystem
         disableTransitionOnChange

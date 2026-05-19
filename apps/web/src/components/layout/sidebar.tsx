@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   DashboardSquare01Icon, Ticket01Icon, Book01Icon, BarChartIcon, Settings01Icon,
-  WorkflowSquare01Icon, DashboardSpeed01Icon, SecurityLockIcon, Search01Icon, ArrowRight01Icon, Cancel01Icon,
+  WorkflowSquare01Icon, DashboardSpeed01Icon, SecurityLockIcon, ArrowRight01Icon, Cancel01Icon,
 } from '@hugeicons/core-free-icons';
 import { useAuthStore } from '@/stores/auth-store';
 
@@ -88,35 +88,6 @@ export function Sidebar({ onClose }: SidebarProps) {
           </button>
         )}
       </div>
-
-      {/* Search trigger */}
-      <button
-        type="button"
-        onClick={() => window.dispatchEvent(new CustomEvent('ot:open-palette'))}
-        aria-label="Search or run a command (⌘K)"
-        style={{
-          display:     'flex',
-          alignItems:  'center',
-          gap:         '8px',
-          padding:     '8px 11px',
-          border:      0,
-          background:  'var(--sb-surface)',
-          borderRadius:'10px',
-          color:       'var(--sb-mute)',
-          fontSize:    '12px',
-          cursor:      'pointer',
-          textAlign:   'left',
-          margin:      '0 2px 4px',
-          transition:  'all 120ms',
-          width:       'calc(100% - 4px)',
-        }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--sb-surface-2)'; }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--sb-surface)'; }}
-      >
-        <HugeiconsIcon icon={Search01Icon} size={13} aria-hidden="true" />
-        <span style={{ flex: 1 }}>Search or jump to…</span>
-        <Kbd>⌘K</Kbd>
-      </button>
 
       {/* Nav */}
       <nav aria-label="Workspace navigation" style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1, overflowY: 'auto', minHeight: 0, width: '100%', padding: '0 2px' }}>
@@ -296,25 +267,6 @@ function SectionLabel({ children, style }: { children: React.ReactNode; style?: 
     }}>
       {children}
     </div>
-  );
-}
-
-function Kbd({ children }: { children: React.ReactNode }) {
-  return (
-    <span aria-hidden="true" style={{
-      display:     'inline-flex',
-      alignItems:  'center',
-      padding:     '1.5px 5px',
-      fontSize:    '10.5px',
-      background:  'rgba(255,255,255,0.06)',
-      color:       'var(--sb-mute)',
-      borderRadius:'4px',
-      fontFamily:  'var(--font-mono)',
-      boxShadow:   'inset 0 0 0 1px rgba(255,255,255,0.06)',
-      fontWeight:  500,
-    }}>
-      {children}
-    </span>
   );
 }
 

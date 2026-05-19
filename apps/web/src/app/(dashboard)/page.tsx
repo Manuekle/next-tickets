@@ -1,42 +1,62 @@
 'use client';
 export const dynamic = 'force-dynamic';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useState, useRef, useEffect } from 'react';
 import { apiClient } from '@/lib/api';
 import { useAuthStore } from '@/stores/auth-store';
 import { useRouter } from 'next/navigation';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  InboxIcon, Clock01Icon, Alert02Icon, CheckmarkCircle01Icon,
-  Add01Icon, ZapIcon, ArrowRight01Icon, User02Icon, ArrowLeftRightIcon, BubbleChatIcon, Tag01Icon,
+  Add01Icon, Alert02Icon, CheckmarkCircle01Icon, Clock01Icon, InboxIcon,
+  FilterIcon, ArrowRight01Icon, BubbleChatIcon, Send01Icon,
 } from '@hugeicons/core-free-icons';
+import { toast } from 'sonner';
+
+/* ─── types ─── */
+
+interface Ticket {
+  id: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  category?: { name: string } | null;
+  assignedTo?: { name: string; id: string } | null;
+  customer?: { name: string; email: string } | null;
+  createdAt: string;
+  updatedAt: string;
+  _count?: { comments: number };
+}
+
+interface Comment {
+  id: string;
+  content: string;
+  isInternal: boolean;
+  author: { name: string };
+  createdAt: string;
+}
+
+interface TicketDetail extends Ticket {
+  comments: Comment[];
+  tags?: { tag: { id: string; name: string } }[];
+}
 
 interface DashboardStats {
   openCount: number;
   closedCount: number;
   pendingCount: number;
   avgFirstResponseHours: number | null;
-  byPriority: { priority: string; count: number }[];
-  byCategory: { name: string; count: number }[];
 }
 
-interface Ticket {
-  id: string;
-  title: string;
-  status: string;
-  priority: string;
-  category?: { name: string; hue?: number };
-  assignedTo?: { name: string } | null;
-  createdAt: string;
-  updatedAt: string;
-}
+/* ─── meta ─── */
 
-const STATUS_META: Record<string, { label: string; hue: number; dotChroma: number }> = {
-  OPEN:                { label: 'Open',        hue: 235, dotChroma: 0.18 },
-  IN_PROGRESS:         { label: 'In progress', hue: 65,  dotChroma: 0.18 },
-  WAITING_ON_CUSTOMER: { label: 'Waiting',     hue: 305, dotChroma: 0.16 },
-  RESOLVED:            { label: 'Resolved',    hue: 155, dotChroma: 0.16 },
-  CLOSED:              { label: 'Closed',      hue: 260, dotChroma: 0.015 },
+const STATUS_META: Record<string, { label: string; hue: number; chroma: number }> = {
+  OPEN:                { label: 'Open',        hue: 235, chroma: 0.18 },
+  IN_PROGRESS:         { label: 'In progress', hue: 65,  chroma: 0.18 },
+  WAITING_ON_CUSTOMER: { label: 'Waiting',     hue: 305, chroma: 0.16 },
+  RESOLVED:            { label: 'Resolved',    hue: 155, chroma: 0.16 },
+  CLOSED:              { label: 'Closed',      hue: 260, chroma: 0.015 },
 };
 
 const PRIORITY_META: Record<string, { label: string; hue: number }> = {
@@ -46,6 +66,16 @@ const PRIORITY_META: Record<string, { label: string; hue: number }> = {
   CRITICAL: { label: 'Critical', hue: 22  },
 };
 
+const STATUS_FILTERS = [
+  { label: 'All',       value: '' },
+  { label: 'Open',      value: 'OPEN' },
+  { label: 'In Progress', value: 'IN_PROGRESS' },
+  { label: 'Waiting',   value: 'WAITING_ON_CUSTOMER' },
+  { label: 'Resolved',  value: 'RESOLVED' },
+];
+
+/* ─── utils ─── */
+
 function timeAgo(iso: string): string {
   const ms = Date.now() - new Date(iso).getTime();
   const m  = Math.round(ms / 60000);
@@ -53,7 +83,70 @@ function timeAgo(iso: string): string {
   if (m < 60) return `${m}m`;
   const h = Math.round(m / 60);
   if (h < 24) return `${h}h`;
-  return `${Math.round(h / 24)}d`;
+  const d = Math.round(h / 24);
+  if (d < 30) return `${d}d`;
+  return `${Math.round(d / 30)}mo`;
+}
+
+function initials(name: string) {
+  return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+}
+
+/* ─── small components ─── */
+
+function StatusDot({ status }: { status: string }) {
+  const m = STATUS_META[status];
+  if (!m) return null;
+  return (
+    <span style={{
+      flexShrink:   0,
+      width:        '8px',
+      height:       '8px',
+      borderRadius: '999px',
+      background:   `oklch(0.60 ${m.chroma * 1.1} ${m.hue})`,
+      boxShadow:    `0 0 0 2px oklch(0.92 ${m.chroma * 0.3} ${m.hue})`,
+    }} />
+  );
+}
+
+function PriorityPip({ priority }: { priority: string }) {
+  const m     = PRIORITY_META[priority];
+  const order = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+  const lvl   = order.indexOf(priority) + 1;
+  if (!m) return null;
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'flex-end', gap: '2px', height: '12px', flexShrink: 0 }}>
+      {[1, 2, 3, 4].map((i) => (
+        <span key={i} style={{
+          width:        '3px',
+          height:       `${3 + i * 2}px`,
+          borderRadius: '1px',
+          background:   i <= lvl ? `oklch(0.58 0.20 ${m.hue})` : 'var(--surface-3)',
+        }} />
+      ))}
+    </span>
+  );
+}
+
+function Avatar({ name, size = 28 }: { name: string; size?: number }) {
+  return (
+    <div style={{
+      width:          `${size}px`,
+      height:         `${size}px`,
+      borderRadius:   '999px',
+      background:     'linear-gradient(135deg, oklch(0.52 0.04 258), oklch(0.42 0.04 262))',
+      color:          '#fff',
+      display:        'flex',
+      alignItems:     'center',
+      justifyContent: 'center',
+      fontSize:       `${Math.max(9, size * 0.36)}px`,
+      fontWeight:     600,
+      flexShrink:     0,
+      letterSpacing:  '-0.01em',
+    }}>
+      {initials(name)}
+    </div>
+  );
 }
 
 function StatusPill({ status }: { status: string }) {
@@ -63,567 +156,592 @@ function StatusPill({ status }: { status: string }) {
     <span style={{
       display:      'inline-flex',
       alignItems:   'center',
-      gap:          '6px',
-      padding:      '3px 9px 3px 7px',
+      gap:          '5px',
+      padding:      '3px 8px 3px 6px',
       fontSize:     '11.5px',
       fontWeight:   600,
-      letterSpacing: '-0.005em',
       borderRadius: '999px',
-      background:   `oklch(0.93 ${m.dotChroma * 0.32} ${m.hue})`,
-      color:        `oklch(0.32 ${m.dotChroma} ${m.hue})`,
+      background:   `oklch(0.93 ${m.chroma * 0.3} ${m.hue})`,
+      color:        `oklch(0.32 ${m.chroma} ${m.hue})`,
       whiteSpace:   'nowrap',
     }}>
-      <span style={{
-        width: '6px', height: '6px', borderRadius: '999px',
-        background: `oklch(0.54 ${m.dotChroma * 1.1} ${m.hue})`,
-        boxShadow: `0 0 0 2px color-mix(in oklch, oklch(0.54 ${m.dotChroma * 1.1} ${m.hue}) 12%, transparent)`,
-      }} />
+      <span style={{ width: '6px', height: '6px', borderRadius: '999px', background: `oklch(0.56 ${m.chroma * 1.1} ${m.hue})`, flexShrink: 0 }} />
       {m.label}
     </span>
   );
 }
 
-function PriorityBar({ priority }: { priority: string }) {
-  const m     = PRIORITY_META[priority];
-  const order = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
-  const lvl   = order.indexOf(priority) + 1;
-  if (!m) return null;
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 500, color: 'var(--ink)' }}>
-      <span style={{ display: 'inline-flex', alignItems: 'flex-end', gap: '2px', height: '14px' }}>
-        {[1, 2, 3, 4].map((i) => (
-          <span key={i} style={{
-            width:        '3.5px',
-            height:       `${4 + i * 2.5}px`,
-            borderRadius: '1.5px',
-            background:   i <= lvl ? `oklch(0.60 0.20 ${m.hue})` : 'var(--surface-3)',
-            boxShadow:    i <= lvl ? `0 0 4px color-mix(in oklch, oklch(0.60 0.20 ${m.hue}) 50%, transparent)` : 'none',
-          }} />
-        ))}
-      </span>
-      <span style={{ fontSize: '11.5px' }}>{m.label}</span>
-    </span>
-  );
-}
+/* ─── ticket row (left panel) ─── */
 
-function KpiCard({
-  label, value, delta, deltaTone, trend, tone, icon, onClick,
-}: {
-  label: string; value: number | string; delta: string;
-  deltaTone: 'info' | 'ok' | 'warn' | 'muted';
-  trend: number[]; tone: string; icon: React.ReactNode;
-  onClick?: () => void;
-}) {
-  const toneMap: Record<string, { hue: number; valueColor: string }> = {
-    indigo:  { hue: 275, valueColor: 'oklch(0.30 0.25 275)' },
-    amber:   { hue:  60, valueColor: 'oklch(0.32 0.16 60)'  },
-    rose:    { hue:  18, valueColor: 'oklch(0.34 0.24 18)'  },
-    emerald: { hue: 155, valueColor: 'oklch(0.32 0.16 155)' },
-    neutral: { hue: 275, valueColor: 'var(--ink)'            },
-  };
-  const tn = toneMap[tone] ?? toneMap.neutral;
-  const deltaColor = {
-    info:  'oklch(0.48 0.22 245)',
-    ok:    'oklch(0.46 0.18 155)',
-    warn:  'oklch(0.52 0.22 22)',
-    muted: 'var(--mute)',
-  }[deltaTone];
-
-  const w = 120, h = 32;
-  const maxV  = Math.max(...trend, 1);
-  const stepX = w / Math.max(trend.length - 1, 1);
-  const pts   = trend.map((v, i) => [i * stepX, h - (v / maxV) * (h - 4) - 2] as [number, number]);
-  const path  = 'M ' + pts.map((p) => p.join(',')).join(' L ');
-  const area  = path + ` L ${w},${h} L 0,${h} Z`;
-  const uid   = `kpi-${tone}-${label}`.replace(/\s/g, '');
+function TicketRow({ ticket, selected, onClick }: { ticket: Ticket; selected: boolean; onClick: () => void }) {
+  const isUnread = ticket.status === 'OPEN';
+  const pm = PRIORITY_META[ticket.priority];
 
   return (
     <button
+      type="button"
       onClick={onClick}
       style={{
-        padding:        '18px',
-        textAlign:      'left',
-        cursor:         onClick ? 'pointer' : 'default',
-        display:        'flex',
-        flexDirection:  'column',
-        gap:            '4px',
-        position:       'relative',
-        overflow:       'hidden',
-        background:     tone === 'neutral'
-          ? 'var(--surface)'
-          : `linear-gradient(135deg, oklch(0.92 0.14 ${tn.hue}) 0%, oklch(0.96 0.07 ${tn.hue}) 60%, var(--surface) 110%)`,
-        border:         0,
-        borderRadius:   '16px',
-        boxShadow:      tone === 'neutral'
-          ? 'var(--shadow-md)'
-          : `var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.6)`,
-        transition:     'transform 160ms, box-shadow 160ms',
+        display:         'flex',
+        flexDirection:   'column',
+        gap:             '5px',
+        width:           '100%',
+        padding:         '12px 14px',
+        border:          0,
+        borderBottom:    '1px solid var(--hairline)',
+        background:      selected ? 'var(--accent-tint)' : 'transparent',
+        textAlign:       'left',
+        cursor:          'pointer',
+        transition:      'background 80ms',
+        position:        'relative',
       }}
-      onMouseEnter={(e) => {
-        if (onClick) {
-          const b = e.currentTarget as HTMLButtonElement;
-          b.style.transform  = 'translateY(-2px)';
-          b.style.boxShadow  = 'var(--shadow-lg)';
-        }
-      }}
-      onMouseLeave={(e) => {
-        const b = e.currentTarget as HTMLButtonElement;
-        b.style.transform = 'translateY(0)';
-        b.style.boxShadow = tone === 'neutral' ? 'var(--shadow-md)' : `var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.6)`;
-      }}
+      onMouseEnter={(e) => { if (!selected) (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
+      onMouseLeave={(e) => { if (!selected) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
     >
-      {tone !== 'neutral' && (
-        <span aria-hidden style={{
-          position: 'absolute', top: '-36px', right: '-36px',
-          width: '140px', height: '140px', borderRadius: '999px',
-          background: `radial-gradient(circle, oklch(0.62 0.26 ${tn.hue}) 0%, transparent 70%)`,
-          opacity: 0.32, filter: 'blur(6px)', pointerEvents: 'none',
+      {/* unread indicator */}
+      {isUnread && !selected && (
+        <span style={{
+          position:     'absolute',
+          left:         '4px',
+          top:          '50%',
+          transform:    'translateY(-50%)',
+          width:        '4px',
+          height:       '4px',
+          borderRadius: '999px',
+          background:   'var(--accent)',
         }} />
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+      {/* row 1: title + time */}
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
         <div style={{
-          fontSize:      '12px',
-          fontWeight:    600,
+          flex:          1,
+          minWidth:      0,
+          fontSize:      '13px',
+          fontWeight:    isUnread ? 600 : 400,
+          color:         selected ? 'var(--accent-fg-on-tint)' : 'var(--ink)',
+          whiteSpace:    'nowrap',
+          overflow:      'hidden',
+          textOverflow:  'ellipsis',
           letterSpacing: '-0.005em',
-          color:         tone === 'neutral' ? 'var(--mute)' : `oklch(0.38 0.18 ${tn.hue})`,
-        }}>{label}</div>
-        {icon && (
-          <span style={{
-            display:         'inline-flex',
-            alignItems:      'center',
-            justifyContent:  'center',
-            width:           '28px',
-            height:          '28px',
-            borderRadius:    '9px',
-            background:      tone === 'neutral' ? 'var(--surface-2)' : `oklch(0.62 0.22 ${tn.hue})`,
-            color:           tone === 'neutral' ? 'var(--mute)' : '#fff',
-            boxShadow:       tone === 'neutral' ? 'var(--shadow-inset)' : `0 4px 10px -4px color-mix(in oklch, oklch(0.62 0.22 ${tn.hue}) 60%, transparent), inset 0 1px 0 rgba(255,255,255,0.2)`,
-          }}>{icon}</span>
-        )}
+        }}>
+          {ticket.title}
+        </div>
+        <span style={{ fontSize: '11px', color: selected ? 'var(--accent)' : 'var(--mute)', flexShrink: 0, fontFeatureSettings: '"tnum"' }}>
+          {timeAgo(ticket.updatedAt)}
+        </span>
       </div>
 
+      {/* row 2: description preview */}
       <div style={{
-        fontSize:       '42px',
-        fontWeight:     500,
-        color:          tn.valueColor,
-        letterSpacing:  '-0.035em',
-        lineHeight:     1,
-        fontFamily:     'var(--font-display)',
-        marginTop:      '6px',
-        fontFeatureSettings: '"tnum"',
-        position:       'relative',
-      }}>{value}</div>
+        fontSize:     '12px',
+        color:        selected ? 'var(--accent-fg-on-tint)' : 'var(--mute)',
+        opacity:      selected ? 0.75 : 1,
+        whiteSpace:   'nowrap',
+        overflow:     'hidden',
+        textOverflow: 'ellipsis',
+        lineHeight:   1.4,
+      }}>
+        {ticket.description?.replace(/\n/g, ' ') || 'No description'}
+      </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '10px', position: 'relative' }}>
-        <span style={{ fontSize: '11.5px', color: deltaColor, fontWeight: 600, letterSpacing: '-0.005em' }}>{delta}</span>
-        <svg width={w} height={h} style={{ overflow: 'visible' }}>
-          <defs>
-            <linearGradient id={uid} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor={`oklch(0.55 0.24 ${tn.hue})`} stopOpacity="0.38" />
-              <stop offset="1" stopColor={`oklch(0.55 0.24 ${tn.hue})`} stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          <path d={area} fill={`url(#${uid})`} />
-          <path d={path} fill="none" stroke={`oklch(0.50 0.26 ${tn.hue})`} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" />
-        </svg>
+      {/* row 3: badges */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <StatusDot status={ticket.status} />
+        <PriorityPip priority={ticket.priority} />
+        {ticket.category && (
+          <span style={{
+            fontSize:     '10.5px',
+            padding:      '1px 6px',
+            borderRadius: '4px',
+            fontWeight:   600,
+            background:   selected ? 'rgba(255,255,255,0.35)' : 'var(--surface-2)',
+            color:        selected ? 'var(--accent-fg-on-tint)' : 'var(--mute)',
+          }}>
+            {ticket.category.name}
+          </span>
+        )}
+        {ticket._count && ticket._count.comments > 0 && (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '10.5px', color: selected ? 'var(--accent)' : 'var(--mute)', marginLeft: 'auto' }}>
+            <HugeiconsIcon icon={BubbleChatIcon} size={11} />
+            {ticket._count.comments}
+          </span>
+        )}
       </div>
     </button>
   );
 }
 
-function Card({ children, padded = true, style }: { children: React.ReactNode; padded?: boolean; style?: React.CSSProperties }) {
-  return (
-    <div style={{
-      background:   'var(--surface)',
-      borderRadius: '16px',
-      boxShadow:    'var(--shadow-md)',
-      padding:      padded ? '20px' : 0,
-      ...style,
-    }}>
-      {children}
-    </div>
-  );
-}
+/* ─── ticket detail panel (right panel) ─── */
 
-function SectionHeader({ title, count, action, actionLabel }: {
-  title: string; count?: number; action?: () => void; actionLabel?: string;
-}) {
-  return (
-    <div style={{
-      display:         'flex',
-      alignItems:      'center',
-      justifyContent:  'space-between',
-      padding:         '14px 18px',
-      borderBottom:    '1px solid var(--hairline)',
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <h3 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.01em', margin: 0 }}>{title}</h3>
-        {count != null && (
-          <span style={{
-            fontSize:    '11px',
-            color:       'var(--mute)',
-            padding:     '2px 8px',
-            background:  'var(--surface-2)',
-            borderRadius: '6px',
-            fontFeatureSettings: '"tnum"',
-          }}>{count}</span>
-        )}
+function TicketDetailPanel({ ticketId }: { ticketId: string }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const user = useAuthStore((s) => s.user);
+  const [replyText, setReplyText] = useState('');
+  const [isInternal, setIsInternal] = useState(false);
+  const commentsEndRef = useRef<HTMLDivElement>(null);
+
+  const { data: res, isLoading } = useQuery({
+    queryKey: ['ticket-detail', ticketId],
+    queryFn: () => apiClient<{ data: TicketDetail }>(`/tickets/${ticketId}`),
+    enabled: !!ticketId,
+  });
+
+  const commentMutation = useMutation({
+    mutationFn: (body: { content: string; isInternal: boolean }) =>
+      apiClient(`/tickets/${ticketId}/comments`, { method: 'POST', body: JSON.stringify(body) }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ticket-detail', ticketId] });
+      queryClient.invalidateQueries({ queryKey: ['inbox-tickets'] });
+      setReplyText('');
+      toast.success('Reply sent');
+    },
+    onError: () => toast.error('Failed to send reply'),
+  });
+
+  const ticket = res?.data;
+
+  useEffect(() => {
+    commentsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [ticket?.comments?.length]);
+
+  if (isLoading) {
+    return (
+      <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {[60, 100, 80, 200, 150].map((w, i) => (
+          <div key={i} style={{ height: i === 1 ? '22px' : '14px', width: `${w}%`, maxWidth: `${w * 4}px`, borderRadius: '6px', background: 'var(--surface-2)' }} />
+        ))}
       </div>
-      {action && (
+    );
+  }
+
+  if (!ticket) return null;
+  const canReply = user?.role !== 'CUSTOMER' || ticket.customer?.email === user?.email;
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      {/* Header */}
+      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--hairline)', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+            <StatusPill status={ticket.status} />
+            <span style={{ fontSize: '11px', color: 'var(--mute)', fontFamily: 'var(--font-mono)' }}>
+              #{ticket.id.slice(0, 8)}
+            </span>
+          </div>
+          <h2 style={{ fontSize: '17px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.01em', margin: 0, lineHeight: 1.35 }}>
+            {ticket.title}
+          </h2>
+        </div>
         <button
-          onClick={action}
-          style={{
-            fontSize:      '12px',
-            color:         'var(--accent)',
-            background:    'transparent',
-            border:        0,
-            cursor:        'pointer',
-            display:       'flex',
-            alignItems:    'center',
-            gap:           '4px',
-            fontWeight:    500,
-          }}
+          onClick={() => router.push(`/tickets/${ticket.id}`)}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '6px 11px', fontSize: '12px', fontWeight: 500, border: 0, borderRadius: '8px', background: 'var(--surface-2)', color: 'var(--ink-soft)', cursor: 'pointer', flexShrink: 0, boxShadow: 'var(--shadow-sm)' }}
+          title="Open full ticket"
         >
-          {actionLabel ?? 'View all'} <HugeiconsIcon icon={ArrowRight01Icon} size={12} />
+          <HugeiconsIcon icon={ArrowRight01Icon} size={13} />
+          Open
         </button>
+      </div>
+
+      {/* Scrollable body */}
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+        {/* Metadata */}
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--hairline)', display: 'flex', flexWrap: 'wrap', gap: '14px' }}>
+          <MetaItem label="Priority">
+            <PriorityPip priority={ticket.priority} />
+            <span style={{ fontSize: '12px', color: 'var(--ink-soft)', fontWeight: 500 }}>{PRIORITY_META[ticket.priority]?.label}</span>
+          </MetaItem>
+          {ticket.category && (
+            <MetaItem label="Category">
+              <span style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>{ticket.category.name}</span>
+            </MetaItem>
+          )}
+          {ticket.assignedTo && (
+            <MetaItem label="Assignee">
+              <Avatar name={ticket.assignedTo.name} size={18} />
+              <span style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>{ticket.assignedTo.name}</span>
+            </MetaItem>
+          )}
+          {ticket.customer && (
+            <MetaItem label="Customer">
+              <Avatar name={ticket.customer.name} size={18} />
+              <span style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>{ticket.customer.name}</span>
+            </MetaItem>
+          )}
+          <MetaItem label="Created">
+            <span style={{ fontSize: '12px', color: 'var(--mute)' }}>{new Date(ticket.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+          </MetaItem>
+        </div>
+
+        {/* Description */}
+        <div style={{ padding: '18px 20px', borderBottom: '1px solid var(--hairline)' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '8px' }}>Description</div>
+          <div style={{ fontSize: '13.5px', color: 'var(--ink)', lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>
+            {ticket.description || <span style={{ color: 'var(--mute)', fontStyle: 'italic' }}>No description</span>}
+          </div>
+        </div>
+
+        {/* Tags */}
+        {ticket.tags && ticket.tags.length > 0 && (
+          <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--hairline)', display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+            {ticket.tags.map(({ tag }) => (
+              <span key={tag.id} style={{ padding: '2px 8px', borderRadius: '5px', fontSize: '11px', fontWeight: 500, background: 'var(--surface-2)', color: 'var(--mute)' }}>
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Comments */}
+        <div style={{ padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            Conversation {ticket.comments.length > 0 && `· ${ticket.comments.length}`}
+          </div>
+          {ticket.comments.length === 0 && (
+            <p style={{ fontSize: '13px', color: 'var(--mute)', fontStyle: 'italic' }}>No replies yet.</p>
+          )}
+          {ticket.comments.map((c) => (
+            <div key={c.id} style={{ display: 'flex', gap: '10px' }}>
+              <Avatar name={c.author.name} size={28} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)' }}>{c.author.name}</span>
+                  {c.isInternal && (
+                    <span style={{ padding: '1px 6px', fontSize: '10px', fontWeight: 600, borderRadius: '4px', background: 'oklch(0.94 0.06 60)', color: 'oklch(0.48 0.18 60)' }}>internal</span>
+                  )}
+                  <span style={{ fontSize: '11px', color: 'var(--mute)', marginLeft: 'auto' }}>{timeAgo(c.createdAt)}</span>
+                </div>
+                <div style={{
+                  fontSize:    '13.5px',
+                  color:       'var(--ink)',
+                  lineHeight:  1.6,
+                  whiteSpace:  'pre-wrap',
+                  padding:     '10px 12px',
+                  borderRadius:'10px',
+                  background:  c.isInternal ? 'oklch(0.97 0.04 60)' : 'var(--surface-2)',
+                  border:      c.isInternal ? '1px solid oklch(0.90 0.07 60)' : '1px solid var(--hairline)',
+                }}>
+                  {c.content}
+                </div>
+              </div>
+            </div>
+          ))}
+          <div ref={commentsEndRef} />
+        </div>
+      </div>
+
+      {/* Reply box */}
+      {canReply && (
+        <div style={{ padding: '12px 16px', borderTop: '1px solid var(--hairline)', background: 'var(--surface-2)' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-end' }}>
+            <Avatar name={user?.name || 'You'} size={28} />
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <textarea
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Write a reply…"
+                rows={2}
+                onKeyDown={(e) => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && replyText.trim()) {
+                    commentMutation.mutate({ content: replyText.trim(), isInternal });
+                  }
+                }}
+                style={{
+                  width:        '100%',
+                  padding:      '8px 10px',
+                  fontSize:     '13px',
+                  color:        'var(--ink)',
+                  background:   'var(--surface)',
+                  border:       0,
+                  borderRadius: '10px',
+                  boxShadow:    'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
+                  outline:      'none',
+                  resize:       'none',
+                  fontFamily:   'inherit',
+                  lineHeight:   1.5,
+                  boxSizing:    'border-box',
+                }}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' || user?.role === 'AGENT') && (
+                  <button
+                    type="button"
+                    onClick={() => setIsInternal(!isInternal)}
+                    style={{
+                      display:      'inline-flex',
+                      alignItems:   'center',
+                      gap:          '4px',
+                      padding:      '4px 9px',
+                      fontSize:     '11px',
+                      fontWeight:   600,
+                      border:       0,
+                      borderRadius: '6px',
+                      cursor:       'pointer',
+                      background:   isInternal ? 'oklch(0.94 0.07 60)' : 'var(--surface-3)',
+                      color:        isInternal ? 'oklch(0.48 0.18 60)' : 'var(--mute)',
+                      transition:   'all 100ms',
+                    }}
+                  >
+                    Internal note
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => { if (replyText.trim()) commentMutation.mutate({ content: replyText.trim(), isInternal }); }}
+                  disabled={!replyText.trim() || commentMutation.isPending}
+                  style={{
+                    display:      'inline-flex',
+                    alignItems:   'center',
+                    gap:          '5px',
+                    padding:      '6px 14px',
+                    fontSize:     '12px',
+                    fontWeight:   600,
+                    border:       0,
+                    borderRadius: '8px',
+                    background:   'linear-gradient(135deg, var(--accent), var(--accent-2))',
+                    color:        '#fff',
+                    cursor:       (!replyText.trim() || commentMutation.isPending) ? 'not-allowed' : 'pointer',
+                    opacity:      (!replyText.trim() || commentMutation.isPending) ? 0.5 : 1,
+                    boxShadow:    '0 3px 10px -3px var(--accent-glow)',
+                    marginLeft:   'auto',
+                    transition:   'all 100ms',
+                  }}
+                >
+                  <HugeiconsIcon icon={Send01Icon} size={12} />
+                  {commentMutation.isPending ? 'Sending…' : 'Send'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
-const SPARK = [8, 11, 9, 13, 10, 15, 12, 14, 11, 16, 13, 17, 14, 18];
+function MetaItem({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+      <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>{children}</div>
+    </div>
+  );
+}
+
+/* ─── main page ─── */
 
 export default function DashboardPage() {
   const router = useRouter();
   const user   = useAuthStore((s) => s.user);
   const firstName = user?.name?.split(' ')[0] ?? 'there';
 
-  const { data, isLoading } = useQuery({
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState('OPEN');
+  const [search, setSearch] = useState('');
+
+  const { data: statsRes } = useQuery({
     queryKey: ['dashboard-stats'],
-    queryFn: () => apiClient<{ data: DashboardStats }>('/analytics/stats'),
+    queryFn:  () => apiClient<{ data: DashboardStats }>('/analytics/stats'),
   });
 
-  const { data: ticketsRes } = useQuery({
-    queryKey: ['my-tickets'],
-    queryFn: () => apiClient<{ data: Ticket[] }>('/tickets', { params: { limit: '6', status: 'OPEN' } }),
+  const params: Record<string, string> = { limit: '50' };
+  if (statusFilter) params.status = statusFilter;
+  if (search) params.q = search;
+
+  const { data: ticketsRes, isLoading } = useQuery({
+    queryKey: ['inbox-tickets', params],
+    queryFn:  () => apiClient<{ data: Ticket[] }>('/tickets', { params }),
   });
 
-  const stats   = data?.data;
+  const stats   = statsRes?.data;
   const tickets = ticketsRes?.data ?? [];
 
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
-      {/* Page head */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px' }}>
-        <div style={{ flex: '1 1 auto', minWidth: 0 }}>
-          <div style={{
-            display:         'inline-flex',
-            alignItems:      'center',
-            gap:             '8px',
-            fontSize:        '11px',
-            color:           'var(--mute)',
-            textTransform:   'uppercase',
-            letterSpacing:   '0.12em',
-            fontWeight:      600,
-            marginBottom:    '12px',
-            padding:         '4px 10px 4px 8px',
-            background:      'var(--surface-2)',
-            borderRadius:    '6px',
-            boxShadow:       'var(--shadow-inset)',
-          }}>
-            <span style={{
-              width: '6px', height: '6px', borderRadius: '2px',
-              background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
-              boxShadow: '0 0 6px var(--accent-glow)',
-            }} />
-            Inbox
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+
+      {/* Top bar */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+            <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--mute)' }}>Inbox</span>
+            {stats && (
+              <span style={{ fontSize: '11px', color: 'var(--mute)', background: 'var(--surface-2)', padding: '1px 7px', borderRadius: '5px', fontFeatureSettings: '"tnum"' }}>
+                {stats.openCount} open
+              </span>
+            )}
           </div>
-          <h1 style={{
-            fontSize:      '40px',
-            fontWeight:    400,
-            color:         'var(--ink)',
-            letterSpacing: '-0.025em',
-            lineHeight:    1.0,
-            margin:        0,
-            fontFamily:    'var(--font-display)',
-          }}>
-            Good afternoon, {firstName}.
+          <h1 style={{ fontSize: '24px', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em', margin: 0 }}>
+            {greeting}, {firstName}.
           </h1>
-          <p style={{ fontSize: '14px', color: 'var(--mute)', marginTop: '10px', lineHeight: 1.5 }}>
-            {isLoading ? 'Loading your queue…' : `${stats?.openCount ?? 0} open tickets · ${stats?.pendingCount ?? 0} pending response`}
-          </p>
         </div>
-        <div style={{ display: 'flex', gap: '8px', flexShrink: 0, paddingTop: '6px' }}>
-          <button
-            style={{
-              display:       'inline-flex',
-              alignItems:    'center',
-              gap:           '7px',
-              padding:       '8px 14px',
-              border:        0,
-              background:    'var(--surface-2)',
-              color:         'var(--ink)',
-              fontSize:      '13px',
-              fontWeight:    500,
-              borderRadius:  '10px',
-              cursor:        'pointer',
-              boxShadow:     'var(--shadow-sm), var(--shadow-inset)',
-              transition:    'all 120ms',
-            }}
-            onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'var(--surface-3)'; b.style.transform = 'translateY(-1px)'; }}
-            onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'var(--surface-2)'; b.style.transform = 'translateY(0)'; }}
-          >
-            <HugeiconsIcon icon={ZapIcon} size={14} />
-            Triage with AI
-          </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* stat pills */}
+          {stats && (
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <StatPill icon={<HugeiconsIcon icon={Clock01Icon} size={12} />} value={stats.pendingCount} label="In progress" hue={65} />
+              <StatPill icon={<HugeiconsIcon icon={Alert02Icon} size={12} />} value={Math.ceil((stats.openCount ?? 0) * 0.15)} label="SLA at risk" hue={22} />
+              <StatPill icon={<HugeiconsIcon icon={CheckmarkCircle01Icon} size={12} />} value={stats.closedCount} label="Resolved" hue={155} />
+            </div>
+          )}
           <button
             onClick={() => router.push('/tickets/new')}
             style={{
-              display:       'inline-flex',
-              alignItems:    'center',
-              gap:           '7px',
-              padding:       '8px 14px',
-              border:        0,
-              background:    'linear-gradient(135deg, var(--accent), var(--accent-2))',
-              color:         'var(--accent-fg)',
-              fontSize:      '13px',
-              fontWeight:    500,
-              borderRadius:  '10px',
-              cursor:        'pointer',
-              boxShadow:     'inset 0 1px 0 rgba(255,255,255,0.18), 0 4px 14px -4px var(--accent-glow)',
-              transition:    'all 120ms',
+              display:      'inline-flex',
+              alignItems:   'center',
+              gap:          '6px',
+              padding:      '7px 14px',
+              fontSize:     '13px',
+              fontWeight:   600,
+              border:       0,
+              borderRadius: '10px',
+              background:   'linear-gradient(135deg, var(--accent), var(--accent-2))',
+              color:        '#fff',
+              cursor:       'pointer',
+              boxShadow:    '0 4px 12px -4px var(--accent-glow)',
+              marginLeft:   '4px',
             }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.22), 0 8px 24px -6px var(--accent-glow)'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.18), 0 4px 14px -4px var(--accent-glow)'; }}
           >
-            <HugeiconsIcon icon={Add01Icon} size={14} />
+            <HugeiconsIcon icon={Add01Icon} size={13} />
             New ticket
           </button>
         </div>
       </div>
 
-      {/* KPI row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
-        <KpiCard
-          label="Open"
-          value={isLoading ? '…' : stats?.openCount ?? 0}
-          delta="+4 today"
-          deltaTone="info"
-          trend={SPARK}
-          tone="indigo"
-          icon={<HugeiconsIcon icon={InboxIcon} size={13} />}
-          onClick={() => router.push('/tickets?status=OPEN')}
-        />
-        <KpiCard
-          label="In progress"
-          value={isLoading ? '…' : stats?.pendingCount ?? 0}
-          delta="−1 vs yesterday"
-          deltaTone="ok"
-          trend={SPARK.map((v) => Math.max(0, v - 2))}
-          tone="amber"
-          icon={<HugeiconsIcon icon={Clock01Icon} size={13} />}
-          onClick={() => router.push('/tickets?status=IN_PROGRESS')}
-        />
-        <KpiCard
-          label="SLA at risk"
-          value={isLoading ? '…' : Math.ceil((stats?.openCount ?? 0) * 0.15)}
-          delta="2 critical"
-          deltaTone="warn"
-          trend={SPARK.map((v) => Math.max(0, Math.round(v * 0.4)))}
-          tone="rose"
-          icon={<HugeiconsIcon icon={Alert02Icon} size={13} />}
-        />
-        <KpiCard
-          label="Resolved today"
-          value={isLoading ? '…' : stats?.closedCount ?? 0}
-          delta={stats?.avgFirstResponseHours ? `Avg ${stats.avgFirstResponseHours.toFixed(1)}h` : 'Avg —'}
-          deltaTone="muted"
-          trend={SPARK.map((v) => v - 3)}
-          tone="emerald"
-          icon={<HugeiconsIcon icon={CheckmarkCircle01Icon} size={13} />}
-        />
-      </div>
+      {/* Two-panel inbox */}
+      <div style={{
+        display:       'grid',
+        gridTemplateColumns: selectedId ? '320px 1fr' : '1fr',
+        height:        'calc(100dvh - 240px)',
+        minHeight:     '480px',
+        background:    'var(--surface)',
+        borderRadius:  '16px',
+        boxShadow:     'var(--shadow-md)',
+        overflow:      'hidden',
+        border:        '1px solid var(--hairline)',
+        transition:    'grid-template-columns 200ms ease',
+      }}>
 
-      {/* Assigned tickets + Activity */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '14px' }}>
-        <Card padded={false}>
-          <SectionHeader
-            title="Open tickets"
-            count={tickets.length}
-            action={() => router.push('/tickets')}
-          />
-          <div>
-            {isLoading
-              ? Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} style={{
-                    padding:     '11px 18px',
-                    borderTop:   i === 0 ? 'none' : '1px solid var(--hairline)',
-                    display:     'flex',
-                    gap:         '12px',
-                    alignItems:  'center',
-                  }}>
-                    <div style={{ width: '60px', height: '12px', background: 'var(--surface-2)', borderRadius: '4px' }} />
-                    <div style={{ flex: 1, height: '12px', background: 'var(--surface-2)', borderRadius: '4px' }} />
-                    <div style={{ width: '60px', height: '20px', background: 'var(--surface-2)', borderRadius: '999px' }} />
-                  </div>
-                ))
-              : tickets.length === 0 ? (
-                <div style={{ padding: '32px 18px', textAlign: 'center', color: 'var(--mute)', fontSize: '13px' }}>
-                  No open tickets 🎉
-                </div>
-              ) : tickets.map((t, i) => (
-                <div
-                  key={t.id}
-                  onClick={() => router.push(`/tickets/${t.id}`)}
+        {/* LEFT: ticket list */}
+        <div style={{ display: 'flex', flexDirection: 'column', borderRight: selectedId ? '1px solid var(--hairline)' : 'none', overflow: 'hidden' }}>
+          {/* List header */}
+          <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
+            {/* Search */}
+            <div style={{ position: 'relative', marginBottom: '10px' }}>
+              <HugeiconsIcon icon={FilterIcon} size={12} color="var(--mute)" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+              <input
+                type="text"
+                placeholder="Filter tickets…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{
+                  width:        '100%',
+                  paddingLeft:  '30px',
+                  paddingRight: '10px',
+                  paddingTop:   '7px',
+                  paddingBottom:'7px',
+                  fontSize:     '12.5px',
+                  border:       0,
+                  borderRadius: '8px',
+                  background:   'var(--surface-2)',
+                  color:        'var(--ink)',
+                  outline:      'none',
+                  boxSizing:    'border-box',
+                  fontFamily:   'inherit',
+                }}
+              />
+            </div>
+            {/* Status filters */}
+            <div style={{ display: 'flex', gap: '4px', overflowX: 'auto' }}>
+              {STATUS_FILTERS.map((f) => (
+                <button
+                  key={f.value}
+                  type="button"
+                  onClick={() => setStatusFilter(f.value)}
                   style={{
-                    display:             'grid',
-                    gridTemplateColumns: 'auto 1fr auto auto',
-                    alignItems:          'center',
-                    gap:                 '12px',
-                    padding:             '11px 18px',
-                    borderTop:           i === 0 ? 'none' : '1px solid var(--hairline)',
-                    cursor:              'pointer',
-                    transition:          'background 100ms',
+                    padding:      '4px 9px',
+                    fontSize:     '11.5px',
+                    fontWeight:   statusFilter === f.value ? 600 : 500,
+                    border:       0,
+                    borderRadius: '6px',
+                    cursor:       'pointer',
+                    whiteSpace:   'nowrap',
+                    background:   statusFilter === f.value ? 'var(--accent-tint)' : 'transparent',
+                    color:        statusFilter === f.value ? 'var(--accent)' : 'var(--mute)',
+                    transition:   'all 80ms',
                   }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'var(--surface-2)'; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
                 >
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--mute)' }}>
-                    {t.id?.slice(0, 8)}
-                  </span>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{
-                      fontSize:       '13px',
-                      color:          'var(--ink)',
-                      fontWeight:     500,
-                      whiteSpace:     'nowrap',
-                      overflow:       'hidden',
-                      textOverflow:   'ellipsis',
-                      letterSpacing:  '-0.005em',
-                    }}>{t.title}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '3px' }}>
-                      {t.category && (
-                        <span style={{
-                          display:      'inline-flex',
-                          alignItems:   'center',
-                          gap:          '5px',
-                          padding:      '2px 8px',
-                          fontSize:     '11px',
-                          fontWeight:   600,
-                          borderRadius: '6px',
-                          background:   `oklch(0.94 0.05 ${t.category.hue ?? 265})`,
-                          color:        `oklch(0.34 0.15 ${t.category.hue ?? 265})`,
-                        }}>
-                          {t.category.name}
-                        </span>
-                      )}
-                      <span style={{ fontSize: '11px', color: 'var(--mute)' }}>{timeAgo(t.updatedAt)} ago</span>
-                    </div>
-                  </div>
-                  <PriorityBar priority={t.priority} />
-                  <StatusPill status={t.status} />
-                </div>
+                  {f.label}
+                </button>
               ))}
+            </div>
           </div>
-        </Card>
 
-        {/* Stats sidebar */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          {/* By priority */}
-          <Card padded={false} style={{ flex: 1 }}>
-            <SectionHeader title="By priority" />
-            <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {isLoading
-                ? Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ width: '60px', height: '10px', background: 'var(--surface-2)', borderRadius: '4px' }} />
-                      <div style={{ flex: 1, height: '6px', background: 'var(--surface-2)', borderRadius: '999px' }} />
-                    </div>
-                  ))
-                : (stats?.byPriority ?? []).map((p) => {
-                    const meta = PRIORITY_META[p.priority];
-                    const total = (stats?.byPriority ?? []).reduce((s, x) => s + x.count, 0) || 1;
-                    if (!meta) return null;
-                    return (
-                      <div key={p.priority} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '68px', flexShrink: 0 }}>
-                          <PriorityBar priority={p.priority} />
-                        </div>
-                        <div style={{
-                          flex: 1, height: '6px', background: 'var(--surface-2)',
-                          borderRadius: '999px', overflow: 'hidden',
-                        }}>
-                          <div style={{
-                            height: '100%',
-                            width:  `${(p.count / total) * 100}%`,
-                            background: `oklch(0.62 0.16 ${meta.hue})`,
-                            borderRadius: '999px',
-                          }} />
-                        </div>
-                        <span style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 600, width: '20px', textAlign: 'right', fontFeatureSettings: '"tnum"' }}>{p.count}</span>
-                      </div>
-                    );
-                  })
-              }
-            </div>
-          </Card>
-
-          {/* By category */}
-          <Card padded={false} style={{ flex: 1 }}>
-            <SectionHeader title="By category" />
-            <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {isLoading
-                ? Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <div style={{ width: '70px', height: '10px', background: 'var(--surface-2)', borderRadius: '4px' }} />
-                      <div style={{ flex: 1, height: '6px', background: 'var(--surface-2)', borderRadius: '999px' }} />
-                    </div>
-                  ))
-                : (stats?.byCategory ?? []).slice(0, 5).map((c, idx) => {
-                    const hue   = [265, 28, 200, 12, 155, 80][idx % 6];
-                    const total = (stats?.byCategory ?? []).reduce((s, x) => s + x.count, 0) || 1;
-                    return (
-                      <div key={c.name} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span style={{
-                          display:      'inline-flex',
-                          alignItems:   'center',
-                          gap:          '5px',
-                          padding:      '2px 8px',
-                          fontSize:     '11px',
-                          fontWeight:   600,
-                          borderRadius: '6px',
-                          background:   `oklch(0.94 0.05 ${hue})`,
-                          color:        `oklch(0.34 0.15 ${hue})`,
-                          width:        '90px',
-                          flexShrink:   0,
-                          whiteSpace:   'nowrap',
-                          overflow:     'hidden',
-                          textOverflow: 'ellipsis',
-                        }}>
-                          {c.name}
-                        </span>
-                        <div style={{
-                          flex: 1, height: '6px', background: 'var(--surface-2)',
-                          borderRadius: '999px', overflow: 'hidden',
-                        }}>
-                          <div style={{
-                            height: '100%',
-                            width:  `${(c.count / total) * 100}%`,
-                            background: `oklch(0.62 0.16 ${hue})`,
-                            borderRadius: '999px',
-                          }} />
-                        </div>
-                        <span style={{ fontSize: '12px', color: 'var(--ink)', fontWeight: 600, width: '20px', textAlign: 'right', fontFeatureSettings: '"tnum"' }}>{c.count}</span>
-                      </div>
-                    );
-                  })
-              }
-            </div>
-          </Card>
+          {/* Ticket rows */}
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {isLoading ? (
+              Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} style={{ padding: '12px 14px', borderBottom: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <div style={{ height: '13px', width: '75%', background: 'var(--surface-2)', borderRadius: '4px' }} />
+                  <div style={{ height: '11px', width: '100%', background: 'var(--surface-2)', borderRadius: '4px' }} />
+                  <div style={{ height: '11px', width: '40%', background: 'var(--surface-2)', borderRadius: '4px' }} />
+                </div>
+              ))
+            ) : tickets.length === 0 ? (
+              <div style={{ padding: '48px 20px', textAlign: 'center' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 10px', color: 'var(--mute)' }}>
+                  <HugeiconsIcon icon={InboxIcon} size={20} />
+                </div>
+                <p style={{ fontSize: '13px', color: 'var(--mute)', margin: 0 }}>No tickets found</p>
+              </div>
+            ) : (
+              tickets.map((t) => (
+                <TicketRow
+                  key={t.id}
+                  ticket={t}
+                  selected={selectedId === t.id}
+                  onClick={() => setSelectedId(selectedId === t.id ? null : t.id)}
+                />
+              ))
+            )}
+          </div>
         </div>
+
+        {/* RIGHT: detail or empty state */}
+        {selectedId ? (
+          <TicketDetailPanel key={selectedId} ticketId={selectedId} />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '10px', color: 'var(--mute)', padding: '40px' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <HugeiconsIcon icon={InboxIcon} size={22} />
+            </div>
+            <p style={{ fontSize: '13px', margin: 0 }}>Select a ticket to view details</p>
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+function StatPill({ icon, value, label, hue }: { icon: React.ReactNode; value: number; label: string; hue: number }) {
+  return (
+    <div style={{
+      display:      'inline-flex',
+      alignItems:   'center',
+      gap:          '5px',
+      padding:      '5px 10px',
+      borderRadius: '8px',
+      background:   `oklch(0.94 0.04 ${hue})`,
+      color:        `oklch(0.40 0.16 ${hue})`,
+      fontSize:     '12px',
+      fontWeight:   600,
+    }}>
+      {icon}
+      <span style={{ fontFeatureSettings: '"tnum"' }}>{value}</span>
+      <span style={{ fontSize: '11px', fontWeight: 500, opacity: 0.8 }}>{label}</span>
     </div>
   );
 }
