@@ -45,7 +45,7 @@ export default function SettingsPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
           <div style={{
             width: '44px', height: '44px', borderRadius: '999px', flexShrink: 0,
-            background: 'linear-gradient(135deg, oklch(0.62 0.18 265), oklch(0.56 0.22 290))',
+            background: 'linear-gradient(135deg, oklch(0.52 0.04 258), oklch(0.42 0.04 262))',
             color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '16px', fontWeight: 600, letterSpacing: '-0.01em',
           }}>

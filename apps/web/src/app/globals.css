@@ -78,17 +78,17 @@
   --shadow-inset: inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
-/* Accent: indigo (default) */
+/* Accent: slate (default) */
 :root, [data-accent="indigo"] {
-  --accent:           oklch(0.52 0.26 275);
-  --accent-2:         oklch(0.60 0.25 305);
-  --accent-hover:     oklch(0.47 0.26 275);
-  --accent-tint:      oklch(0.93 0.08 275);
-  --accent-tint-2:    oklch(0.88 0.13 275);
-  --accent-border:    oklch(0.82 0.13 275);
-  --accent-fg:        #ffffff;
-  --accent-fg-on-tint: oklch(0.32 0.24 275);
-  --accent-glow:      color-mix(in oklch, oklch(0.52 0.26 275) 50%, transparent);
+  --accent:            oklch(0.38 0.042 264);
+  --accent-2:          oklch(0.50 0.040 258);
+  --accent-hover:      oklch(0.32 0.042 264);
+  --accent-tint:       oklch(0.95 0.015 264);
+  --accent-tint-2:     oklch(0.90 0.022 264);
+  --accent-border:     oklch(0.82 0.022 264);
+  --accent-fg:         #ffffff;
+  --accent-fg-on-tint: oklch(0.28 0.042 264);
+  --accent-glow:       color-mix(in oklch, oklch(0.38 0.042 264) 28%, transparent);
 }
 [data-accent="violet"] {
   --accent:           oklch(0.54 0.28 310);
@@ -200,4 +200,76 @@
   background: color-mix(in oklch, var(--ink) 22%, transparent);
   background-clip: padding-box;
   border: 2px solid transparent;
+}
+
+/* ========================= FOCUS ========================= */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+button:focus-visible, a:focus-visible { border-radius: 6px; }
+
+/* ========================= RESPONSIVE LAYOUT ========================= */
+.hx-layout {
+  display: grid;
+  grid-template-columns: 248px 1fr;
+  min-height: 100dvh;
+  position: relative;
+  z-index: 1;
+  padding: 12px;
+  gap: 12px;
+}
+.hx-sidebar-desktop { display: block; }
+.hx-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--surface);
+  border-radius: 18px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+.hx-page-content {
+  flex: 1;
+  padding: 28px 32px 40px;
+  min-width: 0;
+  overflow-y: auto;
+}
+
+/* Mobile-only / desktop-only helpers */
+.hx-show-mobile { display: none !important; }
+.hx-hide-mobile { display: flex; }
+.hx-search-label { display: inline; }
+
+@media (max-width: 900px) {
+  .hx-layout {
+    grid-template-columns: 1fr;
+    padding: 0;
+    gap: 0;
+  }
+  .hx-sidebar-desktop { display: none; }
+  .hx-main {
+    border-radius: 0;
+    min-height: 100dvh;
+  }
+  .hx-page-content {
+    padding: 20px 16px 32px;
+  }
+  .hx-show-mobile { display: flex !important; }
+  .hx-hide-mobile { display: none !important; }
+  .hx-search-label { display: none; }
+}
+
+/* Mobile sidebar slide-in */
+@keyframes hx-slide-from-left {
+  from { transform: translateX(-24px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+/* Screen-reader only */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); border: 0;
 }

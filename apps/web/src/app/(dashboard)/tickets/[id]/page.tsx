@@ -121,7 +121,7 @@ function Avatar({ name, size = 26 }: { name: string; size?: number }) {
       width:          `${size}px`,
       height:         `${size}px`,
       borderRadius:   '999px',
-      background:     'linear-gradient(135deg, oklch(0.62 0.18 265), oklch(0.56 0.22 290))',
+      background:     'linear-gradient(135deg, oklch(0.52 0.04 258), oklch(0.42 0.04 262))',
       color:          '#fff',
       display:        'flex',
       alignItems:     'center',
