@@ -2,9 +2,11 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/auth-store';
+import { useNotificationsStore } from '@/stores/notifications-store';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Notification01Icon, Search01Icon, ArrowRight01Icon, Logout01Icon, Menu01Icon } from '@hugeicons/core-free-icons';
+import { Notification01Icon, Search01Icon, ArrowRight01Icon, Logout01Icon, Menu01Icon, Delete02Icon } from '@hugeicons/core-free-icons';
 import { useState } from 'react';
+import { formatDistanceToNow } from 'date-fns';
 
 const routeLabels: Record<string, string> = {
   '/':             'Inbox',
@@ -17,6 +19,12 @@ const routeLabels: Record<string, string> = {
   '/settings':     'Settings',
 };
 
+const NOTIF_COLOR: Record<string, string> = {
+  'ticket:created': 'oklch(0.60 0.18 220)',
+  'ticket:updated': 'oklch(0.62 0.16 265)',
+  'ticket:deleted': 'oklch(0.58 0.22 22)',
+};
+
 interface HeaderProps {
   onOpenSidebar?: () => void;
 }
@@ -25,7 +33,11 @@ export function Header({ onOpenSidebar }: HeaderProps) {
   const pathname       = usePathname();
   const { user, logout } = useAuthStore();
   const router         = useRouter();
-  const [userOpen, setUserOpen] = useState(false);
+  const [userOpen,  setUserOpen]  = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  const { items, markAllRead, clear } = useNotificationsStore();
+  const unreadCount = items.filter((n) => !n.read).length;
 
   const routeLabel = (() => {
     for (const key of Object.keys(routeLabels).sort((a, b) => b.length - a.length)) {
@@ -37,8 +49,15 @@ export function Header({ onOpenSidebar }: HeaderProps) {
   })();
 
   const initials = user?.name
-    ? user.name.split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase()
+    ? user.name.split(' ').map((p: string) => p[0]).join('').slice(0, 2).toUpperCase()
     : 'U';
+
+  const handleBellClick = () => {
+    const opening = !notifOpen;
+    setNotifOpen(opening);
+    setUserOpen(false);
+    if (opening) markAllRead();
+  };
 
   return (
     <header style={{
@@ -126,47 +145,148 @@ export function Header({ onOpenSidebar }: HeaderProps) {
         </button>
 
         {/* Notification bell */}
-        <button
-          type="button"
-          aria-label="Notifications"
-          style={{
-            display:         'inline-flex',
-            alignItems:      'center',
-            justifyContent:  'center',
-            width:           '32px',
-            height:          '32px',
-            border:          0,
-            borderRadius:    '9px',
-            background:      'transparent',
-            color:           'var(--mute)',
-            cursor:          'pointer',
-            transition:      'all 120ms',
-            position:        'relative',
-          }}
-          onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'var(--surface-2)'; b.style.color = 'var(--ink)'; }}
-          onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'transparent'; b.style.color = 'var(--mute)'; }}
-        >
-          <HugeiconsIcon icon={Notification01Icon} size={15} aria-hidden="true" />
-          <span
-            aria-hidden="true"
+        <div style={{ position: 'relative' }}>
+          <button
+            type="button"
+            aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}
+            aria-expanded={notifOpen}
+            onClick={handleBellClick}
             style={{
-              position:     'absolute',
-              top:          '5px',
-              right:        '5px',
-              width:        '7px',
-              height:       '7px',
-              borderRadius: '999px',
-              background:   'oklch(0.62 0.20 22)',
-              border:       '2px solid var(--surface)',
+              display:         'inline-flex',
+              alignItems:      'center',
+              justifyContent:  'center',
+              width:           '32px',
+              height:          '32px',
+              border:          0,
+              borderRadius:    '9px',
+              background:      notifOpen ? 'var(--surface-2)' : 'transparent',
+              color:           notifOpen ? 'var(--ink)' : 'var(--mute)',
+              cursor:          'pointer',
+              transition:      'all 120ms',
+              position:        'relative',
             }}
-          />
-        </button>
+            onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'var(--surface-2)'; b.style.color = 'var(--ink)'; }}
+            onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; if (!notifOpen) { b.style.background = 'transparent'; b.style.color = 'var(--mute)'; } }}
+          >
+            <HugeiconsIcon icon={Notification01Icon} size={15} aria-hidden="true" />
+            {unreadCount > 0 && (
+              <span
+                aria-hidden="true"
+                style={{
+                  position:     'absolute',
+                  top:          '4px',
+                  right:        '4px',
+                  minWidth:     '14px',
+                  height:       '14px',
+                  borderRadius: '999px',
+                  background:   'oklch(0.62 0.20 22)',
+                  border:       '2px solid var(--surface)',
+                  fontSize:     '8px',
+                  fontWeight:   700,
+                  color:        '#fff',
+                  display:      'flex',
+                  alignItems:   'center',
+                  justifyContent: 'center',
+                  padding:      '0 2px',
+                }}
+              >
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
+
+          {notifOpen && (
+            <>
+              <div
+                onClick={() => setNotifOpen(false)}
+                aria-hidden="true"
+                style={{ position: 'fixed', inset: 0, zIndex: 50 }}
+              />
+              <div
+                role="dialog"
+                aria-label="Notifications"
+                style={{
+                  position:     'absolute',
+                  top:          '40px',
+                  right:        0,
+                  zIndex:       51,
+                  width:        '340px',
+                  maxHeight:    '440px',
+                  background:   'var(--surface)',
+                  border:       '1px solid var(--border)',
+                  borderRadius: '14px',
+                  boxShadow:    'var(--shadow-pop)',
+                  display:      'flex',
+                  flexDirection:'column',
+                  overflow:     'hidden',
+                  animation:    'hx-pop 150ms cubic-bezier(0.2,0.8,0.2,1)',
+                }}
+              >
+                {/* Header */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid var(--hairline)', flexShrink: 0 }}>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>Notifications</span>
+                  {items.length > 0 && (
+                    <button
+                      onClick={clear}
+                      aria-label="Clear all notifications"
+                      style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 7px', fontSize: '11px', color: 'var(--mute)', border: 0, borderRadius: '6px', background: 'var(--surface-2)', cursor: 'pointer' }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'oklch(0.50 0.20 22)'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--mute)'; }}
+                    >
+                      <HugeiconsIcon icon={Delete02Icon} size={10} />
+                      Clear
+                    </button>
+                  )}
+                </div>
+
+                {/* List */}
+                <div style={{ overflowY: 'auto', flex: 1 }}>
+                  {items.length === 0 ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 16px', gap: '8px' }}>
+                      <HugeiconsIcon icon={Notification01Icon} size={22} color="var(--mute)" />
+                      <span style={{ fontSize: '13px', color: 'var(--mute)' }}>No notifications</span>
+                    </div>
+                  ) : (
+                    items.map((n) => (
+                      <div
+                        key={n.id}
+                        style={{
+                          display:      'flex',
+                          alignItems:   'flex-start',
+                          gap:          '10px',
+                          padding:      '10px 16px',
+                          borderBottom: '1px solid var(--hairline)',
+                          cursor:       n.ticketId ? 'pointer' : 'default',
+                          transition:   'background 80ms',
+                        }}
+                        onClick={() => {
+                          if (n.ticketId) { setNotifOpen(false); router.push(`/tickets/${n.ticketId}`); }
+                        }}
+                        onMouseEnter={(e) => { if (n.ticketId) (e.currentTarget as HTMLDivElement).style.background = 'var(--surface-2)'; }}
+                        onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = 'transparent'; }}
+                      >
+                        <span style={{ width: '7px', height: '7px', borderRadius: '999px', background: NOTIF_COLOR[n.type] ?? 'var(--accent)', marginTop: '5px', flexShrink: 0 }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--ink)', marginBottom: '2px' }}>{n.title}</div>
+                          <div style={{ fontSize: '12px', color: 'var(--mute)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{n.message}</div>
+                        </div>
+                        <span style={{ fontSize: '10.5px', color: 'var(--mute)', flexShrink: 0, marginTop: '2px' }}>
+                          {formatDistanceToNow(n.timestamp, { addSuffix: true })}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+        </div>
 
         {/* User avatar + dropdown */}
         <div style={{ position: 'relative' }}>
           <button
             type="button"
-            onClick={() => setUserOpen(!userOpen)}
+            onClick={() => { setUserOpen(!userOpen); setNotifOpen(false); }}
             aria-label={`User menu for ${user?.name ?? 'user'}`}
             aria-expanded={userOpen}
             aria-haspopup="true"

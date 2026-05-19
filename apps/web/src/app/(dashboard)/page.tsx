@@ -2,7 +2,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { apiClient } from '@/lib/api';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
@@ -150,16 +150,22 @@ function TicketRow({ ticket, active, onClick }: { ticket: Ticket; active: boolea
 export default function InboxPage() {
   const [status, setStatus]         = useState('');
   const [search, setSearch]         = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
   const params: Record<string, string> = {};
-  if (status) params.status = status;
-  if (search) params.q     = search;
+  if (status)         params.status = status;
+  if (debouncedSearch) params.q    = debouncedSearch;
   params.limit = '50';
 
   const { data: ticketsRes, isLoading } = useQuery({
-    queryKey: ['inbox-tickets', params],
+    queryKey: ['inbox-tickets', status, debouncedSearch],
     queryFn: () => apiClient<{ data: Ticket[] }>('/tickets', { params }),
   });
   const tickets = ticketsRes?.data ?? [];

@@ -1,12 +1,14 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
+import { sileo } from 'sileo';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  Search01Icon, Add01Icon, FilterIcon, ArrowUpDownIcon, ListViewIcon, GridViewIcon, CheckmarkSquareIcon, Cancel01Icon,
+  Search01Icon, Add01Icon, FilterIcon, ArrowUpDownIcon, ListViewIcon, GridViewIcon,
+  CheckmarkSquareIcon, Cancel01Icon, ArrowDown01Icon, CheckmarkCircle01Icon,
 } from '@hugeicons/core-free-icons';
 
 const STATUS_META: Record<string, { label: string; hue: number; dotChroma: number }> = {
@@ -130,19 +132,55 @@ const STATUS_TABS = [
 
 const BOARD_COLS = ['OPEN', 'IN_PROGRESS', 'WAITING_ON_CUSTOMER', 'RESOLVED'] as const;
 
+interface Category { id: string; name: string }
+
+const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const;
+
 export default function TicketsPage() {
-  const router = useRouter();
-  const [view,        setView]        = useState<'table' | 'board'>('table');
-  const [search,      setSearch]      = useState('');
-  const [statusTab,   setStatusTab]   = useState('');
-  const [selected,    setSelected]    = useState<Set<string>>(new Set());
-  const [page,        setPage]        = useState(1);
+  const router    = useRouter();
+  const qc        = useQueryClient();
+  const [view,          setView]          = useState<'table' | 'board'>('table');
+  const [search,        setSearch]        = useState('');
+  const [statusTab,     setStatusTab]     = useState('');
+  const [selected,      setSelected]      = useState<Set<string>>(new Set());
+  const [page,          setPage]          = useState(1);
+  const [showFilters,   setShowFilters]   = useState(false);
+  const [filterPrio,    setFilterPrio]    = useState<string[]>([]);
+  const [filterCat,     setFilterCat]     = useState('');
+  const [statusPopover, setStatusPopover] = useState(false);
+
+  const { data: catsRes } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => apiClient<{ data: Category[] }>('/categories'),
+  });
+  const categories = catsRes?.data ?? [];
 
   const params: Record<string, string> = {};
-  if (search)    params.q      = search;
-  if (statusTab) params.status = statusTab;
+  if (search)    params.q          = search;
+  if (statusTab) params.status     = statusTab;
+  if (filterPrio.length === 1) params.priority = filterPrio[0];
+  if (filterCat) params.categoryId = filterCat;
   params.page  = String(page);
   params.limit = '25';
+
+  const hasActiveFilters = filterPrio.length > 0 || !!filterCat;
+
+  const bulkStatusMutation = useMutation({
+    mutationFn: async (status: string) => {
+      await Promise.all(
+        [...selected].map((id) =>
+          apiClient(`/tickets/${id}/status`, { method: 'POST', body: JSON.stringify({ status }) })
+        )
+      );
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['tickets'] });
+      sileo.success({ title: `${selected.size} ticket${selected.size > 1 ? 's' : ''} updated` });
+      setSelected(new Set());
+      setStatusPopover(false);
+    },
+    onError: () => sileo.error({ title: 'Failed to update tickets' }),
+  });
 
   const { data, isLoading } = useQuery({
     queryKey: ['tickets', params],
@@ -315,13 +353,24 @@ export default function TicketsPage() {
           />
         </label>
 
-        <button style={{
-          display: 'inline-flex', alignItems: 'center', gap: '6px',
-          padding: '6px 11px', border: 0, background: 'var(--surface-2)',
-          color: 'var(--ink)', fontSize: '12px', fontWeight: 500, borderRadius: '10px',
-          cursor: 'pointer', boxShadow: 'var(--shadow-sm), var(--shadow-inset)',
-        }}>
-          <HugeiconsIcon icon={FilterIcon} size={13} /> Filter
+        <button
+          onClick={() => setShowFilters((v) => !v)}
+          style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            padding: '6px 11px', border: 0, borderRadius: '10px', cursor: 'pointer',
+            background: showFilters || hasActiveFilters ? 'var(--accent-tint)' : 'var(--surface-2)',
+            color: showFilters || hasActiveFilters ? 'var(--accent)' : 'var(--ink)',
+            fontSize: '12px', fontWeight: 500,
+            boxShadow: showFilters || hasActiveFilters ? 'inset 0 0 0 1px var(--accent-border)' : 'var(--shadow-sm), var(--shadow-inset)',
+          }}
+        >
+          <HugeiconsIcon icon={FilterIcon} size={13} />
+          Filter
+          {hasActiveFilters && (
+            <span style={{ background: 'var(--accent)', color: '#fff', borderRadius: '999px', fontSize: '9px', fontWeight: 700, padding: '1px 5px' }}>
+              {filterPrio.length + (filterCat ? 1 : 0)}
+            </span>
+          )}
         </button>
 
         <button style={{
@@ -368,12 +417,82 @@ export default function TicketsPage() {
         </div>
       </div>
 
+      {/* Filter panel */}
+      {showFilters && (
+        <div style={{
+          background: 'var(--surface)', borderRadius: '14px', padding: '14px 18px',
+          boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
+          display: 'flex', flexDirection: 'column', gap: '12px',
+          animation: 'hx-rise 120ms ease-out',
+        }}>
+          {/* Priority filter */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--mute)', minWidth: '60px' }}>Priority</span>
+            <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+              {PRIORITIES.map((p) => {
+                const active = filterPrio.includes(p);
+                return (
+                  <button
+                    key={p}
+                    onClick={() => setFilterPrio((prev) => active ? prev.filter((x) => x !== p) : [...prev, p])}
+                    style={{
+                      padding: '4px 10px', fontSize: '11.5px', fontWeight: 600,
+                      border: 0, borderRadius: '7px', cursor: 'pointer', transition: 'all 80ms',
+                      background: active ? 'var(--accent-tint)' : 'var(--surface-2)',
+                      color: active ? 'var(--accent)' : 'var(--ink-soft)',
+                      boxShadow: active ? 'inset 0 0 0 1px var(--accent-border)' : 'none',
+                    }}
+                  >
+                    {p.charAt(0) + p.slice(1).toLowerCase()}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Category filter */}
+          {categories.length > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--mute)', minWidth: '60px' }}>Category</span>
+              <div style={{ position: 'relative' }}>
+                <select
+                  value={filterCat}
+                  onChange={(e) => setFilterCat(e.target.value)}
+                  style={{
+                    padding: '5px 28px 5px 10px', fontSize: '12px', border: 0, borderRadius: '8px',
+                    background: filterCat ? 'var(--accent-tint)' : 'var(--surface-2)',
+                    color: filterCat ? 'var(--accent)' : 'var(--ink-soft)',
+                    appearance: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                    boxShadow: filterCat ? 'inset 0 0 0 1px var(--accent-border)' : 'none',
+                  }}
+                >
+                  <option value="">All categories</option>
+                  {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                <HugeiconsIcon icon={ArrowDown01Icon} size={10} color="var(--mute)"
+                  style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+              </div>
+            </div>
+          )}
+
+          {/* Clear filters */}
+          {hasActiveFilters && (
+            <button
+              onClick={() => { setFilterPrio([]); setFilterCat(''); }}
+              style={{ alignSelf: 'flex-start', padding: '4px 10px', fontSize: '11.5px', fontWeight: 500, border: 0, borderRadius: '7px', background: 'transparent', color: 'oklch(0.50 0.20 22)', cursor: 'pointer' }}
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Bulk action bar */}
       {selected.size > 0 && (
         <div style={{
           display:      'flex',
           alignItems:   'center',
-          gap:          '12px',
+          gap:          '8px',
           padding:      '10px 18px',
           background:   'var(--accent-tint)',
           borderRadius: '12px',
@@ -384,21 +503,82 @@ export default function TicketsPage() {
             {selected.size} selected
           </span>
           <div style={{ flex: 1 }} />
-          {['Assign', 'Add tag', 'Change status', 'Resolve'].map((action) => (
-            <button key={action} style={{
-              padding: '5px 10px', border: 0, background: 'transparent',
-              color: 'var(--accent-fg-on-tint)', fontSize: '12px', fontWeight: 500,
+
+          {/* Resolve */}
+          <button
+            onClick={() => bulkStatusMutation.mutate('RESOLVED')}
+            disabled={bulkStatusMutation.isPending}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '5px',
+              padding: '5px 10px', border: 0, fontSize: '12px', fontWeight: 500,
               borderRadius: '7px', cursor: 'pointer', transition: 'background 100ms',
+              background: 'oklch(0.55 0.16 148 / 0.14)', color: 'oklch(0.42 0.16 148)',
             }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'color-mix(in oklch, var(--accent) 14%, transparent)'; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
-            >{action}</button>
-          ))}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'oklch(0.55 0.16 148 / 0.22)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'oklch(0.55 0.16 148 / 0.14)'; }}
+          >
+            <HugeiconsIcon icon={CheckmarkCircle01Icon} size={12} />
+            Resolve
+          </button>
+
+          {/* Change status popover */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setStatusPopover((v) => !v)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '5px',
+                padding: '5px 10px', border: 0, fontSize: '12px', fontWeight: 500,
+                borderRadius: '7px', cursor: 'pointer', transition: 'background 100ms',
+                background: 'color-mix(in oklch, var(--accent) 14%, transparent)',
+                color: 'var(--accent)',
+              }}
+            >
+              Change status
+              <HugeiconsIcon icon={ArrowDown01Icon} size={11} />
+            </button>
+
+            {statusPopover && (
+              <>
+                <div onClick={() => setStatusPopover(false)} aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 50 }} />
+                <div style={{
+                  position: 'absolute', bottom: '36px', left: 0, zIndex: 51,
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  borderRadius: '10px', boxShadow: 'var(--shadow-pop)', padding: '4px', minWidth: '160px',
+                  animation: 'hx-pop 120ms cubic-bezier(0.2,0.8,0.2,1)',
+                }}>
+                  {[
+                    { value: 'OPEN',                label: 'Open'         },
+                    { value: 'IN_PROGRESS',         label: 'In Progress'  },
+                    { value: 'WAITING_ON_CUSTOMER', label: 'Waiting'      },
+                    { value: 'RESOLVED',            label: 'Resolved'     },
+                    { value: 'CLOSED',              label: 'Closed'       },
+                  ].map((s) => (
+                    <button
+                      key={s.value}
+                      onClick={() => bulkStatusMutation.mutate(s.value)}
+                      disabled={bulkStatusMutation.isPending}
+                      style={{
+                        width: '100%', display: 'flex', alignItems: 'center', padding: '7px 10px',
+                        fontSize: '12.5px', fontWeight: 500, border: 0, borderRadius: '7px',
+                        background: 'transparent', color: 'var(--ink)', cursor: 'pointer', textAlign: 'left',
+                        transition: 'background 80ms',
+                      }}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
           <button
             onClick={() => setSelected(new Set())}
             style={{
               display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: '22px', height: '22px', border: 0, borderRadius: '5px',
+              width: '24px', height: '24px', border: 0, borderRadius: '5px',
               background: 'transparent', color: 'var(--accent-fg-on-tint)', cursor: 'pointer',
             }}
           ><HugeiconsIcon icon={Cancel01Icon} size={13} /></button>

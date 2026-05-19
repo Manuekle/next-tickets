@@ -2,22 +2,24 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useQuery } from '@tanstack/react-query';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   DashboardSquare01Icon, Ticket01Icon, Book01Icon, BarChartIcon,
   WorkflowSquare01Icon, DashboardSpeed01Icon, SecurityLockIcon, ArrowRight01Icon, Cancel01Icon,
 } from '@hugeicons/core-free-icons';
 import { useAuthStore } from '@/stores/auth-store';
+import { apiClient } from '@/lib/api';
 
-const navItems = [
-  { href: '/',             label: 'Inbox',       icon: DashboardSquare01Icon, count: 3  },
-  { href: '/tickets',      label: 'Tickets',     icon: Ticket01Icon,          count: 24 },
-  { href: '/analytics',    label: 'Analytics',   icon: BarChartIcon                     },
-  { href: '/sla',          label: 'SLA',         icon: DashboardSpeed01Icon             },
-  { href: '/automations',  label: 'Automations', icon: WorkflowSquare01Icon             },
-  { href: '/knowledge',    label: 'Knowledge',   icon: Book01Icon                       },
-  { href: '/admin',        label: 'Admin',       icon: SecurityLockIcon                 },
-];
+const BASE_NAV = [
+  { href: '/',             label: 'Inbox',       icon: DashboardSquare01Icon, statKey: 'open'    },
+  { href: '/tickets',      label: 'Tickets',     icon: Ticket01Icon,          statKey: 'total'   },
+  { href: '/analytics',    label: 'Analytics',   icon: BarChartIcon                              },
+  { href: '/sla',          label: 'SLA',         icon: DashboardSpeed01Icon                      },
+  { href: '/automations',  label: 'Automations', icon: WorkflowSquare01Icon                      },
+  { href: '/knowledge',    label: 'Knowledge',   icon: Book01Icon                                },
+  { href: '/admin',        label: 'Admin',       icon: SecurityLockIcon                          },
+] as const;
 
 
 interface SidebarProps {
@@ -27,6 +29,18 @@ interface SidebarProps {
 export function Sidebar({ onClose }: SidebarProps) {
   const pathname = usePathname();
   const user     = useAuthStore((s) => s.user);
+
+  const { data: statsRes } = useQuery({
+    queryKey: ['sidebar-stats'],
+    queryFn: () => apiClient<{ data: { openCount: number; pendingCount: number; closedCount: number } }>('/analytics/stats'),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+  const stats = statsRes?.data;
+  const navCounts: Record<string, number | undefined> = {
+    open:  stats?.openCount,
+    total: stats ? stats.openCount + stats.pendingCount : undefined,
+  };
 
   return (
     <aside
@@ -87,8 +101,9 @@ export function Sidebar({ onClose }: SidebarProps) {
       <nav aria-label="Workspace navigation" style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1, overflowY: 'auto', minHeight: 0, width: '100%', padding: '0 2px' }}>
         <SectionLabel>Workspace</SectionLabel>
 
-        {navItems.map((item) => {
+        {BASE_NAV.map((item) => {
           const isActive = pathname === item.href;
+          const count = 'statKey' in item ? navCounts[item.statKey] : undefined;
           return (
             <Link
               key={item.href}
@@ -104,20 +119,20 @@ export function Sidebar({ onClose }: SidebarProps) {
                 <span style={{ flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {item.label}
                 </span>
-                {item.count != null && (
+                {count != null && count > 0 && (
                   <span
-                    aria-label={`${item.count} items`}
+                    aria-label={`${count} items`}
                     style={{
-                      fontSize:         '10.5px',
-                      color:            isActive ? '#fff' : 'var(--sb-mute)',
-                      background:       isActive ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.05)',
-                      padding:          '1px 7px',
-                      borderRadius:     '5px',
+                      fontSize:            '10.5px',
+                      color:               isActive ? '#fff' : 'var(--sb-mute)',
+                      background:          isActive ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.05)',
+                      padding:             '1px 7px',
+                      borderRadius:        '5px',
                       fontFeatureSettings: '"tnum"',
-                      fontWeight:       600,
+                      fontWeight:          600,
                     }}
                   >
-                    {item.count}
+                    {count}
                   </span>
                 )}
               </NavItem>

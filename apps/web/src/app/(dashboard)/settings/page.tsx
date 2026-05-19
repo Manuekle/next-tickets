@@ -64,7 +64,7 @@ export default function SettingsPage() {
   const [name, setName] = useState(user?.name ?? '');
   const [saving, setSaving] = useState(false);
 
-  const initials = (user?.name ?? 'U').split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase();
+  const initials = (user?.name ?? 'U').split(' ').map((p: string) => p[0]).join('').slice(0, 2).toUpperCase();
   const roleStyle = ROLE_STYLE[user?.role ?? ''] ?? { background: 'var(--surface-2)', color: 'var(--mute)' };
 
   const handleLogout = () => { logout(); router.push('/login'); };
