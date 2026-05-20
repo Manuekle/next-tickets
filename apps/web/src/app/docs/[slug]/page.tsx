@@ -6,6 +6,8 @@ import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import getHeadingsFromMarkdown from '@/lib/get-headings';
 
 import Link from 'next/link';
+import OnThisPage from '@/components/docs/on-this-page';
+import CopyToast from '@/components/docs/copy-toast';
 
 type Props = { params: { slug: string } };
 
@@ -29,6 +31,7 @@ export default function DocSlugPage({ params }: Props) {
           </div>
         </div>
       </aside>
+      <CopyToast />
     </div>
   );
 }

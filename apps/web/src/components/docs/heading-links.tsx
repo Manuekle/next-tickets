@@ -37,6 +37,9 @@ export default function HeadingLinks({ containerId = 'doc-article' }: { containe
           await navigator.clipboard.writeText(url);
           const prev = btn.textContent;
           btn.textContent = '✓';
+          // dispatch a toast event
+          const ev = new CustomEvent('copy-toast', { detail: { copyToast: 'Link copied to clipboard' } });
+          window.dispatchEvent(ev as any);
           setTimeout(() => { btn.textContent = prev; }, 1400);
         } catch (err) {
           console.error('copy failed', err);

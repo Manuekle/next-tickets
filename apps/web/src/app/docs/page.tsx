@@ -5,6 +5,7 @@ import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 import getHeadingsFromMarkdown from '@/lib/get-headings';
 import OnThisPage from '@/components/docs/on-this-page';
+import CopyToast from '@/components/docs/copy-toast';
 
 // Render the README as the /docs index page. This is separate from docs/*.mdx
 export default function DocsPage() {
@@ -28,6 +29,7 @@ export default function DocsPage() {
           </div>
         </div>
       </aside>
+      <CopyToast />
     </div>
   );
 }
