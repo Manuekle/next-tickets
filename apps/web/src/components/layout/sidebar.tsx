@@ -142,8 +142,8 @@ export function Sidebar({ onClose }: SidebarProps) {
             background:   'var(--sb-surface)',
             transition:   'background 120ms',
           }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = 'var(--sb-surface-2)'; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = 'var(--sb-surface)'; }}
+          onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = 'var(--sb-surface-2)'; }}
+          onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = 'var(--sb-surface)'; }}
         >
           <UserAvatar name={user?.name || 'User'} size={28} />
           <div style={{ minWidth: 0, flex: 1 }}>

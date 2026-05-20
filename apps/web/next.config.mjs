@@ -1,8 +1,5 @@
 const nextConfig = {
-  experimental: {
-    appDir: true,
-  },
-  pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'md', 'mdx'],
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
 };
 
 export default nextConfig;

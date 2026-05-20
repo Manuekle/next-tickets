@@ -1,6 +1,6 @@
 'use client';
 
-import { ThemeProvider as NextThemesProvider } from 'next-themes';
+import { ThemeProvider } from './theme-provider';
 import { QueryProvider } from './query-provider';
 import { AuthProvider } from './auth-provider';
 import { SocketProvider } from './socket-provider';
@@ -8,7 +8,7 @@ import { Toaster } from 'sileo';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <NextThemesProvider
+    <ThemeProvider
       attribute="data-theme"
       defaultTheme="system"
       enableSystem
@@ -22,6 +22,6 @@ export function Providers({ children }: { children: React.ReactNode }) {
           </SocketProvider>
         </AuthProvider>
       </QueryProvider>
-    </NextThemesProvider>
+    </ThemeProvider>
   );
 }
