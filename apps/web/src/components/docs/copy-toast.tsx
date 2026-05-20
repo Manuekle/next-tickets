@@ -22,8 +22,8 @@ export default function CopyToast() {
   if (!msg) return null;
 
   return (
-    <div style={{ position: 'fixed', right: 20, bottom: 26, background: 'var(--surface)', color: 'var(--ink)', padding: '10px 14px', borderRadius: 10, boxShadow: 'var(--shadow-pop)' }}>
-      {msg}
+    <div aria-live="polite" role="status" style={{ position: 'fixed', right: 20, bottom: 26, background: 'var(--surface)', color: 'var(--ink)', padding: '10px 14px', borderRadius: 10, boxShadow: 'var(--shadow-pop)', animation: 'hx-pop 200ms ease' }}>
+      <span style={{ fontWeight: 600 }}>{msg}</span>
     </div>
   );
 }
