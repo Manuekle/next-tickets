@@ -7,6 +7,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { Notification01Icon, Search01Icon, ArrowRight01Icon, Logout01Icon, Menu01Icon, Delete02Icon } from '@hugeicons/core-free-icons';
 import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
+import GitHubStars from '@/components/github-stars';
 
 const routeLabels: Record<string, string> = {
   '/':             'Inbox',
@@ -102,6 +103,9 @@ export function Header({ onOpenSidebar }: HeaderProps) {
 
       {/* Right side */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <GitHubStars compact />
+        </div>
         {/* Search pill */}
         <button
           type="button"

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import GitHubStars from '@/components/github-stars';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -71,9 +72,7 @@ export default function AboutPage() {
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <a href="https://github.com/Manuekle/next-tickets" target="_blank" rel="noopener noreferrer" style={{ padding: '7px 14px', fontSize: '13px', fontWeight: 500, color: 'var(--accent)', textDecoration: 'none', borderRadius: '9px', transition: 'background 100ms' }}>
-              GitHub
-            </a>
+            <GitHubStars />
             <Link href="/login" style={{ padding: '8px 18px', fontSize: '13px', fontWeight: 600, color: 'var(--accent-fg)', textDecoration: 'none', borderRadius: '10px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', boxShadow: '0 4px 12px -4px color-mix(in oklch, var(--accent) 40%, transparent)' }}>
               Sign in →
             </Link>
