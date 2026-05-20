@@ -42,39 +42,39 @@ export default function AboutPage() {
   return (
     <div style={{
       minHeight:    '100dvh',
-      background:   '#f4f0e6',
+      background:   'var(--bg)',
       fontFamily:   'var(--font-sans, system-ui)',
       position:     'relative',
       overflowX:    'hidden',
     }}>
       {/* Mesh bg */}
-      <div style={{
-        position:   'fixed',
-        inset:      0,
-        background: 'radial-gradient(ellipse 80% 60% at 20% -10%, oklch(0.88 0.06 275 / 0.30) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 110%, oklch(0.90 0.07 305 / 0.18) 0%, transparent 60%)',
-        pointerEvents: 'none',
-        zIndex:     0,
-      }} />
+        <div style={{
+         position:   'fixed',
+         inset:      0,
+         background: 'radial-gradient(ellipse 80% 60% at 20% -10%, var(--bg-mesh-1) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 110%, var(--bg-mesh-2) 0%, transparent 60%)',
+         pointerEvents: 'none',
+         zIndex:     0,
+       }} />
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         {/* Nav */}
         <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 48px', maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, oklch(0.52 0.26 275), oklch(0.60 0.25 305))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 4px 10px -4px oklch(0.52 0.26 275 / 0.50)' }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-fg)', boxShadow: '0 4px 10px -4px color-mix(in oklch, var(--accent) 50%, transparent)' }}>
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="6" width="20" height="12" rx="2" />
                 <path d="M2 10h4M18 10h4" />
               </svg>
             </div>
-            <span style={{ fontSize: '15px', fontWeight: 700, color: 'oklch(0.18 0.030 270)', letterSpacing: '-0.02em' }}>
-              open<span style={{ color: 'oklch(0.52 0.26 275)' }}>-tickets</span>
+            <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em' }}>
+              open<span style={{ color: 'var(--accent)' }}>-tickets</span>
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <a href="https://github.com/Manuekle/next-tickets" target="_blank" rel="noopener noreferrer" style={{ padding: '7px 14px', fontSize: '13px', fontWeight: 500, color: 'oklch(0.52 0.020 270)', textDecoration: 'none', borderRadius: '9px', transition: 'background 100ms' }}>
+            <a href="https://github.com/Manuekle/next-tickets" target="_blank" rel="noopener noreferrer" style={{ padding: '7px 14px', fontSize: '13px', fontWeight: 500, color: 'var(--accent)', textDecoration: 'none', borderRadius: '9px', transition: 'background 100ms' }}>
               GitHub
             </a>
-            <Link href="/login" style={{ padding: '8px 18px', fontSize: '13px', fontWeight: 600, color: '#fff', textDecoration: 'none', borderRadius: '10px', background: 'linear-gradient(135deg, oklch(0.52 0.26 275), oklch(0.60 0.25 305))', boxShadow: '0 4px 12px -4px oklch(0.52 0.26 275 / 0.50)' }}>
+            <Link href="/login" style={{ padding: '8px 18px', fontSize: '13px', fontWeight: 600, color: 'var(--accent-fg)', textDecoration: 'none', borderRadius: '10px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', boxShadow: '0 4px 12px -4px color-mix(in oklch, var(--accent) 40%, transparent)' }}>
               Sign in →
             </Link>
           </div>
@@ -82,22 +82,22 @@ export default function AboutPage() {
 
         {/* Hero */}
         <section style={{ textAlign: 'center', padding: '80px 24px 64px', maxWidth: '820px', margin: '0 auto' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, borderRadius: '999px', background: 'oklch(0.92 0.08 275 / 0.60)', color: 'oklch(0.40 0.22 275)', marginBottom: '28px', letterSpacing: '0.01em', textTransform: 'uppercase' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, borderRadius: '999px', background: 'var(--accent-tint)', color: 'var(--accent)', marginBottom: '28px', letterSpacing: '0.01em', textTransform: 'uppercase' }}>
             Open Source · MIT License
           </div>
-          <h1 style={{ fontSize: 'clamp(42px, 7vw, 72px)', fontFamily: 'var(--font-display)', fontWeight: 700, color: 'oklch(0.18 0.030 270)', letterSpacing: '-0.03em', lineHeight: 1.0, margin: '0 0 24px' }}>
+          <h1 style={{ fontSize: 'clamp(42px, 7vw, 72px)', fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.03em', lineHeight: 1.0, margin: '0 0 24px' }}>
             Support tickets,
             <br />
-            <span style={{ color: 'oklch(0.52 0.26 275)' }}>finally open.</span>
+            <span style={{ color: 'var(--accent)' }}>finally open.</span>
           </h1>
-          <p style={{ fontSize: '18px', color: 'oklch(0.52 0.020 270)', lineHeight: 1.65, maxWidth: '520px', margin: '0 auto 40px' }}>
+          <p style={{ fontSize: '18px', color: 'var(--mutе)', lineHeight: 1.65, maxWidth: '520px', margin: '0 auto 40px' }}>
             A modern, self-hostable ticket management system. No vendor lock-in, no SaaS pricing, no surprises — just great support tooling you own.
           </p>
           <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/register" style={{ padding: '13px 28px', fontSize: '15px', fontWeight: 600, color: '#fff', textDecoration: 'none', borderRadius: '12px', background: 'linear-gradient(135deg, oklch(0.52 0.26 275), oklch(0.60 0.25 305))', boxShadow: '0 6px 20px -6px oklch(0.52 0.26 275 / 0.60)' }}>
+            <Link href="/register" style={{ padding: '13px 28px', fontSize: '15px', fontWeight: 600, color: 'var(--accent-fg)', textDecoration: 'none', borderRadius: '12px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', boxShadow: '0 6px 20px -6px color-mix(in oklch, var(--accent) 50%, transparent)' }}>
               Get started free
             </Link>
-            <a href="https://github.com/Manuekle/next-tickets" target="_blank" rel="noopener noreferrer" style={{ padding: '13px 28px', fontSize: '15px', fontWeight: 600, color: 'oklch(0.30 0.028 270)', textDecoration: 'none', borderRadius: '12px', background: 'rgba(255,255,255,0.70)', boxShadow: '0 2px 8px rgba(24,18,8,0.10)' }}>
+            <a href="https://github.com/Manuekle/next-tickets" target="_blank" rel="noopener noreferrer" style={{ padding: '13px 28px', fontSize: '15px', fontWeight: 600, color: 'var(--ink)', textDecoration: 'none', borderRadius: '12px', background: 'var(--surface)', boxShadow: '0 2px 8px rgba(24,18,8,0.10)' }}>
               View on GitHub
             </a>
           </div>
@@ -170,7 +170,7 @@ export default function AboutPage() {
               One monorepo, Next.js + Node.js. Runs anywhere — Vercel, Railway, fly.io, or your own VPS. Full source on GitHub.
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link href="/register" style={{ padding: '12px 24px', fontSize: '14px', fontWeight: 600, color: '#fff', textDecoration: 'none', borderRadius: '11px', background: 'linear-gradient(135deg, oklch(0.52 0.26 275), oklch(0.60 0.25 305))', boxShadow: '0 4px 16px -4px oklch(0.52 0.26 275 / 0.55)' }}>
+              <Link href="/register" style={{ padding: '12px 24px', fontSize: '14px', fontWeight: 600, color: 'var(--accent-fg)', textDecoration: 'none', borderRadius: '11px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', boxShadow: '0 4px 16px -4px color-mix(in oklch, var(--accent) 40%, transparent)' }}>
                 Start for free
               </Link>
               <a href="https://github.com/Manuekle/next-tickets" target="_blank" rel="noopener noreferrer" style={{ padding: '12px 24px', fontSize: '14px', fontWeight: 600, color: 'oklch(0.30 0.028 270)', textDecoration: 'none', borderRadius: '11px', background: 'rgba(255,255,255,0.80)', boxShadow: '0 2px 8px rgba(24,18,8,0.10)' }}>
