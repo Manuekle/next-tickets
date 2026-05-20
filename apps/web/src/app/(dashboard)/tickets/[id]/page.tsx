@@ -9,6 +9,7 @@ import { useAuthStore } from '@/stores/auth-store';
 import { Role } from '@next-tickets/shared';
 import { CommentList } from '@/components/comments/comment-list';
 import { CommentInput } from '@/components/comments/comment-input';
+import { CopilotPanel } from '@/components/ai/copilot-panel';
 import { format } from 'date-fns';
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
 import { ArrowRight01Icon, BubbleChatIcon, InformationCircleIcon } from '@hugeicons/core-free-icons';
@@ -464,6 +465,8 @@ export default function TicketDetailPage() {
               {format(new Date(ticket.updatedAt), 'MMM d, yyyy HH:mm')}
             </span>
           </SideField>
+
+          {isAgent && <CopilotPanel ticketId={ticketId} />}
         </div>
       </div>
     </div>

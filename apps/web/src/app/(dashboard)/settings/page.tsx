@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { useAuthStore } from '@/stores/auth-store';
 import { useTheme } from 'next-themes';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Sun01Icon, Moon01Icon, ComputerDesk01Icon, Logout01Icon, FloppyDiskIcon, PencilEdit01Icon } from '@hugeicons/core-free-icons';
+import { Sun01Icon, Moon01Icon, ComputerDesk01Icon, Logout01Icon, FloppyDiskIcon, PencilEdit01Icon, Robot01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { sileo } from 'sileo';
@@ -179,6 +180,33 @@ export default function SettingsPage() {
           <ThemeBtn value="dark" label="Dark" current={theme} onClick={() => setTheme('dark')}
             icon={<HugeiconsIcon icon={Moon01Icon} size={16} />} />
         </div>
+      </Card>
+
+      {/* AI & Integrations */}
+      <Card title="AI & Integrations" subtitle="Configure AI providers and copilot features">
+        <Link
+          href="/settings/ai"
+          style={{
+            display: 'flex', alignItems: 'center', gap: '12px', padding: '12px',
+            borderRadius: '10px', background: 'var(--surface-2)', textDecoration: 'none',
+            color: 'var(--ink)', transition: 'background 120ms',
+          }}
+          onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = 'var(--accent-tint)'; }}
+          onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = 'var(--surface-2)'; }}
+        >
+          <div style={{
+            width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
+            background: 'linear-gradient(135deg, var(--accent), var(--accent-2, var(--accent)))',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
+          }}>
+            <HugeiconsIcon icon={Robot01Icon} size={18} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>AI Providers</div>
+            <div style={{ fontSize: '11.5px', color: 'var(--mute)', marginTop: '1px' }}>OpenAI, Anthropic, Gemini, OpenRouter, Groq</div>
+          </div>
+          <HugeiconsIcon icon={ArrowRight01Icon} size={14} color="var(--mute)" />
+        </Link>
       </Card>
 
       {/* About */}
