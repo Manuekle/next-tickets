@@ -32,11 +32,19 @@ export class TicketsGateway implements OnGatewayInit, OnGatewayConnection {
 
   @SubscribeMessage('typing:start')
   handleTypingStart(client: Socket, { ticketId }: { ticketId: string }) {
-    client.to(`ticket:${ticketId}`).emit('typing:status', { userId: client.data.user?.sub });
+    client.to(`ticket:${ticketId}`).emit('typing:status', {
+      userId: client.data.user?.sub,
+      name: client.data.user?.name,
+      typing: true,
+    });
   }
 
   @SubscribeMessage('typing:stop')
   handleTypingStop(client: Socket, { ticketId }: { ticketId: string }) {
-    client.to(`ticket:${ticketId}`).emit('typing:status', { userId: client.data.user?.sub });
+    client.to(`ticket:${ticketId}`).emit('typing:status', {
+      userId: client.data.user?.sub,
+      name: client.data.user?.name,
+      typing: false,
+    });
   }
 }

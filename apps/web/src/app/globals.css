@@ -352,4 +352,18 @@ button:focus-visible, a:focus-visible { border-radius: 6px; }
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* Typing indicator dots */
+.nt-typing-dot {
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  animation: nt-typing 1.2s infinite ease-in-out;
+}
+@keyframes nt-typing {
+  0%, 60%, 100% { opacity: 0.25; transform: translateY(0); }
+  30%           { opacity: 1;    transform: translateY(-2px); }
+}
 [0 q[?1004l[?2004l[?1049l[?25h

@@ -6,6 +6,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { ZapIcon, PlusSignIcon, Delete02Icon } from '@hugeicons/core-free-icons';
 import { apiClient } from '@/lib/api';
 import { sileo } from 'sileo';
+import { useSocket } from '@/components/providers/socket-provider';
 
 interface QuickReply { id: string; label: string; content: string; }
 
@@ -46,6 +47,27 @@ export function CommentInput({
   const [newLabel, setNewLabel] = useState('');
   const popRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+  const socket = useSocket();
+  const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTypingRef = useRef(false);
+
+  const emitTyping = (typing: boolean) => {
+    if (!socket || !ticketId) return;
+    if (typing && !isTypingRef.current) {
+      socket.emit('typing:start', { ticketId });
+      isTypingRef.current = true;
+    } else if (!typing && isTypingRef.current) {
+      socket.emit('typing:stop', { ticketId });
+      isTypingRef.current = false;
+    }
+  };
+
+  useEffect(() => () => {
+    if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+    if (isTypingRef.current && socket && ticketId) {
+      socket.emit('typing:stop', { ticketId });
+    }
+  }, [socket, ticketId]);
 
   useEffect(() => { setReplies(loadReplies()); }, []);
 
@@ -102,7 +124,16 @@ export function CommentInput({
         placeholder="Write a comment… markdown supported (use @ to mention)"
         aria-label="Write a comment"
         value={content}
-        onChange={(e) => setContent(e.target.value)}
+        onChange={(e) => {
+          setContent(e.target.value);
+          if (e.target.value.trim()) {
+            emitTyping(true);
+            if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
+            typingTimerRef.current = setTimeout(() => emitTyping(false), 2500);
+          } else {
+            emitTyping(false);
+          }
+        }}
         rows={3}
         style={{
           width: '100%', padding: '9px 11px', fontSize: '13px', color: 'var(--ink)',
@@ -112,7 +143,10 @@ export function CommentInput({
           boxSizing: 'border-box', transition: 'box-shadow 100ms',
         }}
         onFocus={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-sm), inset 0 0 0 1.5px var(--accent)'; }}
-        onBlur={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)'; }}
+        onBlur={(e) => {
+          e.currentTarget.style.boxShadow = 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)';
+          emitTyping(false);
+        }}
       />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

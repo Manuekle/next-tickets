@@ -10,6 +10,6 @@ import { AutomationsModule } from '../automations/automation.module';
   imports: [JwtModule.register({}), SlaModule, AutomationsModule],
   controllers: [TicketsController],
   providers: [TicketsService, TicketsGateway],
-  exports: [TicketsService],
+  exports: [TicketsService, TicketsGateway],
 })
 export class TicketsModule {}

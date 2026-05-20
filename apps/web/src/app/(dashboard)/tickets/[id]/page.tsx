@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import { useSocket } from '@/components/providers/socket-provider';
+import { useSocketEvent, useTicketRoom } from '@/hooks/use-socket-event';
 import { useAuthStore } from '@/stores/auth-store';
 import { Role } from '@next-tickets/shared';
 import { CommentList } from '@/components/comments/comment-list';
@@ -228,15 +229,22 @@ export default function TicketDetailPage() {
     setLiveComments((prev) => [comment, ...prev]);
   }, []);
 
-  useEffect(() => {
-    if (!socket || !ticketId) return;
-    socket.emit('join:ticket', ticketId);
-    socket.on('comment:created', handleNewComment);
-    return () => {
-      socket.off('comment:created', handleNewComment);
-      socket.emit('leave:ticket', ticketId);
-    };
-  }, [socket, ticketId, handleNewComment]);
+  useTicketRoom(socket, ticketId);
+  useSocketEvent<Comment>(socket, 'comment:created', handleNewComment, [handleNewComment]);
+
+  const [typingUsers, setTypingUsers] = useState<Record<string, string>>({});
+  const handleTyping = useCallback((data: { userId: string; name?: string; typing: boolean }) => {
+    if (!data?.userId || data.userId === user?.id) return;
+    setTypingUsers((prev) => {
+      const next = { ...prev };
+      if (data.typing) next[data.userId] = data.name ?? 'Someone';
+      else delete next[data.userId];
+      return next;
+    });
+  }, [user?.id]);
+  useSocketEvent<{ userId: string; name?: string; typing: boolean }>(socket, 'typing:status', handleTyping, [handleTyping]);
+
+  const typingNames = Object.values(typingUsers);
 
   const ticket = ticketRes?.data;
 
@@ -361,6 +369,18 @@ export default function TicketDetailPage() {
                 boxShadow: 'var(--shadow-sm)', padding: '16px',
               }}>
                 <CommentInput ticketId={ticketId} showInternal={isAgent} />
+                {typingNames.length > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '11.5px', color: 'var(--mute)', fontStyle: 'italic' }}>
+                    <span style={{ display: 'inline-flex', gap: '2px' }} aria-hidden>
+                      <span className="nt-typing-dot" />
+                      <span className="nt-typing-dot" style={{ animationDelay: '0.15s' }} />
+                      <span className="nt-typing-dot" style={{ animationDelay: '0.30s' }} />
+                    </span>
+                    {typingNames.length === 1
+                      ? `${typingNames[0]} is typing…`
+                      : `${typingNames.length} people are typing…`}
+                  </div>
+                )}
               </div>
               <div>
                 {commentsLoading ? (

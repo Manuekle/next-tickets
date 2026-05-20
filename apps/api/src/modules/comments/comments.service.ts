@@ -4,6 +4,7 @@ import DOMPurify from 'dompurify';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { Role } from '@prisma/client';
+import { TicketsGateway } from '../tickets/tickets.gateway';
 
 const window = new JSDOM('').window;
 const purify = DOMPurify(window as any);
@@ -14,7 +15,10 @@ const commentInclude = {
 
 @Injectable()
 export class CommentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private ticketsGateway: TicketsGateway,
+  ) {}
 
   async findByTicket(ticketId: string, user: any) {
     const ticket = await this.prisma.ticket.findUnique({ where: { id: ticketId } });
@@ -50,6 +54,7 @@ export class CommentsService {
         data: { firstResponseAt: new Date() },
       });
     }
+    this.ticketsGateway.server.to(`ticket:${ticketId}`).emit('comment:created', comment);
     return comment;
   }
 }
