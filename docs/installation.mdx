@@ -1,0 +1,27 @@
+---
+title: Installation
+---
+
+# Installation
+
+Follow these steps to run the project locally.
+
+```bash
+git clone <repo-url>
+cd next-tickets
+npm install
+```
+
+Start infrastructure (Docker):
+
+```bash
+docker compose -f docker/docker-compose.yml up -d
+```
+
+Copy env and run:
+
+```bash
+cp .env.example .env
+cd apps/web
+npm run dev
+```
