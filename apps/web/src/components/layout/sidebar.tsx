@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Logo from '@/components/logo';
 import { useQuery } from '@tanstack/react-query';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
@@ -62,25 +63,8 @@ export function Sidebar({ onClose }: SidebarProps) {
     >
       {/* Logo + optional close */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '11px', padding: '6px 8px 10px' }}>
-        <div
-          style={{
-            width: '32px', height: '32px', borderRadius: '10px',
-            background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
-            color: '#fff',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.22), 0 4px 10px -4px var(--accent-glow)',
-            flexShrink: 0,
-          }}
-          aria-hidden="true"
-        >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="2" y="6" width="20" height="12" rx="2" />
-            <path d="M2 10h4M18 10h4" />
-          </svg>
-        </div>
-        <div style={{ fontSize: '13.5px', letterSpacing: '-0.02em', color: 'var(--sb-ink)', fontWeight: 600, flex: 1 }}>
-          open<span style={{ color: 'var(--accent-2)', fontWeight: 700 }}>-tickets</span>
-        </div>
+        <Logo size={32} showText textSize="13.5px" />
+        <div style={{ flex: 1 }} />
         {onClose && (
           <button
             type="button"

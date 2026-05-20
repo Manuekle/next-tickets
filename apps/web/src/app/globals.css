@@ -272,29 +272,6 @@ button:focus-visible, a:focus-visible { border-radius: 6px; }
   clip: rect(0,0,0,0); border: 0;
 }
 
-/* Docs sidebar / TOC animations */
-#__docs-aside {
-  transition: width 280ms cubic-bezier(.16,.84,.36,1);
-}
-#__docs-aside.closed {
-  width: 72px !important;
-}
-#__docs-sidebar {
-  transition: opacity 220ms cubic-bezier(.16,.84,.36,1), transform 300ms cubic-bezier(.16,.84,.36,1);
-  transform-origin: left center;
-}
-#__docs-aside.closed #__docs-sidebar {
-  opacity: 0; transform: translateX(-12px) scale(0.975); pointer-events: none;
-}
-
-/* TOC slide/fade */
-.docs-toc {
-  transition: transform 260ms cubic-bezier(.16,.84,.36,1), opacity 220ms cubic-bezier(.16,.84,.36,1);
-}
-.docs-toc.closed {
-  opacity: 0; transform: translateY(-8px); height: 0; overflow: hidden;
-}
-
 /* Heading copy button styles (SVG) */
 .heading-copy-btn {
   display: inline-flex;

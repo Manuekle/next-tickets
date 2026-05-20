@@ -4,20 +4,17 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Public pages that don't require auth
-  const publicPaths = ['/', '/about'];
-  const isPublicPage = publicPaths.includes(pathname) || pathname === '/docs' || pathname.startsWith('/docs/');
-
+  const isPublicPage = pathname === '/about';
   const isAuthPage = pathname === '/login' || pathname === '/register' ||
     pathname === '/forgot-password' || pathname === '/reset-password';
   const hasAuthCookie = request.cookies.has('auth-storage');
 
   if (isPublicPage) return NextResponse.next();
-  if (!isAuthPage && !hasAuthCookie) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
   if (isAuthPage && hasAuthCookie) {
     return NextResponse.redirect(new URL('/', request.url));
+  }
+  if (!isAuthPage && !hasAuthCookie) {
+    return NextResponse.redirect(new URL('/about', request.url));
   }
   return NextResponse.next();
 }

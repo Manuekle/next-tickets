@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import GitHubStars from '@/components/github-stars';
+import Logo from '@/components/logo';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -60,17 +61,7 @@ export default function AboutPage() {
       <div style={{ position: 'relative', zIndex: 1 }}>
         {/* Nav */}
         <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 48px', maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-fg)', boxShadow: '0 4px 10px -4px color-mix(in oklch, var(--accent) 50%, transparent)' }}>
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="6" width="20" height="12" rx="2" />
-                <path d="M2 10h4M18 10h4" />
-              </svg>
-            </div>
-            <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em' }}>
-              open<span style={{ color: 'var(--accent)' }}>-tickets</span>
-            </span>
-          </div>
+          <Logo size={32} showText textSize="15px" />
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <GitHubStars />
             <Link href="/login" style={{ padding: '8px 18px', fontSize: '13px', fontWeight: 600, color: 'var(--accent-fg)', textDecoration: 'none', borderRadius: '10px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', boxShadow: '0 4px 12px -4px color-mix(in oklch, var(--accent) 40%, transparent)' }}>
@@ -173,7 +164,7 @@ export default function AboutPage() {
                 Start for free
               </Link>
               <a href="https://github.com/Manuekle/next-tickets" target="_blank" rel="noopener noreferrer" style={{ padding: '12px 24px', fontSize: '14px', fontWeight: 600, color: 'oklch(0.30 0.028 270)', textDecoration: 'none', borderRadius: '11px', background: 'rgba(255,255,255,0.80)', boxShadow: '0 2px 8px rgba(24,18,8,0.10)' }}>
-                Read the docs
+                View source
               </a>
             </div>
           </div>

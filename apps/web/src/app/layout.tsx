@@ -10,8 +10,23 @@ const font = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'open-tickets — Open Source Support',
+  title: {
+    default: 'open-tickets — Open Source Support',
+    template: '%s — open-tickets',
+  },
   description: 'Open-source support ticket management. Self-host your own Zendesk alternative.',
+  icons: { icon: '/favicon.svg' },
+  openGraph: {
+    type: 'website',
+    siteName: 'open-tickets',
+    title: 'open-tickets — Open Source Support',
+    description: 'Open-source support ticket management. Self-host your own Zendesk alternative.',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'open-tickets — Open Source Support',
+    description: 'Open-source support ticket management. Self-host your own Zendesk alternative.',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
