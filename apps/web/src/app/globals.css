@@ -271,3 +271,44 @@ button:focus-visible, a:focus-visible { border-radius: 6px; }
   padding: 0; margin: -1px; overflow: hidden;
   clip: rect(0,0,0,0); border: 0;
 }
+
+/* Docs sidebar / TOC animations */
+#__docs-aside {
+  transition: width 220ms cubic-bezier(.2,.9,.28,1);
+}
+#__docs-aside.closed {
+  width: 72px !important;
+}
+#__docs-sidebar {
+  transition: opacity 200ms ease, transform 240ms cubic-bezier(.2,.9,.28,1);
+  transform-origin: left center;
+}
+#__docs-aside.closed #__docs-sidebar {
+  opacity: 0; transform: translateX(-8px) scale(0.98); pointer-events: none;
+}
+
+/* TOC slide/fade */
+.docs-toc {
+  transition: transform 240ms cubic-bezier(.2,.9,.28,1), opacity 200ms ease;
+}
+.docs-toc.closed {
+  opacity: 0; transform: translateY(-6px); height: 0; overflow: hidden;
+}
+
+/* Heading copy button styles (SVG) */
+.heading-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 8px;
+  border-radius: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--mute);
+  cursor: pointer;
+  transition: background 160ms, color 160ms, transform 120ms;
+}
+.heading-copy-btn:hover { background: var(--surface-2); color: var(--accent); transform: translateY(-2px); }
+.heading-copy-btn svg { width: 14px; height: 14px; display: block; }

@@ -24,10 +24,11 @@ export default function HeadingLinks({ containerId = 'doc-article' }: { containe
       btn.style.borderRadius = '6px';
       btn.style.transition = 'all 160ms';
 
-      btn.textContent = '🔗';
+      // Use SVG icon for copy
+      btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M15 7h3a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1v-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="5" y="3" width="11" height="13" rx="2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-      btn.onmouseenter = () => { btn.style.opacity = '1'; btn.style.transform = 'translateY(-1px)'; };
-      btn.onmouseleave = () => { btn.style.opacity = '0.65'; btn.style.transform = 'none'; };
+      btn.onmouseenter = () => { btn.style.color = 'var(--accent)'; btn.style.transform = 'translateY(-2px)'; };
+      btn.onmouseleave = () => { btn.style.color = 'var(--mute)'; btn.style.transform = 'none'; };
 
       btn.onclick = async (e) => {
         e.preventDefault();
@@ -35,12 +36,12 @@ export default function HeadingLinks({ containerId = 'doc-article' }: { containe
         const url = `${window.location.origin}${window.location.pathname}#${id}`;
         try {
           await navigator.clipboard.writeText(url);
-          const prev = btn.textContent;
-          btn.textContent = '✓';
+          const prevHTML = btn.innerHTML;
+          btn.innerHTML = '<svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M2 8.5l3 3L13.5 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
           // dispatch a toast event
           const ev = new CustomEvent('copy-toast', { detail: { copyToast: 'Link copied to clipboard' } });
           window.dispatchEvent(ev as any);
-          setTimeout(() => { btn.textContent = prev; }, 1400);
+          setTimeout(() => { btn.innerHTML = prevHTML; }, 1400);
         } catch (err) {
           console.error('copy failed', err);
         }
