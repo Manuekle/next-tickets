@@ -10,7 +10,7 @@ turbo/
 .DS_Store
 coverage/
 .superpowers/
-.agents/skills/
+.agents/
 apps/web/e2e/.auth/
 apps/web/playwright-report/
 apps/web/test-results/
