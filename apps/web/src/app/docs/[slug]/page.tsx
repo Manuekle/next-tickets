@@ -1,9 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { MDXRemote } from 'next-mdx-remote/rsc';
-import rehypeSlug from 'rehype-slug';
-import rehypeAutolinkHeadings from 'rehype-autolink-headings';
-import getHeadingsFromMarkdown from '@/lib/get-headings';
+import { marked } from 'marked';
+import getHeadingsFromMarkdown, { slugify } from '@/lib/get-headings';
 
 import Link from 'next/link';
 import OnThisPage from '@/components/docs/on-this-page';
@@ -16,13 +14,18 @@ export default function DocSlugPage({ params }: Props) {
   const p = path.resolve(process.cwd(), `docs/${slug}.mdx`);
   let md = '# Not found';
   try { md = fs.readFileSync(p, 'utf-8'); } catch (e) {}
+
+  const renderer = new marked.Renderer();
+  renderer.heading = (text: string, level: number) => {
+    const id = slugify(text.replace(/<[^>]+>/g, ''));
+    return `<h${level} id="${id}">${text}</h${level}>`;
+  };
+  const html = marked.parse(md, { renderer });
   const headings = getHeadingsFromMarkdown(md);
 
   return (
     <div style={{ display: 'flex', gap: 18 }}>
-      <article id="doc-article" style={{ flex: 1 }}>
-        <MDXRemote source={md} options={{ mdxOptions: { rehypePlugins: [rehypeSlug, rehypeAutolinkHeadings] } }} />
-      </article>
+      <article id="doc-article" style={{ flex: 1 }} dangerouslySetInnerHTML={{ __html: html }} />
       <aside style={{ width: 220, borderLeft: '1px solid var(--hairline)', paddingLeft: 12 }}>
         <div style={{ position: 'sticky', top: 84 }}>
           <strong>On this page</strong>

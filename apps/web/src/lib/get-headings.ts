@@ -27,3 +27,5 @@ export function getHeadingsFromMarkdown(md: string): Heading[] {
 }
 
 export default getHeadingsFromMarkdown;
+
+export { slugify };
