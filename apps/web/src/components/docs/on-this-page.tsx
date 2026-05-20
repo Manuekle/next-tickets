@@ -24,6 +24,8 @@ export default function OnThisPage({ containerId = 'doc-article' }: { containerI
 
   useEffect(() => {
     const container = document.getElementById(containerId) || document.body;
+    // ensure heading copy buttons exist
+    import('@/components/docs/heading-links').then((m) => m.default({ containerId }));
     const nodeList = container.querySelectorAll('h1, h2, h3, h4');
     const hs: Heading[] = Array.from(nodeList).map((el) => ({ id: el.id, text: el.textContent || '', level: parseInt(el.tagName.replace('H', ''), 10) }));
     setHeadings(hs);
