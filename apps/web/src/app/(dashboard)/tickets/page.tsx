@@ -738,7 +738,7 @@ export default function TicketsPage() {
       {/* Board view (drag & drop) */}
       {view === 'board' && (
         isLoading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${KANBAN_COLUMNS.length}, 1fr)`, gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${KANBAN_COLUMNS.length}, minmax(260px, 1fr))`, gap: '12px', overflowX: 'auto' }}>
             {KANBAN_COLUMNS.map((c) => (
               <div key={c.status} style={{ background: 'var(--surface-2)', borderRadius: '14px', padding: '10px', minHeight: '200px' }}>
                 {Array.from({ length: 2 }).map((_, i) => (

@@ -11,12 +11,21 @@ import { Role } from '@next-tickets/shared';
 import { CommentList } from '@/components/comments/comment-list';
 import { CommentInput } from '@/components/comments/comment-input';
 import { CopilotPanel } from '@/components/ai/copilot-panel';
+import { ActivityTimeline } from '@/components/tickets/activity-timeline';
 import { format } from 'date-fns';
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
-import { ArrowRight01Icon, BubbleChatIcon, InformationCircleIcon } from '@hugeicons/core-free-icons';
+import { ArrowRight01Icon, BubbleChatIcon, InformationCircleIcon, Activity01Icon } from '@hugeicons/core-free-icons';
 import { sileo } from 'sileo';
 
-type Tab = 'conversation' | 'details';
+type Tab = 'conversation' | 'details' | 'activity';
+
+interface ActivityLog {
+  id: string;
+  action: string;
+  details?: Record<string, unknown> | null;
+  user: { id: string; name: string } | null;
+  createdAt: string;
+}
 
 interface TicketDetail {
   id: string;
@@ -28,6 +37,7 @@ interface TicketDetail {
   customer: { id: string; name: string; email: string };
   assignedTo: { id: string; name: string } | null;
   category: { id: string; name: string; color: string } | null;
+  activityLogs?: ActivityLog[];
   createdAt: string;
   updatedAt: string;
 }
@@ -282,6 +292,7 @@ export default function TicketDetailPage() {
   const tabs: { key: Tab; label: string; icon: IconSvgElement }[] = [
     { key: 'conversation', label: `Conversation (${ticket.commentCount ?? comments.length})`, icon: BubbleChatIcon          },
     { key: 'details',      label: 'Details',                                                    icon: InformationCircleIcon  },
+    { key: 'activity',     label: `Activity (${ticket.activityLogs?.length ?? 0})`,             icon: Activity01Icon         },
   ];
 
   return (
@@ -416,6 +427,10 @@ export default function TicketDetailPage() {
                 </p>
               )}
             </div>
+          )}
+
+          {activeTab === 'activity' && (
+            <ActivityTimeline logs={ticket.activityLogs ?? []} />
           )}
         </div>
 

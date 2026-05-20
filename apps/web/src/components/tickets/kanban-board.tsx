@@ -117,7 +117,17 @@ export function KanbanBoard({ columns, tickets, onMove, onOpen, renderCard }: Pr
       onDragCancel={() => setActiveId(null)}
       onDragEnd={handleDragEnd}
     >
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${columns.length}, 1fr)`, gap: '12px', alignItems: 'flex-start' }}>
+      <div
+        className="nt-kanban-scroll"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${columns.length}, minmax(260px, 1fr))`,
+          gap: '12px',
+          alignItems: 'flex-start',
+          overflowX: 'auto',
+          paddingBottom: '6px',
+        }}
+      >
         {columns.map((col) => {
           const colTickets = tickets.filter((t) => t.status === col.status);
           return (
