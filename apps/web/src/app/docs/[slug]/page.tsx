@@ -18,17 +18,15 @@ export default function DocSlugPage({ params }: Props) {
 
   return (
     <div style={{ display: 'flex', gap: 18 }}>
-      <article style={{ flex: 1 }}>
+      <article id="doc-article" style={{ flex: 1 }}>
         <MDXRemote source={md} options={{ mdxOptions: { rehypePlugins: [rehypeSlug, rehypeAutolinkHeadings] } }} />
       </article>
       <aside style={{ width: 220, borderLeft: '1px solid var(--hairline)', paddingLeft: 12 }}>
         <div style={{ position: 'sticky', top: 84 }}>
           <strong>On this page</strong>
-          <nav style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {headings.map((h) => (
-              <a key={h.id} href={`#${h.id}`} style={{ marginLeft: (h.level - 1) * 6, fontSize: 13, color: 'var(--mute)' }}>{h.text}</a>
-            ))}
-          </nav>
+          <div style={{ marginTop: 8 }}>
+            <OnThisPage containerId="doc-article" />
+          </div>
         </div>
       </aside>
     </div>
