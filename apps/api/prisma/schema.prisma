@@ -29,6 +29,14 @@ enum TicketPriority {
   CRITICAL
 }
 
+enum AiProviderType {
+  OPENAI
+  ANTHROPIC
+  GEMINI
+  OPENROUTER
+  GROQ
+}
+
 model User {
   id               String    @id @default(cuid())
   email            String    @unique
@@ -49,6 +57,8 @@ model User {
   activityLogs     ActivityLog[]
   knowledgeArticles KnowledgeArticle[]
   auditLogs        AuditLog[]
+  aiProviders      AiProvider[]
+  aiUsageLogs      AiUsageLog[]
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
 }
@@ -224,4 +234,42 @@ model Notification {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
+}
+
+model AiProvider {
+  id            String         @id @default(cuid())
+  type          AiProviderType
+  label         String
+  apiKeyEnc     String         @db.Text
+  model         String
+  temperature   Float          @default(0.3)
+  maxTokens     Int            @default(1024)
+  enabled       Boolean        @default(true)
+  isDefault     Boolean        @default(false)
+  rateLimitRpm  Int            @default(60)
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usageLogs     AiUsageLog[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  @@index([userId, enabled])
+  @@index([userId, isDefault])
+}
+
+model AiUsageLog {
+  id           String     @id @default(cuid())
+  providerId   String
+  provider     AiProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  task         String
+  promptTokens Int        @default(0)
+  outputTokens Int        @default(0)
+  latencyMs    Int        @default(0)
+  success      Boolean    @default(true)
+  errorMessage String?
+  createdAt    DateTime   @default(now())
+
+  @@index([userId, createdAt])
 }

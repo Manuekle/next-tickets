@@ -1,4 +1,4 @@
-import { Role, TicketPriority, TicketStatus } from './enums';
+import { AiProviderType, Role, TicketPriority, TicketStatus } from './enums';
 
 export interface LoginDto {
   email: string;
@@ -79,4 +79,39 @@ export interface ApiError {
     message: string;
     details?: unknown;
   };
+}
+
+export interface AiProviderDto {
+  id: string;
+  type: AiProviderType;
+  label: string;
+  apiKeyMasked: string;
+  model: string;
+  temperature: number;
+  maxTokens: number;
+  enabled: boolean;
+  isDefault: boolean;
+  rateLimitRpm: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateAiProviderInput {
+  type: AiProviderType;
+  label: string;
+  apiKey: string;
+  model: string;
+  temperature?: number;
+  maxTokens?: number;
+  enabled?: boolean;
+  isDefault?: boolean;
+  rateLimitRpm?: number;
+}
+
+export type UpdateAiProviderInput = Partial<CreateAiProviderInput>;
+
+export interface AiTestResult {
+  ok: boolean;
+  latencyMs: number;
+  error?: string;
 }

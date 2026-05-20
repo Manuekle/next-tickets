@@ -14,6 +14,7 @@ import { SlaModule } from './modules/sla/sla.module';
 import { AutomationsModule } from './modules/automations/automation.module';
 import { KnowledgeModule } from './modules/knowledge/knowledge.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { AiModule } from './modules/ai/ai.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
@@ -36,6 +37,7 @@ import { HttpExceptionFilter } from './common/filters/http-exception.filter';
     AutomationsModule,
     KnowledgeModule,
     AdminModule,
+    AiModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

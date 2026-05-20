@@ -19,3 +19,11 @@ export enum TicketPriority {
   HIGH = 'HIGH',
   CRITICAL = 'CRITICAL',
 }
+
+export enum AiProviderType {
+  OPENAI = 'OPENAI',
+  ANTHROPIC = 'ANTHROPIC',
+  GEMINI = 'GEMINI',
+  OPENROUTER = 'OPENROUTER',
+  GROQ = 'GROQ',
+}
