@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/api';
 import { sileo } from 'sileo';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { CreateTicketDrawer } from '@/components/drawers/ticket-drawer';
+import { KanbanBoard, type KanbanColumnDef, type KanbanTicket } from '@/components/tickets/kanban-board';
 import {
   Search01Icon, Add01Icon, FilterIcon, ArrowUpDownIcon, ListViewIcon, GridViewIcon,
   CheckmarkSquareIcon, Cancel01Icon, ArrowDown01Icon, CheckmarkCircle01Icon,
@@ -133,6 +134,13 @@ const STATUS_TABS = [
 
 const BOARD_COLS = ['OPEN', 'IN_PROGRESS', 'WAITING_ON_CUSTOMER', 'RESOLVED'] as const;
 
+const KANBAN_COLUMNS: KanbanColumnDef[] = [
+  { status: 'OPEN',                label: 'Open',        hue: 235 },
+  { status: 'IN_PROGRESS',         label: 'In progress', hue: 65  },
+  { status: 'WAITING_ON_CUSTOMER', label: 'Waiting',     hue: 305 },
+  { status: 'RESOLVED',            label: 'Resolved',    hue: 155 },
+];
+
 interface Category { id: string; name: string }
 
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const;
@@ -191,6 +199,16 @@ export default function TicketsPage() {
       setStatusPopover(false);
     },
     onError: () => sileo.error({ title: 'Failed to update tickets' }),
+  });
+
+  const moveTicketMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      apiClient(`/tickets/${id}/status`, { method: 'POST', body: JSON.stringify({ status }) }),
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ['tickets'] });
+      sileo.success({ title: `Moved to ${vars.status.replace(/_/g, ' ').toLowerCase()}` });
+    },
+    onError: () => sileo.error({ title: 'Failed to move ticket' }),
   });
 
   const { data, isLoading } = useQuery({
@@ -713,130 +731,56 @@ export default function TicketsPage() {
         </div>
       )}
 
-      {/* Board view */}
+      {/* Board view (drag & drop) */}
       {view === 'board' && (
-        <div style={{
-          display:             'grid',
-          gridTemplateColumns: `repeat(${BOARD_COLS.length}, 1fr)`,
-          gap:                 '12px',
-          alignItems:          'flex-start',
-        }}>
-          {BOARD_COLS.map((col) => {
-            const colTickets = tickets.filter((t) => t.status === col);
-            const m = STATUS_META[col];
-            return (
-              <div
-                key={col}
-                style={{
-                  background:   'var(--surface-2)',
-                  borderRadius: '14px',
-                  padding:      '10px',
-                  minHeight:    '200px',
-                  boxShadow:    'var(--shadow-inset)',
-                }}
-              >
-                {/* Column header */}
-                <div style={{
-                  display:         'flex',
-                  alignItems:      'center',
-                  justifyContent:  'space-between',
-                  padding:         '4px 6px 10px',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <StatusPill status={col} />
-                    <span style={{ fontSize: '11px', color: 'var(--mute)', fontWeight: 600, fontFeatureSettings: '"tnum"' }}>
-                      {colTickets.length}
-                    </span>
+        isLoading ? (
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${KANBAN_COLUMNS.length}, 1fr)`, gap: '12px' }}>
+            {KANBAN_COLUMNS.map((c) => (
+              <div key={c.status} style={{ background: 'var(--surface-2)', borderRadius: '14px', padding: '10px', minHeight: '200px' }}>
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <div key={i} style={{ background: 'var(--surface)', borderRadius: '12px', padding: '13px', marginBottom: '8px' }}>
+                    <div style={{ height: '11px', background: 'var(--surface-2)', borderRadius: '3px', marginBottom: '10px' }} />
+                    <div style={{ height: '26px', background: 'var(--surface-2)', borderRadius: '3px' }} />
                   </div>
-                  <button style={{
-                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                    width: '28px', height: '28px', border: 0, borderRadius: '8px',
-                    background: 'transparent', color: 'var(--mute)', cursor: 'pointer',
-                    transition: 'all 120ms',
-                  }}
-                    onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'var(--surface-3)'; b.style.color = 'var(--ink)'; }}
-                    onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'transparent'; b.style.color = 'var(--mute)'; }}
-                  >
-                    <HugeiconsIcon icon={Add01Icon} size={13} />
-                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <KanbanBoard
+            columns={KANBAN_COLUMNS}
+            tickets={tickets as KanbanTicket[]}
+            onOpen={(id) => router.push(`/tickets/${id}`)}
+            onMove={(id, status) => moveTicketMutation.mutate({ id, status })}
+            renderCard={(t) => (
+              <div style={{
+                background: 'var(--surface)', borderRadius: '12px', padding: '13px',
+                boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '8px',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mute)', fontWeight: 500 }}>
+                    {t.id?.slice(0, 8)}
+                  </span>
+                  <PriorityBar priority={t.priority} />
                 </div>
-
-                {/* Cards */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {isLoading
-                    ? Array.from({ length: 2 }).map((_, i) => (
-                        <div key={i} style={{
-                          background: 'var(--surface)', borderRadius: '12px',
-                          padding: '13px', boxShadow: 'var(--shadow-sm)',
-                        }}>
-                          <div style={{ height: '11px', background: 'var(--surface-2)', borderRadius: '3px', marginBottom: '10px' }} />
-                          <div style={{ height: '26px', background: 'var(--surface-2)', borderRadius: '3px' }} />
-                        </div>
-                      ))
-                    : colTickets.map((t) => (
-                        <div
-                          key={t.id}
-                          onClick={() => router.push(`/tickets/${t.id}`)}
-                          style={{
-                            background:   'var(--surface)',
-                            borderRadius: '12px',
-                            padding:      '13px',
-                            cursor:       'pointer',
-                            boxShadow:    'var(--shadow-sm)',
-                            display:      'flex',
-                            flexDirection: 'column',
-                            gap:          '8px',
-                            transition:   'transform 160ms, box-shadow 160ms',
-                          }}
-                          onMouseEnter={(e) => {
-                            const d = e.currentTarget as HTMLDivElement;
-                            d.style.transform  = 'translateY(-2px)';
-                            d.style.boxShadow  = 'var(--shadow-md)';
-                          }}
-                          onMouseLeave={(e) => {
-                            const d = e.currentTarget as HTMLDivElement;
-                            d.style.transform  = 'translateY(0)';
-                            d.style.boxShadow  = 'var(--shadow-sm)';
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mute)', fontWeight: 500 }}>
-                              {t.id?.slice(0, 8)}
-                            </span>
-                            <PriorityBar priority={t.priority} />
-                          </div>
-                          <div style={{
-                            fontSize:           '13px',
-                            color:              'var(--ink)',
-                            fontWeight:         500,
-                            lineHeight:         1.35,
-                            letterSpacing:      '-0.005em',
-                            display:            '-webkit-box',
-                            WebkitLineClamp:    2,
-                            WebkitBoxOrient:    'vertical',
-                            overflow:           'hidden',
-                          } as React.CSSProperties}>{t.title}</div>
-                          <div style={{
-                            display:         'flex',
-                            alignItems:      'center',
-                            justifyContent:  'space-between',
-                            marginTop:       '2px',
-                            paddingTop:      '8px',
-                            borderTop:       '1px solid var(--hairline)',
-                          }}>
-                            <span style={{ fontSize: '11px', color: 'var(--mute)' }}>{t.customer?.name}</span>
-                            <span style={{ fontSize: '11px', color: 'var(--mute)', fontFeatureSettings: '"tnum"' }}>
-                              {timeAgo(t.updatedAt)}
-                            </span>
-                          </div>
-                        </div>
-                      ))
-                  }
+                <div style={{
+                  fontSize: '13px', color: 'var(--ink)', fontWeight: 500, lineHeight: 1.35,
+                  letterSpacing: '-0.005em', display: '-webkit-box',
+                  WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+                } as React.CSSProperties}>{t.title}</div>
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  marginTop: '2px', paddingTop: '8px', borderTop: '1px solid var(--hairline)',
+                }}>
+                  <span style={{ fontSize: '11px', color: 'var(--mute)' }}>{t.customer?.name}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--mute)', fontFeatureSettings: '"tnum"' }}>
+                    {timeAgo(t.updatedAt)}
+                  </span>
                 </div>
               </div>
-            );
-          })}
-        </div>
+            )}
+          />
+        )
       )}
 
       {/* Pagination */}

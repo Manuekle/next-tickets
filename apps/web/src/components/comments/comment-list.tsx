@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { renderMarkdown } from '@/lib/markdown';
 
 interface Comment {
   id: string;
@@ -40,7 +41,11 @@ export function CommentList({ comments }: { comments: Comment[] }) {
               </span>
             )}
           </div>
-          <p style={{ fontSize: '13px', color: 'var(--ink)', whiteSpace: 'pre-wrap', lineHeight: 1.55, margin: 0 }}>{comment.content}</p>
+          <div
+            className="markdown-body"
+            style={{ fontSize: '13px', color: 'var(--ink)', lineHeight: 1.55 }}
+            dangerouslySetInnerHTML={{ __html: renderMarkdown(comment.content) }}
+          />
         </div>
       ))}
     </div>
