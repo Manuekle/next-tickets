@@ -10,8 +10,10 @@ turbo/
 .DS_Store
 coverage/
 .superpowers/
+.agents/skills/
 apps/web/e2e/.auth/
 apps/web/playwright-report/
 apps/web/test-results/
 test-results/
 .vercel
+*.tsbuildinfo
