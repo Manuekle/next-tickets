@@ -164,6 +164,13 @@ export function CreateTicketDrawer({ open, onClose }: CreateTicketDrawerProps) {
   });
 
   const priorities = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+  const selectStyle: React.CSSProperties = {
+    width: '100%', padding: '9px 12px', fontSize: '13px', color: 'var(--ink)',
+    border: 0, borderRadius: '10px', background: 'var(--surface)',
+    boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
+    outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'box-shadow 100ms',
+    appearance: 'none', cursor: 'pointer', paddingRight: '34px',
+  };
 
   return (
     <DrawerShell open={open} onClose={onClose} title="New ticket">
@@ -236,30 +243,21 @@ export function CreateTicketDrawer({ open, onClose }: CreateTicketDrawerProps) {
         </div>
 
         {/* Category */}
-        {categories.length > 0 && (
-          <div>
-            <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)', display: 'block', marginBottom: '6px' }}>
-              Category
-            </label>
-            <div style={{ position: 'relative' }}>
-              <select
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
-                style={{
-                  width: '100%', padding: '9px 32px 9px 12px', fontSize: '13px', border: 0, borderRadius: '10px',
-                  background: 'var(--surface)', color: 'var(--ink)',
-                  boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
-                  outline: 'none', appearance: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                }}
-              >
+            {categories.length > 0 && (
+              <div>
+                <label style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)', display: 'block', marginBottom: '6px' }}>
+                  Category
+                </label>
+                <div style={{ position: 'relative' }}>
+              	<select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} style={selectStyle}>
                 <option value="">No category</option>
                 {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
-              <HugeiconsIcon icon={ArrowDown01Icon} size={12} color="var(--mute)"
+              	<HugeiconsIcon icon={ArrowDown01Icon} size={12} color="var(--mute)"
                 style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-            </div>
-          </div>
-        )}
+                </div>
+              </div>
+            )}
 
         {/* Submit */}
         <button

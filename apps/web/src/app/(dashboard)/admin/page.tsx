@@ -34,6 +34,13 @@ const inputStyle: React.CSSProperties = {
   boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
   outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit',
 };
+const selectStyle: React.CSSProperties = {
+  width: '100%', padding: '8px 10px', fontSize: '13px', color: 'var(--ink)',
+  border: 0, borderRadius: '8px', background: 'var(--surface)',
+  boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
+  outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'box-shadow 100ms',
+  appearance: 'none', cursor: 'pointer', paddingRight: '28px',
+};
 
 function RoleBadge({ role }: { role: string }) {
   const label = role === 'SUPER_ADMIN' ? 'Super Admin' : role.charAt(0) + role.slice(1).toLowerCase();
@@ -48,7 +55,7 @@ function NativeSelect({ value, onChange, options, placeholder }: { value: string
   return (
     <div style={{ position: 'relative' }}>
       <select value={value} onChange={(e) => onChange(e.target.value)}
-        style={{ ...inputStyle, paddingRight: '28px', appearance: 'none', cursor: 'pointer' }}>
+        style={selectStyle}>
         {placeholder !== undefined && <option value="">{placeholder}</option>}
         {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>

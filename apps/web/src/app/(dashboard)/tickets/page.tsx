@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { sileo } from 'sileo';
 import { HugeiconsIcon } from '@hugeicons/react';
+import { CreateTicketDrawer } from '@/components/drawers/ticket-drawer';
 import {
   Search01Icon, Add01Icon, FilterIcon, ArrowUpDownIcon, ListViewIcon, GridViewIcon,
   CheckmarkSquareIcon, Cancel01Icon, ArrowDown01Icon, CheckmarkCircle01Icon,
@@ -135,6 +136,15 @@ const BOARD_COLS = ['OPEN', 'IN_PROGRESS', 'WAITING_ON_CUSTOMER', 'RESOLVED'] as
 interface Category { id: string; name: string }
 
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const;
+const selectStyle: React.CSSProperties = {
+  padding: '5px 28px 5px 10px',
+  fontSize: '12px',
+  border: 0,
+  borderRadius: '8px',
+  appearance: 'none',
+  cursor: 'pointer',
+  fontFamily: 'inherit',
+};
 
 export default function TicketsPage() {
   const router    = useRouter();
@@ -145,6 +155,7 @@ export default function TicketsPage() {
   const [selected,      setSelected]      = useState<Set<string>>(new Set());
   const [page,          setPage]          = useState(1);
   const [showFilters,   setShowFilters]   = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [filterPrio,    setFilterPrio]    = useState<string[]>([]);
   const [filterCat,     setFilterCat]     = useState('');
   const [statusPopover, setStatusPopover] = useState(false);
@@ -263,7 +274,7 @@ export default function TicketsPage() {
             Saved views
           </button>
           <button
-            onClick={() => router.push('/tickets/new')}
+            onClick={() => setCreateOpen(true)}
             style={{
               display:       'inline-flex',
               alignItems:    'center',
@@ -459,10 +470,9 @@ export default function TicketsPage() {
                   value={filterCat}
                   onChange={(e) => setFilterCat(e.target.value)}
                   style={{
-                    padding: '5px 28px 5px 10px', fontSize: '12px', border: 0, borderRadius: '8px',
+                    ...selectStyle,
                     background: filterCat ? 'var(--accent-tint)' : 'var(--surface-2)',
                     color: filterCat ? 'var(--accent)' : 'var(--ink-soft)',
-                    appearance: 'none', cursor: 'pointer', fontFamily: 'inherit',
                     boxShadow: filterCat ? 'inset 0 0 0 1px var(--accent-border)' : 'none',
                   }}
                 >
@@ -869,6 +879,7 @@ export default function TicketsPage() {
           >Next</button>
         </div>
       )}
+      <CreateTicketDrawer open={createOpen} onClose={() => setCreateOpen(false)} />
     </div>
   );
 }

@@ -148,6 +148,13 @@ const inputStyle: React.CSSProperties = {
   fontFamily:   'inherit',
   transition:   'box-shadow 100ms',
 };
+const selectStyle: React.CSSProperties = {
+  width: '100%', padding: '8px 10px', fontSize: '13px', color: 'var(--ink)',
+  border: 0, borderRadius: '8px', background: 'var(--surface)',
+  boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
+  outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'box-shadow 100ms',
+  appearance: 'none', cursor: 'pointer', paddingRight: '28px',
+};
 
 function NativeSelect({ value, onChange, options, placeholder }: {
   value: string; onChange: (v: string) => void;
@@ -159,7 +166,7 @@ function NativeSelect({ value, onChange, options, placeholder }: {
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        style={{ ...inputStyle, paddingRight: '28px', appearance: 'none', cursor: 'pointer' }}
+        style={selectStyle}
       >
         {placeholder && <option value="">{placeholder}</option>}
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}

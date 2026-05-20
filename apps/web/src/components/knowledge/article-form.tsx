@@ -41,6 +41,13 @@ const inputStyle: React.CSSProperties = {
   boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
   outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'box-shadow 100ms',
 };
+const selectStyle: React.CSSProperties = {
+  width: '100%', padding: '8px 10px', fontSize: '13px', color: 'var(--ink)',
+  border: 0, borderRadius: '8px', background: 'var(--surface)',
+  boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
+  outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'box-shadow 100ms',
+  appearance: 'none', cursor: 'pointer', paddingRight: '34px',
+};
 
 const labelStyle: React.CSSProperties = {
   fontSize: '12px', fontWeight: 500, color: 'var(--ink-soft)', marginBottom: '5px', display: 'block',
@@ -157,12 +164,12 @@ export function ArticleForm({ initialData }: ArticleFormProps) {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <div>
             <label style={labelStyle}>Category</label>
-            <div style={{ position: 'relative' }}>
-              <select
-                value={watch('categoryId') || ''}
-                onChange={(e) => setValue('categoryId', e.target.value || undefined)}
-                style={{ ...inputStyle, paddingRight: '28px', appearance: 'none', cursor: 'pointer' }}
-              >
+              <div style={{ position: 'relative' }}>
+               <select
+                 value={watch('categoryId') || ''}
+                 onChange={(e) => setValue('categoryId', e.target.value || undefined)}
+                 style={selectStyle}
+               >
                 <option value="">No category</option>
                 {categories?.data.map((c) => (
                   <option key={c.id} value={c.id}>{c.name} ({c._count.articles})</option>

@@ -89,6 +89,12 @@ export default function NewTicketPage() {
     transition:   'box-shadow 100ms',
     fontFamily:   'inherit',
   };
+  const selectStyle: React.CSSProperties = {
+    width: '100%', padding: '9px 12px', fontSize: '13px', color: 'var(--ink)',
+    border: 0, borderRadius: '10px', background: 'var(--surface)',
+    boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
+    outline: 'none', boxSizing: 'border-box', transition: 'box-shadow 100ms', appearance: 'none', cursor: 'pointer', paddingRight: '28px',
+  };
 
   return (
     <div style={{ maxWidth: '640px' }}>
@@ -189,18 +195,21 @@ export default function NewTicketPage() {
               {/* Category */}
               <div>
                 <FieldLabel>Category</FieldLabel>
-                <select
-                  value={categoryId ?? ''}
-                  onChange={(e) => setValue('categoryId', e.target.value || undefined)}
-                  style={{ ...inputStyle, cursor: 'pointer' }}
-                  onFocus={(e)  => { (e.currentTarget as HTMLSelectElement).style.boxShadow = 'var(--shadow-sm), inset 0 0 0 1.5px var(--accent)'; }}
-                  onBlur={(e)   => { (e.currentTarget as HTMLSelectElement).style.boxShadow = 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)'; }}
-                >
+                <div style={{ position: 'relative' }}>
+                  <select
+                    value={categoryId ?? ''}
+                    onChange={(e) => setValue('categoryId', e.target.value || undefined)}
+                    style={selectStyle}
+                    onFocus={(e)  => { (e.currentTarget as HTMLSelectElement).style.boxShadow = 'var(--shadow-sm), inset 0 0 0 1.5px var(--accent)'; }}
+                    onBlur={(e)   => { (e.currentTarget as HTMLSelectElement).style.boxShadow = 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)'; }}
+                  >
                   <option value="">Select category</option>
                   {(categories?.data ?? []).map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
-                </select>
+                  </select>
+                  <HugeiconsIcon icon={ArrowRight01Icon} size={12} color="var(--mute)" style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                </div>
               </div>
             </div>
           </div>
