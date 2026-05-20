@@ -11,6 +11,9 @@ import {
 } from '@hugeicons/core-free-icons';
 import { formatDistanceToNow } from 'date-fns';
 import { CreateTicketDrawer, TicketDetailDrawer } from '@/components/drawers/ticket-drawer';
+import { CriticalBanner } from '@/components/tickets/critical-banner';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Ticket01Icon } from '@hugeicons/core-free-icons';
 
 /* ─── types ─── */
 interface Ticket {
@@ -206,6 +209,9 @@ export default function InboxPage() {
         </button>
       </div>
 
+      {/* Critical tickets */}
+      <CriticalBanner />
+
       {/* Stats */}
       {stats && (
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -272,10 +278,11 @@ export default function InboxPage() {
             ))}
           </div>
         ) : tickets.length === 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '60px 24px', gap: '10px' }}>
-            <p style={{ fontSize: '14px', fontWeight: 500, color: 'var(--ink)', margin: 0 }}>No tickets found</p>
-            <p style={{ fontSize: '13px', color: 'var(--mute)', margin: 0 }}>Try adjusting the filters or create a new ticket.</p>
-          </div>
+          <EmptyState
+            icon={Ticket01Icon}
+            title="No tickets found"
+            description="Try adjusting the filters or create a new ticket."
+          />
         ) : (
           <div>
             {tickets.map((t) => (

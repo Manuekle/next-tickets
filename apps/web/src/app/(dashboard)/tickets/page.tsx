@@ -8,6 +8,8 @@ import { sileo } from 'sileo';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { CreateTicketDrawer } from '@/components/drawers/ticket-drawer';
 import { KanbanBoard, type KanbanColumnDef, type KanbanTicket } from '@/components/tickets/kanban-board';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Ticket01Icon } from '@hugeicons/core-free-icons';
 import {
   Search01Icon, Add01Icon, FilterIcon, ArrowUpDownIcon, ListViewIcon, GridViewIcon,
   CheckmarkSquareIcon, Cancel01Icon, ArrowDown01Icon, CheckmarkCircle01Icon,
@@ -667,9 +669,11 @@ export default function TicketsPage() {
                 ))
               : tickets.length === 0
               ? (
-                <div style={{ padding: '48px 18px', textAlign: 'center', color: 'var(--mute)', fontSize: '13px' }}>
-                  No tickets found
-                </div>
+                <EmptyState
+                  icon={Ticket01Icon}
+                  title="No tickets found"
+                  description={hasActiveFilters || search ? 'Try clearing filters to see more results.' : 'Create your first ticket to get started.'}
+                />
               )
               : tickets.map((t, i) => (
                 <div
