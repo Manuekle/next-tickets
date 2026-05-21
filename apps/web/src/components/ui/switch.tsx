@@ -24,7 +24,7 @@ export const Switch = React.forwardRef<
     <BaseSwitch.Thumb
       className={cn(
         'block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform',
-        'translate-x-0.5 data-[checked]:translate-x-[13px]',
+        'translate-x-0.5 data-[checked]:translate-x-[13px] data-[checked]:bg-accent-fg',
       )}
     />
   </BaseSwitch.Root>

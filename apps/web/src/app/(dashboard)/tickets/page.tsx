@@ -198,7 +198,7 @@ export default function TicketsPage() {
               className={cn(
                 'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
                 statusTab === tab.value
-                  ? 'bg-surface text-ink shadow-sm'
+                  ? 'bg-surface text-ink shadow-sm dark:bg-surface-3'
                   : 'text-mute hover:text-ink-soft',
               )}
             >
@@ -251,7 +251,7 @@ export default function TicketsPage() {
               onClick={() => setView(v)}
               className={cn(
                 'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
-                view === v ? 'bg-surface text-ink shadow-sm' : 'text-mute hover:text-ink-soft',
+                view === v ? 'bg-surface text-ink shadow-sm dark:bg-surface-3' : 'text-mute hover:text-ink-soft',
               )}
             >
               {v === 'table' ? <HugeiconsIcon icon={ListViewIcon} size={12} /> : <HugeiconsIcon icon={GridViewIcon} size={12} />}
