@@ -9,20 +9,10 @@ export default function Logo({ size = 32, showText = false, textSize = '15px' }:
   const iconSize = Math.round(size * 0.53);
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+    <div className="flex items-center gap-2.5">
       <div
-        style={{
-          width: `${size}px`,
-          height: `${size}px`,
-          borderRadius: radius,
-          background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#fff',
-          flexShrink: 0,
-          boxShadow: '0 4px 10px -4px color-mix(in oklch, var(--accent) 50%, transparent)',
-        }}
+        className="flex shrink-0 items-center justify-center bg-accent text-accent-fg"
+        style={{ width: `${size}px`, height: `${size}px`, borderRadius: radius }}
       >
         <svg
           width={iconSize}
@@ -42,8 +32,8 @@ export default function Logo({ size = 32, showText = false, textSize = '15px' }:
       </div>
 
       {showText && (
-        <span style={{ fontSize: textSize, fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em' }}>
-          open<span style={{ color: 'var(--accent)' }}>-tickets</span>
+        <span className="font-bold tracking-tight text-ink" style={{ fontSize: textSize }}>
+          open<span className="text-mute">-tickets</span>
         </span>
       )}
     </div>
