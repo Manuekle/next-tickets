@@ -14,6 +14,12 @@ import { CreateTicketDrawer, TicketDetailDrawer } from '@/components/drawers/tic
 import { CriticalBanner } from '@/components/tickets/critical-banner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Ticket01Icon } from '@hugeicons/core-free-icons';
+import { Card } from '@/components/ui/card';
+import { Badge, type BadgeProps } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 /* ─── types ─── */
 interface Ticket {
@@ -31,17 +37,17 @@ interface DashboardStats {
 
 /* ─── helpers ─── */
 const PRIORITY_BAR: Record<string, string> = {
-  CRITICAL: 'oklch(0.58 0.22 22)',
-  HIGH:     'oklch(0.70 0.18 50)',
-  MEDIUM:   'oklch(0.70 0.14 90)',
-  LOW:      'oklch(0.62 0.10 200)',
+  CRITICAL: 'bg-danger',
+  HIGH:     'bg-warning',
+  MEDIUM:   'bg-info',
+  LOW:      'bg-mute-soft',
 };
-const STATUS_META: Record<string, { label: string; color: string; icon: typeof Alert02Icon }> = {
-  OPEN:                { label: 'Open',        color: 'oklch(0.60 0.18 220)', icon: Alert02Icon          },
-  IN_PROGRESS:         { label: 'In Progress', color: 'oklch(0.62 0.16 265)', icon: Clock01Icon          },
-  WAITING_ON_CUSTOMER: { label: 'Waiting',     color: 'oklch(0.65 0.16 55)',  icon: Clock01Icon          },
-  RESOLVED:            { label: 'Resolved',    color: 'oklch(0.55 0.16 148)', icon: CheckmarkCircle01Icon },
-  CLOSED:              { label: 'Closed',      color: 'oklch(0.55 0.04 270)', icon: CheckmarkCircle01Icon },
+const STATUS_META: Record<string, { label: string; variant: BadgeProps['variant']; icon: typeof Alert02Icon }> = {
+  OPEN:                { label: 'Open',        variant: 'info',    icon: Alert02Icon          },
+  IN_PROGRESS:         { label: 'In Progress', variant: 'neutral', icon: Clock01Icon          },
+  WAITING_ON_CUSTOMER: { label: 'Waiting',     variant: 'warning', icon: Clock01Icon          },
+  RESOLVED:            { label: 'Resolved',    variant: 'success', icon: CheckmarkCircle01Icon },
+  CLOSED:              { label: 'Closed',      variant: 'neutral', icon: CheckmarkCircle01Icon },
 };
 const STATUS_FILTERS = [
   { label: 'All',         value: '' },
@@ -52,26 +58,18 @@ const STATUS_FILTERS = [
 ];
 
 /* ─── sub-components ─── */
-function StatChip({ label, value, color }: { label: string; value: number | string; color: string }) {
+function StatChip({ label, value }: { label: string; value: number | string }) {
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
-      padding: '10px 16px', borderRadius: '12px',
-      background: 'var(--surface)', boxShadow: 'var(--shadow-sm)',
-      minWidth: '80px',
-    }}>
-      <span style={{ fontSize: '22px', fontWeight: 700, color, fontFeatureSettings: '"tnum"', lineHeight: 1 }}>{value}</span>
-      <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
-    </div>
+    <Card className="flex min-w-[80px] flex-col items-center gap-0.5 px-4 py-2.5">
+      <span className="font-mono text-[22px] font-bold leading-none text-ink">{value}</span>
+      <span className="text-[11px] font-medium uppercase tracking-wide text-mute">{label}</span>
+    </Card>
   );
 }
 
 function PriorityBar({ priority }: { priority: string }) {
   return (
-    <div style={{
-      position: 'absolute', left: 0, top: '8px', bottom: '8px', width: '3px', borderRadius: '0 2px 2px 0',
-      background: PRIORITY_BAR[priority] ?? 'var(--hairline)',
-    }} />
+    <div className={cn('absolute bottom-2 left-0 top-2 w-[3px] rounded-r-sm', PRIORITY_BAR[priority] ?? 'bg-border')} />
   );
 }
 
@@ -79,14 +77,10 @@ function StatusChip({ status }: { status: string }) {
   const m = STATUS_META[status];
   if (!m) return null;
   return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: '4px',
-      padding: '2px 7px', borderRadius: '5px', fontSize: '11px', fontWeight: 600,
-      background: `${m.color}18`, color: m.color, whiteSpace: 'nowrap', flexShrink: 0,
-    }}>
+    <Badge variant={m.variant}>
       <HugeiconsIcon icon={m.icon} size={10} />
       {m.label}
-    </span>
+    </Badge>
   );
 }
 
@@ -95,50 +89,34 @@ function TicketRow({ ticket, active, onClick }: { ticket: Ticket; active: boolea
     <button
       type="button"
       onClick={onClick}
-      style={{
-        position: 'relative', display: 'flex', alignItems: 'flex-start', gap: '12px',
-        width: '100%', textAlign: 'left', padding: '12px 14px 12px 20px',
-        border: 0, borderBottom: '1px solid var(--hairline)',
-        background: active ? 'var(--accent-tint)' : 'transparent',
-        cursor: 'pointer', transition: 'background 80ms',
-        boxShadow: active ? 'inset 2px 0 0 var(--accent)' : 'none',
-      }}
-      onMouseEnter={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
-      onMouseLeave={(e) => { if (!active) (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
+      className={cn(
+        'relative flex w-full items-start gap-3 border-b border-border py-3 pl-5 pr-3.5 text-left transition-colors',
+        active ? 'bg-accent-tint shadow-[inset_2px_0_0_var(--accent)]' : 'hover:bg-surface-2',
+      )}
     >
       <PriorityBar priority={ticket.priority} />
 
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '4px' }}>
-          <span style={{
-            fontSize: '13px', fontWeight: active ? 700 : 600, color: 'var(--ink)',
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.3,
-          }}>
+      <div className="min-w-0 flex-1">
+        <div className="mb-1 flex items-start justify-between gap-2">
+          <span className={cn('truncate text-[13px] leading-tight text-ink', active ? 'font-bold' : 'font-semibold')}>
             {ticket.title}
           </span>
-          <span style={{ fontSize: '11px', color: 'var(--mute)', flexShrink: 0, marginTop: '1px' }}>
+          <span className="mt-px shrink-0 text-[11px] text-mute">
             {formatDistanceToNow(new Date(ticket.updatedAt), { addSuffix: true })}
           </span>
         </div>
         {ticket.description && (
-          <p style={{
-            fontSize: '12px', color: 'var(--mute)', margin: '0 0 6px',
-            overflow: 'hidden', display: '-webkit-box',
-            WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
-            lineHeight: 1.45,
-          }}>
+          <p className="mb-1.5 line-clamp-2 text-xs leading-relaxed text-mute">
             {ticket.description}
           </p>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+        <div className="flex flex-wrap items-center gap-1.5">
           <StatusChip status={ticket.status} />
           {ticket.category && (
-            <span style={{ padding: '2px 6px', borderRadius: '5px', fontSize: '11px', fontWeight: 500, background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>
-              {ticket.category.name}
-            </span>
+            <Badge variant="neutral">{ticket.category.name}</Badge>
           )}
           {(ticket._count?.comments ?? 0) > 0 && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: 'var(--mute)', marginLeft: 'auto' }}>
+            <span className="ml-auto inline-flex items-center gap-1 text-[11px] text-mute">
               <HugeiconsIcon icon={BubbleChatIcon} size={10} />
               {ticket._count!.comments}
             </span>
@@ -180,33 +158,19 @@ export default function InboxPage() {
   const stats = statsRes?.data;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+    <div className="flex flex-col gap-[18px]">
       {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px' }}>
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
         <div>
-          <h1 style={{ fontSize: '26px', fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em', margin: 0, lineHeight: 1.1 }}>
-            Inbox
-          </h1>
-          <p style={{ fontSize: '13px', color: 'var(--mute)', margin: '2px 0 0' }}>
+          <h1>Inbox</h1>
+          <p className="mt-0.5 text-[13px] text-mute">
             {isLoading ? '…' : `${tickets.length} tickets`}
           </p>
         </div>
-        <button
-          onClick={() => setCreateOpen(true)}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: '6px',
-            padding: '9px 18px', fontSize: '13px', fontWeight: 600,
-            border: 0, borderRadius: '11px', cursor: 'pointer',
-            background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
-            color: '#fff', boxShadow: '0 4px 14px -4px var(--accent-glow)',
-            transition: 'opacity 120ms',
-          }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.88'; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; }}
-        >
+        <Button onClick={() => setCreateOpen(true)} size="lg">
           <HugeiconsIcon icon={Add01Icon} size={14} />
           New ticket
-        </button>
+        </Button>
       </div>
 
       {/* Critical tickets */}
@@ -214,51 +178,48 @@ export default function InboxPage() {
 
       {/* Stats */}
       {stats && (
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          <StatChip label="Open"        value={stats.openCount}    color="oklch(0.60 0.18 220)" />
-          <StatChip label="In Progress" value={stats.pendingCount} color="oklch(0.62 0.16 265)" />
-          <StatChip label="Resolved"    value={stats.closedCount}  color="oklch(0.55 0.16 148)" />
+        <div className="flex flex-wrap gap-2">
+          <StatChip label="Open"        value={stats.openCount} />
+          <StatChip label="In Progress" value={stats.pendingCount} />
+          <StatChip label="Resolved"    value={stats.closedCount} />
           {stats.avgFirstResponseHours != null && (
-            <StatChip label="Avg response" value={`${Math.round(stats.avgFirstResponseHours)}h`} color="var(--accent)" />
+            <StatChip label="Avg response" value={`${Math.round(stats.avgFirstResponseHours)}h`} />
           )}
         </div>
       )}
 
       {/* Filters */}
-      <div style={{ background: 'var(--surface)', borderRadius: '14px', boxShadow: 'var(--shadow-sm)', overflow: 'hidden' }}>
+      <Card className="overflow-hidden">
         {/* Search + filter row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 12px', borderBottom: '1px solid var(--hairline)' }}>
-          <div style={{ position: 'relative', flex: 1, maxWidth: '320px' }}>
-            <HugeiconsIcon icon={Search01Icon} size={13} color="var(--mute)" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-            <input
+        <div className="flex items-center gap-2 border-b border-border p-3">
+          <div className="relative max-w-[320px] flex-1">
+            <HugeiconsIcon
+              icon={Search01Icon}
+              size={13}
+              color="var(--mute)"
+              className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2"
+            />
+            <Input
               type="text"
               placeholder="Search tickets…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{
-                width: '100%', paddingLeft: '30px', paddingRight: '10px', paddingTop: '7px', paddingBottom: '7px',
-                fontSize: '12.5px', border: 0, borderRadius: '8px',
-                background: 'var(--surface-2)', color: 'var(--ink)',
-                outline: 'none', boxSizing: 'border-box',
-              }}
-              onFocus={(e) => { (e.target as HTMLInputElement).style.boxShadow = 'inset 0 0 0 1.5px var(--accent)'; }}
-              onBlur={(e)  => { (e.target as HTMLInputElement).style.boxShadow = 'none'; }}
+              className="h-8 border-transparent bg-surface-2 pl-7"
             />
           </div>
           <HugeiconsIcon icon={FilterIcon} size={13} color="var(--mute)" />
-          <div style={{ display: 'flex', gap: '4px' }}>
+          <div className="flex gap-1">
             {STATUS_FILTERS.map((f) => (
               <button
                 key={f.value}
                 type="button"
                 onClick={() => setStatus(f.value)}
-                style={{
-                  padding: '5px 10px', fontSize: '12px', fontWeight: status === f.value ? 600 : 500,
-                  border: 0, borderRadius: '7px', cursor: 'pointer', transition: 'all 80ms',
-                  background: status === f.value ? 'var(--accent-tint)' : 'transparent',
-                  color: status === f.value ? 'var(--accent)' : 'var(--ink-soft)',
-                  boxShadow: status === f.value ? 'inset 0 0 0 1px var(--accent-border)' : 'none',
-                }}
+                className={cn(
+                  'rounded-md px-2.5 py-1.5 text-xs transition-colors',
+                  status === f.value
+                    ? 'bg-accent-tint font-semibold text-accent shadow-[inset_0_0_0_1px_var(--accent-border)]'
+                    : 'font-medium text-ink-soft hover:bg-surface-2',
+                )}
               >
                 {f.label}
               </button>
@@ -268,12 +229,12 @@ export default function InboxPage() {
 
         {/* Ticket list */}
         {isLoading ? (
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div className="flex flex-col">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} style={{ padding: '14px 20px', borderBottom: '1px solid var(--hairline)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ height: '14px', width: `${55 + (i % 3) * 15}%`, borderRadius: '5px', background: 'var(--surface-2)' }} />
-                <div style={{ height: '12px', width: `${70 + (i % 4) * 8}%`, borderRadius: '5px', background: 'var(--surface-2)' }} />
-                <div style={{ height: '18px', width: '80px', borderRadius: '5px', background: 'var(--surface-2)' }} />
+              <div key={i} className="flex flex-col gap-2 border-b border-border px-5 py-3.5">
+                <Skeleton height={14} width={`${55 + (i % 3) * 15}%`} />
+                <Skeleton height={12} width={`${70 + (i % 4) * 8}%`} />
+                <Skeleton height={18} width={80} />
               </div>
             ))}
           </div>
@@ -295,7 +256,7 @@ export default function InboxPage() {
             ))}
           </div>
         )}
-      </div>
+      </Card>
 
       {/* Drawers */}
       <CreateTicketDrawer open={createOpen} onClose={() => setCreateOpen(false)} />

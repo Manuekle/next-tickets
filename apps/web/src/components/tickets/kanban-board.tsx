@@ -2,6 +2,8 @@
 
 import { DndContext, DragEndEvent, DragOverlay, MouseSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
 import { useState } from 'react';
+import { Badge, type BadgeProps } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 export interface KanbanTicket {
   id: string;
@@ -26,40 +28,31 @@ interface Props {
   renderCard: (t: KanbanTicket) => React.ReactNode;
 }
 
+const STATUS_VARIANT: Record<string, BadgeProps['variant']> = {
+  OPEN: 'info',
+  IN_PROGRESS: 'warning',
+  WAITING_ON_CUSTOMER: 'neutral',
+  RESOLVED: 'success',
+  CLOSED: 'neutral',
+};
+
 function DroppableColumn({ col, count, children }: { col: KanbanColumnDef; count: number; children: React.ReactNode }) {
   const { isOver, setNodeRef } = useDroppable({ id: `col:${col.status}` });
   return (
     <div
       ref={setNodeRef}
-      style={{
-        background:   isOver ? 'var(--accent-tint)' : 'var(--surface-2)',
-        borderRadius: '14px',
-        padding:      '10px',
-        minHeight:    '200px',
-        boxShadow:    'var(--shadow-inset)',
-        transition:   'background 120ms',
-        outline:      isOver ? '2px dashed var(--accent)' : 'none',
-        outlineOffset: '-4px',
-      }}
+      className={cn(
+        'min-h-[200px] rounded-xl border p-2.5 transition-colors',
+        isOver ? 'border-accent border-dashed bg-accent-tint' : 'border-border bg-surface-2',
+      )}
     >
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '4px 6px 10px',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '3px 9px 3px 7px',
-            fontSize: '11px', fontWeight: 600, borderRadius: '5px',
-            color: `oklch(0.45 0.18 ${col.hue})`,
-            background: `oklch(0.96 0.04 ${col.hue})`,
-          }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '999px', background: `oklch(0.50 0.18 ${col.hue})` }} />
-            {col.label}
-          </span>
-          <span style={{ fontSize: '11px', color: 'var(--mute)', fontWeight: 600, fontFeatureSettings: '"tnum"' }}>{count}</span>
+      <div className="flex items-center justify-between px-1.5 pb-2.5 pt-1">
+        <div className="flex items-center gap-2">
+          <Badge variant={STATUS_VARIANT[col.status] ?? 'neutral'}>{col.label}</Badge>
+          <span className="text-[11px] font-semibold tabular-nums text-mute">{count}</span>
         </div>
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>{children}</div>
+      <div className="flex flex-col gap-2">{children}</div>
     </div>
   );
 }
@@ -76,12 +69,8 @@ function DraggableCard({ t, onOpen, renderCard }: { t: KanbanTicket; onOpen: (id
         if (target.closest('[data-drag-handle="false"]')) return;
         onOpen(t.id);
       }}
-      style={{
-        transform: transformStyle,
-        opacity: isDragging ? 0.4 : 1,
-        cursor: isDragging ? 'grabbing' : 'pointer',
-        touchAction: 'none',
-      }}
+      className={cn('touch-none', isDragging ? 'cursor-grabbing opacity-40' : 'cursor-pointer')}
+      style={{ transform: transformStyle }}
       {...listeners}
       {...attributes}
     >
@@ -118,15 +107,8 @@ export function KanbanBoard({ columns, tickets, onMove, onOpen, renderCard }: Pr
       onDragEnd={handleDragEnd}
     >
       <div
-        className="nt-kanban-scroll"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${columns.length}, minmax(260px, 1fr))`,
-          gap: '12px',
-          alignItems: 'flex-start',
-          overflowX: 'auto',
-          paddingBottom: '6px',
-        }}
+        className="nt-kanban-scroll grid items-start gap-3 overflow-x-auto pb-1.5"
+        style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(260px, 1fr))` }}
       >
         {columns.map((col) => {
           const colTickets = tickets.filter((t) => t.status === col.status);
@@ -141,7 +123,7 @@ export function KanbanBoard({ columns, tickets, onMove, onOpen, renderCard }: Pr
       </div>
       <DragOverlay>
         {active ? (
-          <div style={{ pointerEvents: 'none', cursor: 'grabbing', boxShadow: 'var(--shadow-md)', borderRadius: '12px' }}>
+          <div className="pointer-events-none cursor-grabbing rounded-xl shadow-md">
             {renderCard(active)}
           </div>
         ) : null}

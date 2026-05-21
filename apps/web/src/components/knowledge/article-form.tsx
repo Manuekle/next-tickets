@@ -7,8 +7,20 @@ import { useRouter } from 'next/navigation';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import { sileo } from 'sileo';
-import { HugeiconsIcon } from '@hugeicons/react';
-import { ArrowDown01Icon } from '@hugeicons/core-free-icons';
+import {
+  Card,
+  CardContent,
+  Input,
+  Textarea,
+  Label,
+  Button,
+  Switch,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui';
 
 const articleSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -34,24 +46,6 @@ interface ArticleFormProps {
     published: boolean;
   };
 }
-
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '8px 10px', fontSize: '13px', color: 'var(--ink)',
-  border: 0, borderRadius: '8px', background: 'var(--surface)',
-  boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
-  outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'box-shadow 100ms',
-};
-const selectStyle: React.CSSProperties = {
-  width: '100%', padding: '8px 10px', fontSize: '13px', color: 'var(--ink)',
-  border: 0, borderRadius: '8px', background: 'var(--surface)',
-  boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
-  outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'box-shadow 100ms',
-  appearance: 'none', cursor: 'pointer', paddingRight: '34px',
-};
-
-const labelStyle: React.CSSProperties = {
-  fontSize: '12px', fontWeight: 500, color: 'var(--ink-soft)', marginBottom: '5px', display: 'block',
-};
 
 export function ArticleForm({ initialData }: ArticleFormProps) {
   const router = useRouter();
@@ -112,101 +106,92 @@ export function ArticleForm({ initialData }: ArticleFormProps) {
 
   const onSubmit = (data: ArticleFormData) => mutation.mutate(data);
   const published = watch('published');
-
-  const btnPrimary: React.CSSProperties = {
-    padding: '9px 18px', fontSize: '13px', fontWeight: 600, border: 0, borderRadius: '10px',
-    background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', color: '#fff',
-    cursor: 'pointer', boxShadow: '0 4px 12px -4px var(--accent-glow)', transition: 'opacity 100ms',
-  };
-  const btnSecondary: React.CSSProperties = {
-    padding: '9px 16px', fontSize: '13px', fontWeight: 500, border: 0, borderRadius: '10px',
-    background: 'var(--surface-2)', color: 'var(--ink-soft)', cursor: 'pointer', boxShadow: 'var(--shadow-sm)',
-  };
+  const categoryId = watch('categoryId') || '';
 
   return (
-    <div style={{ background: 'var(--surface)', borderRadius: '16px', boxShadow: 'var(--shadow-md)', overflow: 'hidden' }}>
-      <form onSubmit={handleSubmit(onSubmit)} style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div>
-          <label style={labelStyle}>Title</label>
-          <input
-            {...register('title', {
-              onChange: (e) => {
-                if (!isEdit) {
-                  const slug = e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-                  setValue('slug', slug);
-                }
-              },
-            })}
-            style={{ ...inputStyle, ...(errors.title ? { boxShadow: 'var(--shadow-sm), inset 0 0 0 1.5px oklch(0.58 0.20 22)' } : {}) }}
-          />
-          {errors.title && <p style={{ fontSize: '11px', color: 'oklch(0.58 0.20 22)', marginTop: '4px' }}>{errors.title.message}</p>}
-        </div>
+    <Card className="shadow-md">
+      <CardContent className="p-0">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 p-5">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="article-title">Title</Label>
+            <Input
+              id="article-title"
+              aria-invalid={!!errors.title}
+              className={errors.title ? 'border-danger focus-visible:border-danger focus-visible:ring-danger/20' : undefined}
+              {...register('title', {
+                onChange: (e) => {
+                  if (!isEdit) {
+                    const slug = e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                    setValue('slug', slug);
+                  }
+                },
+              })}
+            />
+            {errors.title && <p className="text-[11px] text-danger">{errors.title.message}</p>}
+          </div>
 
-        <div>
-          <label style={labelStyle}>Slug</label>
-          <input
-            {...register('slug')}
-            style={{ ...inputStyle, ...(errors.slug ? { boxShadow: 'var(--shadow-sm), inset 0 0 0 1.5px oklch(0.58 0.20 22)' } : {}) }}
-          />
-          {errors.slug && <p style={{ fontSize: '11px', color: 'oklch(0.58 0.20 22)', marginTop: '4px' }}>{errors.slug.message}</p>}
-        </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="article-slug">Slug</Label>
+            <Input
+              id="article-slug"
+              aria-invalid={!!errors.slug}
+              className={errors.slug ? 'border-danger focus-visible:border-danger focus-visible:ring-danger/20' : undefined}
+              {...register('slug')}
+            />
+            {errors.slug && <p className="text-[11px] text-danger">{errors.slug.message}</p>}
+          </div>
 
-        <div>
-          <label style={labelStyle}>Content</label>
-          <textarea {...register('content')} rows={12} style={{ ...inputStyle, resize: 'vertical', lineHeight: '1.6' }} />
-        </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="article-content">Content</Label>
+            <Textarea id="article-content" rows={12} className="leading-relaxed" {...register('content')} />
+          </div>
 
-        <div>
-          <label style={labelStyle}>Excerpt</label>
-          <textarea {...register('excerpt')} rows={2} style={{ ...inputStyle, resize: 'vertical', lineHeight: '1.6' }} />
-        </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="article-excerpt">Excerpt</Label>
+            <Textarea id="article-excerpt" rows={2} {...register('excerpt')} />
+          </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-          <div>
-            <label style={labelStyle}>Category</label>
-              <div style={{ position: 'relative' }}>
-               <select
-                 value={watch('categoryId') || ''}
-                 onChange={(e) => setValue('categoryId', e.target.value || undefined)}
-                 style={selectStyle}
-               >
-                <option value="">No category</option>
-                {categories?.data.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name} ({c._count.articles})</option>
-                ))}
-              </select>
-              <HugeiconsIcon icon={ArrowDown01Icon} size={12} color="var(--mute)" style={{ position: 'absolute', right: '9px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1.5">
+              <Label>Category</Label>
+              <Select
+                value={categoryId}
+                onValueChange={(v) => setValue('categoryId', (v as string) || undefined)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="No category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No category</SelectItem>
+                  {categories?.data.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} ({c._count.articles})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="article-tags">Tags (comma separated)</Label>
+              <Input id="article-tags" placeholder="bug, ui, feature" {...register('tags')} />
             </div>
           </div>
-          <div>
-            <label style={labelStyle}>Tags (comma separated)</label>
-            <input {...register('tags')} placeholder="bug, ui, feature" style={inputStyle} />
-          </div>
-        </div>
 
-        <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-          <div
-            onClick={() => setValue('published', !published)}
-            style={{
-              width: '36px', height: '20px', borderRadius: '999px', position: 'relative', cursor: 'pointer',
-              background: published ? 'var(--accent)' : 'var(--surface-3)', transition: 'background 150ms',
-            }}
-          >
-            <div style={{
-              position: 'absolute', top: '2px', left: published ? '18px' : '2px', width: '16px', height: '16px',
-              borderRadius: '999px', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.25)', transition: 'left 150ms',
-            }} />
-          </div>
-          <span style={{ fontSize: '13px', color: 'var(--ink-soft)' }}>Published</span>
-        </label>
+          <label className="flex cursor-pointer items-center gap-2.5">
+            <Switch checked={published} onCheckedChange={(v: boolean) => setValue('published', v)} />
+            <span className="text-[13px] text-ink-soft">Published</span>
+          </label>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', paddingTop: '4px' }}>
-          <button type="button" style={btnSecondary} onClick={() => router.back()}>Cancel</button>
-          <button type="submit" disabled={mutation.isPending} style={{ ...btnPrimary, opacity: mutation.isPending ? 0.6 : 1 }}>
-            {mutation.isPending ? 'Saving…' : isEdit ? 'Update Article' : 'Create Article'}
-          </button>
-        </div>
-      </form>
-    </div>
+          <div className="flex justify-end gap-2 pt-1">
+            <Button type="button" variant="secondary" onClick={() => router.back()}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={mutation.isPending}>
+              {mutation.isPending ? 'Saving…' : isEdit ? 'Update Article' : 'Create Article'}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

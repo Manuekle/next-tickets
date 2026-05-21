@@ -12,22 +12,15 @@ export function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center',
-      gap: '10px', padding: '40px 16px', textAlign: 'center',
-    }}>
-      <div style={{
-        width: '52px', height: '52px', borderRadius: '14px',
-        background: 'var(--surface-2)', display: 'flex',
-        alignItems: 'center', justifyContent: 'center', color: 'var(--mute)',
-      }}>
+    <div className="flex flex-col items-center gap-2.5 px-4 py-10 text-center">
+      <div className="flex h-[52px] w-[52px] items-center justify-center rounded-xl border border-border bg-surface-2 text-mute">
         <HugeiconsIcon icon={icon} size={22} />
       </div>
-      <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)' }}>{title}</div>
+      <div className="text-sm font-semibold text-ink">{title}</div>
       {description && (
-        <div style={{ fontSize: '12px', color: 'var(--mute)', maxWidth: '320px', lineHeight: 1.5 }}>{description}</div>
+        <div className="max-w-[320px] text-xs leading-relaxed text-mute">{description}</div>
       )}
-      {action && <div style={{ marginTop: '4px' }}>{action}</div>}
+      {action && <div className="mt-1">{action}</div>}
     </div>
   );
 }

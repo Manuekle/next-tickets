@@ -1,6 +1,9 @@
 import Link from 'next/link';
 import GitHubStars from '@/components/github-stars';
 import Logo from '@/components/logo';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { buttonVariants } from '@/components/ui/button';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -35,146 +38,142 @@ const COMPARE = [
 ];
 
 function Check({ v }: { v: boolean | string }) {
-  if (v === true)  return <span style={{ color: 'oklch(0.52 0.18 148)', fontSize: '16px' }}>✓</span>;
-  if (v === false) return <span style={{ color: 'oklch(0.72 0.04 270)', fontSize: '15px' }}>—</span>;
-  return <span style={{ fontSize: '11px', color: 'oklch(0.60 0.10 50)', fontWeight: 500 }}>{v}</span>;
+  if (v === true)  return <span className="text-base text-success">✓</span>;
+  if (v === false) return <span className="text-[15px] text-mute-soft">—</span>;
+  return <span className="text-[11px] font-medium text-warning">{v}</span>;
 }
 
 export default function AboutPage() {
   return (
-    <div style={{
-      minHeight:    '100dvh',
-      background:   'var(--bg)',
-      fontFamily:   'var(--font-sans, system-ui)',
-      position:     'relative',
-      overflowX:    'hidden',
-    }}>
-      {/* Mesh bg */}
-        <div style={{
-         position:   'fixed',
-         inset:      0,
-         background: 'radial-gradient(ellipse 80% 60% at 20% -10%, var(--bg-mesh-1) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 110%, var(--bg-mesh-2) 0%, transparent 60%)',
-         pointerEvents: 'none',
-         zIndex:     0,
-       }} />
+    <div className="min-h-[100dvh] overflow-x-hidden bg-bg">
+      {/* Nav */}
+      <nav className="mx-auto flex max-w-[1200px] items-center justify-between px-12 py-[18px]">
+        <Logo size={32} showText textSize="15px" />
+        <div className="flex items-center gap-2">
+          <GitHubStars />
+          <Link href="/login" className={buttonVariants({ variant: 'primary', size: 'lg' })}>
+            Sign in →
+          </Link>
+        </div>
+      </nav>
 
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        {/* Nav */}
-        <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 48px', maxWidth: '1200px', margin: '0 auto' }}>
-          <Logo size={32} showText textSize="15px" />
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <GitHubStars />
-            <Link href="/login" style={{ padding: '8px 18px', fontSize: '13px', fontWeight: 600, color: 'var(--accent-fg)', textDecoration: 'none', borderRadius: '10px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', boxShadow: '0 4px 12px -4px color-mix(in oklch, var(--accent) 40%, transparent)' }}>
-              Sign in →
-            </Link>
-          </div>
-        </nav>
+      {/* Hero */}
+      <section className="mx-auto max-w-[820px] px-6 pb-16 pt-20 text-center">
+        <Badge variant="neutral" className="mb-7 px-3 py-1 text-xs uppercase tracking-wide">
+          Open Source · MIT License
+        </Badge>
+        <h1 className="m-0 mb-6 text-[clamp(42px,7vw,72px)] font-bold leading-none tracking-tight text-ink">
+          Support tickets,
+          <br />
+          finally open.
+        </h1>
+        <p className="mx-auto mb-10 max-w-[520px] text-lg leading-relaxed text-mute">
+          A modern, self-hostable ticket management system. No vendor lock-in, no SaaS pricing, no surprises — just great support tooling you own.
+        </p>
+        <div className="flex flex-wrap justify-center gap-3">
+          <Link href="/register" className={buttonVariants({ variant: 'primary', size: 'lg' })}>
+            Get started free
+          </Link>
+          <a
+            href="https://github.com/Manuekle/next-tickets"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonVariants({ variant: 'outline', size: 'lg' })}
+          >
+            View on GitHub
+          </a>
+        </div>
+      </section>
 
-        {/* Hero */}
-        <section style={{ textAlign: 'center', padding: '80px 24px 64px', maxWidth: '820px', margin: '0 auto' }}>
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '5px 12px', fontSize: '12px', fontWeight: 600, borderRadius: '999px', background: 'var(--accent-tint)', color: 'var(--accent)', marginBottom: '28px', letterSpacing: '0.01em', textTransform: 'uppercase' }}>
-            Open Source · MIT License
-          </div>
-          <h1 style={{ fontSize: 'clamp(42px, 7vw, 72px)', fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.03em', lineHeight: 1.0, margin: '0 0 24px' }}>
-            Support tickets,
-            <br />
-            <span style={{ color: 'var(--accent)' }}>finally open.</span>
-          </h1>
-          <p style={{ fontSize: '18px', color: 'var(--mutе)', lineHeight: 1.65, maxWidth: '520px', margin: '0 auto 40px' }}>
-            A modern, self-hostable ticket management system. No vendor lock-in, no SaaS pricing, no surprises — just great support tooling you own.
+      {/* Features grid */}
+      <section className="mx-auto max-w-[1100px] px-6 pb-20">
+        <h2 className="mb-12 text-center text-3xl font-bold tracking-tight text-ink">
+          Everything a support team needs
+        </h2>
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
+          {FEATURES.map((f) => (
+            <Card key={f.title} className="p-[22px]">
+              <div className="mb-3 text-2xl">{f.icon}</div>
+              <div className="mb-1.5 text-sm font-semibold text-ink">{f.title}</div>
+              <div className="text-[13px] leading-relaxed text-mute">{f.desc}</div>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* Comparison table */}
+      <section className="mx-auto max-w-[1100px] px-6 pb-24">
+        <h2 className="mb-3 text-center text-3xl font-bold tracking-tight text-ink">
+          How we compare
+        </h2>
+        <p className="mb-10 text-center text-[15px] text-mute">
+          vs. Zendesk, Freshdesk, and Jira Service Management
+        </p>
+
+        <Card className="overflow-hidden">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-surface-2">
+                <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-wide text-mute">Feature</th>
+                {[
+                  { name: 'open-tickets', highlight: true },
+                  { name: 'Zendesk',       highlight: false },
+                  { name: 'Freshdesk',     highlight: false },
+                  { name: 'Jira SM',       highlight: false },
+                ].map((col) => (
+                  <th
+                    key={col.name}
+                    className={`px-5 py-3.5 text-center text-[13px] font-bold tracking-tight ${col.highlight ? 'text-ink' : 'text-mute'}`}
+                  >
+                    {col.name}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {COMPARE.map((row, i) => (
+                <tr key={row.feature} className={i === 0 ? '' : 'border-t border-border'}>
+                  <td className="px-5 py-3 text-[13px] font-medium text-ink-soft">{row.feature}</td>
+                  <td className="bg-surface-2 px-5 py-3 text-center"><Check v={row.ot} /></td>
+                  <td className="px-5 py-3 text-center"><Check v={row.zendesk} /></td>
+                  <td className="px-5 py-3 text-center"><Check v={row.freshdesk} /></td>
+                  <td className="px-5 py-3 text-center"><Check v={row.jira} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      </section>
+
+      {/* CTA */}
+      <section className="px-6 pb-24 text-center">
+        <Card className="inline-block max-w-[600px] px-[72px] py-14">
+          <h2 className="mb-4 text-4xl font-bold tracking-tight text-ink">
+            Deploy it yourself
+          </h2>
+          <p className="mb-8 text-[15px] leading-relaxed text-mute">
+            One monorepo, Next.js + Node.js. Runs anywhere — Vercel, Railway, fly.io, or your own VPS. Full source on GitHub.
           </p>
-          <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/register" style={{ padding: '13px 28px', fontSize: '15px', fontWeight: 600, color: 'var(--accent-fg)', textDecoration: 'none', borderRadius: '12px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', boxShadow: '0 6px 20px -6px color-mix(in oklch, var(--accent) 50%, transparent)' }}>
-              Get started free
+          <div className="flex flex-wrap justify-center gap-3">
+            <Link href="/register" className={buttonVariants({ variant: 'primary', size: 'lg' })}>
+              Start for free
             </Link>
-            <a href="https://github.com/Manuekle/next-tickets" target="_blank" rel="noopener noreferrer" style={{ padding: '13px 28px', fontSize: '15px', fontWeight: 600, color: 'var(--ink)', textDecoration: 'none', borderRadius: '12px', background: 'var(--surface)', boxShadow: '0 2px 8px rgba(24,18,8,0.10)' }}>
-              View on GitHub
+            <a
+              href="https://github.com/Manuekle/next-tickets"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={buttonVariants({ variant: 'outline', size: 'lg' })}
+            >
+              View source
             </a>
           </div>
-        </section>
+        </Card>
+      </section>
 
-        {/* Features grid */}
-        <section style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 24px 80px' }}>
-          <h2 style={{ textAlign: 'center', fontSize: '32px', fontFamily: 'var(--font-display)', fontWeight: 700, color: 'oklch(0.18 0.030 270)', letterSpacing: '-0.02em', margin: '0 0 48px' }}>
-            Everything a support team needs
-          </h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '16px' }}>
-            {FEATURES.map((f) => (
-              <div key={f.title} style={{ background: 'rgba(255,255,255,0.75)', borderRadius: '16px', padding: '22px', boxShadow: '0 2px 12px rgba(24,18,8,0.07)', backdropFilter: 'blur(8px)' }}>
-                <div style={{ fontSize: '26px', marginBottom: '12px' }}>{f.icon}</div>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: 'oklch(0.18 0.030 270)', letterSpacing: '-0.005em', marginBottom: '6px' }}>{f.title}</div>
-                <div style={{ fontSize: '13px', color: 'oklch(0.52 0.020 270)', lineHeight: 1.55 }}>{f.desc}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Comparison table */}
-        <section style={{ maxWidth: '1100px', margin: '0 auto', padding: '0 24px 100px' }}>
-          <h2 style={{ textAlign: 'center', fontSize: '32px', fontFamily: 'var(--font-display)', fontWeight: 700, color: 'oklch(0.18 0.030 270)', letterSpacing: '-0.02em', margin: '0 0 12px' }}>
-            How we compare
-          </h2>
-          <p style={{ textAlign: 'center', fontSize: '15px', color: 'oklch(0.52 0.020 270)', margin: '0 0 40px' }}>
-            vs. Zendesk, Freshdesk, and Jira Service Management
-          </p>
-
-          <div style={{ background: 'rgba(255,255,255,0.80)', borderRadius: '18px', overflow: 'hidden', boxShadow: '0 4px 24px rgba(24,18,8,0.10)', backdropFilter: 'blur(8px)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: 'oklch(0.16 0.040 275)' }}>
-                  <th style={{ padding: '14px 20px', textAlign: 'left', fontSize: '12px', fontWeight: 600, color: 'oklch(0.80 0.030 275)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Feature</th>
-                  {[
-                    { name: 'open-tickets', highlight: true },
-                    { name: 'Zendesk',       highlight: false },
-                    { name: 'Freshdesk',     highlight: false },
-                    { name: 'Jira SM',       highlight: false },
-                  ].map((col) => (
-                    <th key={col.name} style={{ padding: '14px 20px', textAlign: 'center', fontSize: '13px', fontWeight: 700, color: col.highlight ? 'oklch(0.80 0.15 275)' : 'rgba(255,255,255,0.55)', letterSpacing: '-0.01em' }}>
-                      {col.name}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {COMPARE.map((row, i) => (
-                  <tr key={row.feature} style={{ borderTop: i === 0 ? 'none' : '1px solid oklch(0.94 0.010 270)' }}>
-                    <td style={{ padding: '12px 20px', fontSize: '13px', color: 'oklch(0.30 0.028 270)', fontWeight: 500 }}>{row.feature}</td>
-                    <td style={{ padding: '12px 20px', textAlign: 'center', background: 'oklch(0.94 0.04 275 / 0.25)' }}><Check v={row.ot} /></td>
-                    <td style={{ padding: '12px 20px', textAlign: 'center' }}><Check v={row.zendesk} /></td>
-                    <td style={{ padding: '12px 20px', textAlign: 'center' }}><Check v={row.freshdesk} /></td>
-                    <td style={{ padding: '12px 20px', textAlign: 'center' }}><Check v={row.jira} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        {/* CTA */}
-        <section style={{ textAlign: 'center', padding: '0 24px 100px' }}>
-          <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.75)', borderRadius: '24px', padding: '56px 72px', boxShadow: '0 8px 32px rgba(24,18,8,0.10)', backdropFilter: 'blur(8px)', maxWidth: '600px' }}>
-            <h2 style={{ fontSize: '36px', fontFamily: 'var(--font-display)', fontWeight: 700, color: 'oklch(0.18 0.030 270)', letterSpacing: '-0.02em', margin: '0 0 16px' }}>
-              Deploy it yourself
-            </h2>
-            <p style={{ fontSize: '15px', color: 'oklch(0.52 0.020 270)', lineHeight: 1.65, margin: '0 0 32px' }}>
-              One monorepo, Next.js + Node.js. Runs anywhere — Vercel, Railway, fly.io, or your own VPS. Full source on GitHub.
-            </p>
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Link href="/register" style={{ padding: '12px 24px', fontSize: '14px', fontWeight: 600, color: 'var(--accent-fg)', textDecoration: 'none', borderRadius: '11px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', boxShadow: '0 4px 16px -4px color-mix(in oklch, var(--accent) 40%, transparent)' }}>
-                Start for free
-              </Link>
-              <a href="https://github.com/Manuekle/next-tickets" target="_blank" rel="noopener noreferrer" style={{ padding: '12px 24px', fontSize: '14px', fontWeight: 600, color: 'oklch(0.30 0.028 270)', textDecoration: 'none', borderRadius: '11px', background: 'rgba(255,255,255,0.80)', boxShadow: '0 2px 8px rgba(24,18,8,0.10)' }}>
-                View source
-              </a>
-            </div>
-          </div>
-        </section>
-
-        {/* Footer */}
-        <footer style={{ textAlign: 'center', padding: '20px 24px 40px', fontSize: '12px', color: 'oklch(0.62 0.020 270)' }}>
-          open-tickets · MIT License · Built with Next.js & Node.js
-        </footer>
-      </div>
+      {/* Footer */}
+      <footer className="px-6 pb-10 pt-5 text-center text-xs text-mute">
+        open-tickets · MIT License · Built with Next.js & Node.js
+      </footer>
     </div>
   );
 }

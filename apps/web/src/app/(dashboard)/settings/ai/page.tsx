@@ -8,6 +8,26 @@ import { apiClient } from '@/lib/api';
 import { sileo } from 'sileo';
 import { AiProviderType } from '@next-tickets/shared';
 import type { AiProviderDto, AiTestResult, CreateAiProviderInput } from '@next-tickets/shared';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  Input,
+  Label,
+  Button,
+  Badge,
+  Checkbox,
+  EmptyState,
+  Tooltip,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui';
+import { cn } from '@/lib/utils';
 
 const PROVIDER_LABELS: Record<AiProviderType, string> = {
   [AiProviderType.OPENAI]: 'OpenAI',
@@ -24,27 +44,6 @@ const PROVIDER_MODELS: Record<AiProviderType, string[]> = {
   [AiProviderType.OPENROUTER]: ['openai/gpt-4o-mini', 'anthropic/claude-sonnet-4-6', 'meta-llama/llama-3.3-70b-instruct'],
   [AiProviderType.GROQ]: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'],
 };
-
-function Card({ title, subtitle, children, action }: { title: string; subtitle?: string; children: React.ReactNode; action?: React.ReactNode }) {
-  return (
-    <div style={{ background: 'var(--surface)', borderRadius: '16px', boxShadow: 'var(--shadow-md)', overflow: 'hidden' }}>
-      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.005em' }}>{title}</div>
-          {subtitle && <div style={{ fontSize: '12px', color: 'var(--mute)', marginTop: '2px' }}>{subtitle}</div>}
-        </div>
-        {action}
-      </div>
-      <div style={{ padding: '18px 20px' }}>{children}</div>
-    </div>
-  );
-}
-
-const INPUT_STYLE: React.CSSProperties = {
-  width: '100%', padding: '9px 11px', fontSize: '13px', border: 0, borderRadius: '8px',
-  background: 'var(--surface-2)', color: 'var(--ink)', outline: 'none', fontFamily: 'inherit',
-};
-const LABEL_STYLE: React.CSSProperties = { fontSize: '11.5px', fontWeight: 600, color: 'var(--mute)', marginBottom: '5px', display: 'block', textTransform: 'uppercase', letterSpacing: '0.04em' };
 
 interface FormState {
   id?: string;
@@ -198,217 +197,223 @@ export default function AiSettingsPage() {
   };
 
   return (
-    <div style={{ maxWidth: '720px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className="flex max-w-[720px] flex-col gap-5">
       <div>
-        <Link href="/settings" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--mute)', textDecoration: 'none', marginBottom: '10px' }}>
+        <Link href="/settings" className="mb-2.5 inline-flex items-center gap-1.5 text-xs text-mute no-underline hover:text-ink-soft">
           <HugeiconsIcon icon={ArrowLeft01Icon} size={12} /> Settings
         </Link>
-        <h1 style={{ fontSize: '28px', fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em', margin: 0 }}>
-          AI & Integrations
-        </h1>
-        <p style={{ fontSize: '13px', color: 'var(--mute)', marginTop: '4px' }}>Configure AI providers used by the copilot features.</p>
+        <h1>AI & Integrations</h1>
+        <p className="mt-1 text-[13px] text-mute">Configure AI providers used by the copilot features.</p>
       </div>
 
-      <Card
-        title="Providers"
-        subtitle={loading ? 'Loading…' : `${providers.length} configured`}
-        action={
-          !showForm && (
-            <button
-              onClick={openCreate}
-              style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '6px 12px', fontSize: '12px', fontWeight: 600, border: 0, borderRadius: '8px', background: 'var(--accent)', color: '#fff', cursor: 'pointer' }}
-            >
-              <HugeiconsIcon icon={PlusSignIcon} size={12} /> Add provider
-            </button>
-          )
-        }
-      >
-        {showForm && (
-          <div style={{ background: 'var(--surface-2)', borderRadius: '12px', padding: '16px', marginBottom: providers.length ? '16px' : 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>{form.id ? 'Edit provider' : 'New provider'}</div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              <div>
-                <label style={LABEL_STYLE}>Provider</label>
-                <select
-                  value={form.type}
-                  onChange={(e) => {
-                    const t = e.target.value as AiProviderType;
-                    setForm((f) => ({ ...f, type: t, model: PROVIDER_MODELS[t][0] }));
-                  }}
-                  style={INPUT_STYLE}
-                >
-                  {Object.values(AiProviderType).map((t) => (
-                    <option key={t} value={t}>{PROVIDER_LABELS[t]}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label style={LABEL_STYLE}>Label</label>
-                <input
-                  value={form.label}
-                  onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
-                  placeholder="Production OpenAI"
-                  style={INPUT_STYLE}
-                />
-              </div>
+      <Card>
+        <CardHeader className="border-b border-hairline">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-col gap-0.5">
+              <CardTitle>Providers</CardTitle>
+              <CardDescription>{loading ? 'Loading…' : `${providers.length} configured`}</CardDescription>
             </div>
-
-            <div>
-              <label style={LABEL_STYLE}>API key {form.id && <span style={{ color: 'var(--mute)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(leave blank to keep current)</span>}</label>
-              <input
-                type="password"
-                value={form.apiKey}
-                onChange={(e) => setForm((f) => ({ ...f, apiKey: e.target.value }))}
-                placeholder={form.id ? '••••••••' : 'sk-...'}
-                style={{ ...INPUT_STYLE, fontFamily: 'var(--font-mono, monospace)' }}
-                autoComplete="off"
-              />
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '10px' }}>
-              <div>
-                <label style={LABEL_STYLE}>Model</label>
-                <input
-                  list="model-suggestions"
-                  value={form.model}
-                  onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))}
-                  style={INPUT_STYLE}
-                />
-                <datalist id="model-suggestions">
-                  {PROVIDER_MODELS[form.type].map((m) => <option key={m} value={m} />)}
-                </datalist>
-              </div>
-              <div>
-                <label style={LABEL_STYLE}>Temperature</label>
-                <input
-                  type="number" step="0.1" min={0} max={2}
-                  value={form.temperature}
-                  onChange={(e) => setForm((f) => ({ ...f, temperature: parseFloat(e.target.value) || 0 }))}
-                  style={INPUT_STYLE}
-                />
-              </div>
-              <div>
-                <label style={LABEL_STYLE}>Max tokens</label>
-                <input
-                  type="number" min={1} max={32000}
-                  value={form.maxTokens}
-                  onChange={(e) => setForm((f) => ({ ...f, maxTokens: parseInt(e.target.value) || 1024 }))}
-                  style={INPUT_STYLE}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
-              <div>
-                <label style={LABEL_STYLE}>Rate limit (rpm)</label>
-                <input
-                  type="number" min={1} max={10000}
-                  value={form.rateLimitRpm}
-                  onChange={(e) => setForm((f) => ({ ...f, rateLimitRpm: parseInt(e.target.value) || 60 }))}
-                  style={INPUT_STYLE}
-                />
-              </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--ink-soft)', cursor: 'pointer', paddingTop: '20px' }}>
-                <input type="checkbox" checked={form.enabled} onChange={(e) => setForm((f) => ({ ...f, enabled: e.target.checked }))} />
-                Enabled
-              </label>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--ink-soft)', cursor: 'pointer', paddingTop: '20px' }}>
-                <input type="checkbox" checked={form.isDefault} onChange={(e) => setForm((f) => ({ ...f, isDefault: e.target.checked }))} />
-                Default
-              </label>
-            </div>
-
-            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowForm(false)} style={{ padding: '8px 14px', fontSize: '12px', border: 0, borderRadius: '8px', background: 'var(--surface)', color: 'var(--ink-soft)', cursor: 'pointer' }}>
-                Cancel
-              </button>
-              <button
-                onClick={submit}
-                disabled={submitting}
-                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 14px', fontSize: '12px', fontWeight: 600, border: 0, borderRadius: '8px', background: 'var(--accent)', color: '#fff', cursor: 'pointer', opacity: submitting ? 0.6 : 1 }}
-              >
-                <HugeiconsIcon icon={FloppyDiskIcon} size={12} />
-                {submitting ? 'Saving…' : 'Save'}
-              </button>
-            </div>
+            {!showForm && (
+              <Button size="sm" onClick={openCreate}>
+                <HugeiconsIcon icon={PlusSignIcon} size={12} /> Add provider
+              </Button>
+            )}
           </div>
-        )}
+        </CardHeader>
+        <CardContent className="pt-4">
+          {showForm && (
+            <div className={cn('flex flex-col gap-3 rounded-lg border border-border bg-surface-2 p-4', providers.length && 'mb-4')}>
+              <div className="text-[13px] font-semibold text-ink">{form.id ? 'Edit provider' : 'New provider'}</div>
 
-        {loading ? (
-          <div style={{ fontSize: '12px', color: 'var(--mute)', textAlign: 'center', padding: '20px' }}>Loading providers…</div>
-        ) : providers.length === 0 && !showForm ? (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', padding: '32px 12px' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--mute)' }}>
-              <HugeiconsIcon icon={Robot01Icon} size={22} />
-            </div>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>No providers yet</div>
-            <div style={{ fontSize: '12px', color: 'var(--mute)', textAlign: 'center' }}>Add an AI provider to enable copilot features.</div>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {providers.map((p) => (
-              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '10px', background: 'var(--surface-2)', opacity: p.enabled ? 1 : 0.55 }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'var(--accent-tint)', color: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <HugeiconsIcon icon={Robot01Icon} size={16} />
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>{p.label}</span>
-                    {p.isDefault && (
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', fontSize: '10px', fontWeight: 600, padding: '2px 6px', borderRadius: '5px', background: 'var(--accent-tint)', color: 'var(--accent)' }}>
-                        <HugeiconsIcon icon={StarIcon} size={9} /> DEFAULT
-                      </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: '11.5px', color: 'var(--mute)', marginTop: '2px', display: 'flex', gap: '8px', fontFamily: 'var(--font-mono, monospace)' }}>
-                    <span>{PROVIDER_LABELS[p.type]}</span>·<span>{p.model}</span>·<span>{p.apiKeyMasked}</span>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <button
-                    title="Test connection"
-                    onClick={() => test(p)}
-                    disabled={testingId === p.id}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '30px', height: '30px', border: 0, borderRadius: '8px', background: 'var(--surface)', color: 'var(--ink-soft)', cursor: 'pointer' }}
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="flex flex-col gap-1.5">
+                  <Label>Provider</Label>
+                  <Select
+                    value={form.type}
+                    onValueChange={(v) => {
+                      const t = v as AiProviderType;
+                      setForm((f) => ({ ...f, type: t, model: PROVIDER_MODELS[t][0] }));
+                    }}
                   >
-                    <HugeiconsIcon icon={ZapIcon} size={13} />
-                  </button>
-                  {!p.isDefault && (
-                    <button
-                      title="Set as default"
-                      onClick={() => setDefault(p)}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '30px', height: '30px', border: 0, borderRadius: '8px', background: 'var(--surface)', color: 'var(--ink-soft)', cursor: 'pointer' }}
-                    >
-                      <HugeiconsIcon icon={StarIcon} size={13} />
-                    </button>
+                    <SelectTrigger className="bg-surface-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.values(AiProviderType).map((t) => (
+                        <SelectItem key={t} value={t}>{PROVIDER_LABELS[t]}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="ai-label">Label</Label>
+                  <Input
+                    id="ai-label"
+                    className="bg-surface-2"
+                    value={form.label}
+                    onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
+                    placeholder="Production OpenAI"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="ai-key">
+                  API key {form.id && <span className="font-normal normal-case text-mute">(leave blank to keep current)</span>}
+                </Label>
+                <Input
+                  id="ai-key"
+                  type="password"
+                  className="bg-surface-2 font-mono"
+                  value={form.apiKey}
+                  onChange={(e) => setForm((f) => ({ ...f, apiKey: e.target.value }))}
+                  placeholder={form.id ? '••••••••' : 'sk-...'}
+                  autoComplete="off"
+                />
+              </div>
+
+              <div className="grid grid-cols-[2fr_1fr_1fr] gap-2.5">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="ai-model">Model</Label>
+                  <Input
+                    id="ai-model"
+                    list="model-suggestions"
+                    className="bg-surface-2"
+                    value={form.model}
+                    onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))}
+                  />
+                  <datalist id="model-suggestions">
+                    {PROVIDER_MODELS[form.type].map((m) => <option key={m} value={m} />)}
+                  </datalist>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="ai-temp">Temperature</Label>
+                  <Input
+                    id="ai-temp"
+                    type="number" step="0.1" min={0} max={2}
+                    className="bg-surface-2"
+                    value={form.temperature}
+                    onChange={(e) => setForm((f) => ({ ...f, temperature: parseFloat(e.target.value) || 0 }))}
+                  />
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="ai-max">Max tokens</Label>
+                  <Input
+                    id="ai-max"
+                    type="number" min={1} max={32000}
+                    className="bg-surface-2"
+                    value={form.maxTokens}
+                    onChange={(e) => setForm((f) => ({ ...f, maxTokens: parseInt(e.target.value) || 1024 }))}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2.5">
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor="ai-rpm">Rate limit (rpm)</Label>
+                  <Input
+                    id="ai-rpm"
+                    type="number" min={1} max={10000}
+                    className="bg-surface-2"
+                    value={form.rateLimitRpm}
+                    onChange={(e) => setForm((f) => ({ ...f, rateLimitRpm: parseInt(e.target.value) || 60 }))}
+                  />
+                </div>
+                <label className="flex cursor-pointer items-center gap-2 pt-5 text-xs text-ink-soft">
+                  <Checkbox checked={form.enabled} onCheckedChange={(v: boolean) => setForm((f) => ({ ...f, enabled: !!v }))} />
+                  Enabled
+                </label>
+                <label className="flex cursor-pointer items-center gap-2 pt-5 text-xs text-ink-soft">
+                  <Checkbox checked={form.isDefault} onCheckedChange={(v: boolean) => setForm((f) => ({ ...f, isDefault: !!v }))} />
+                  Default
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-2">
+                <Button variant="secondary" size="sm" onClick={() => setShowForm(false)}>
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={submit} disabled={submitting}>
+                  <HugeiconsIcon icon={FloppyDiskIcon} size={12} />
+                  {submitting ? 'Saving…' : 'Save'}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {loading ? (
+            <div className="py-5 text-center text-xs text-mute">Loading providers…</div>
+          ) : providers.length === 0 && !showForm ? (
+            <EmptyState
+              icon={Robot01Icon}
+              title="No providers yet"
+              description="Add an AI provider to enable copilot features."
+            />
+          ) : (
+            <div className="flex flex-col gap-2">
+              {providers.map((p) => (
+                <div
+                  key={p.id}
+                  className={cn(
+                    'flex items-center gap-3 rounded-lg border border-border bg-surface-2 p-3',
+                    !p.enabled && 'opacity-55',
                   )}
-                  <button
-                    title={p.enabled ? 'Disable' : 'Enable'}
-                    onClick={() => toggleEnabled(p)}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '30px', height: '30px', border: 0, borderRadius: '8px', background: 'var(--surface)', color: p.enabled ? 'oklch(0.55 0.16 148)' : 'var(--mute)', cursor: 'pointer' }}
-                  >
-                    <HugeiconsIcon icon={p.enabled ? CheckmarkCircle02Icon : AlertCircleIcon} size={13} />
-                  </button>
-                  <button
-                    title="Edit"
-                    onClick={() => openEdit(p)}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '30px', height: '30px', border: 0, borderRadius: '8px', background: 'var(--surface)', color: 'var(--ink-soft)', cursor: 'pointer' }}
-                  >
-                    <HugeiconsIcon icon={PencilEdit01Icon} size={13} />
-                  </button>
-                  <button
-                    title="Delete"
-                    onClick={() => remove(p)}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '30px', height: '30px', border: 0, borderRadius: '8px', background: 'var(--surface)', color: 'oklch(0.55 0.20 22)', cursor: 'pointer' }}
-                  >
-                    <HugeiconsIcon icon={Delete02Icon} size={13} />
-                  </button>
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent-tint text-accent">
+                    <HugeiconsIcon icon={Robot01Icon} size={16} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[13px] font-semibold text-ink">{p.label}</span>
+                      {p.isDefault && (
+                        <Badge variant="solid" className="gap-0.5 uppercase">
+                          <HugeiconsIcon icon={StarIcon} size={9} /> Default
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="mt-0.5 flex gap-2 font-mono text-[11.5px] text-mute">
+                      <span>{PROVIDER_LABELS[p.type]}</span>·<span>{p.model}</span>·<span>{p.apiKeyMasked}</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-1">
+                    <Tooltip content="Test connection">
+                      <Button variant="ghost" size="icon-sm" onClick={() => test(p)} disabled={testingId === p.id}>
+                        <HugeiconsIcon icon={ZapIcon} size={13} />
+                      </Button>
+                    </Tooltip>
+                    {!p.isDefault && (
+                      <Tooltip content="Set as default">
+                        <Button variant="ghost" size="icon-sm" onClick={() => setDefault(p)}>
+                          <HugeiconsIcon icon={StarIcon} size={13} />
+                        </Button>
+                      </Tooltip>
+                    )}
+                    <Tooltip content={p.enabled ? 'Disable' : 'Enable'}>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => toggleEnabled(p)}
+                        className={p.enabled ? 'text-success' : 'text-mute'}
+                      >
+                        <HugeiconsIcon icon={p.enabled ? CheckmarkCircle02Icon : AlertCircleIcon} size={13} />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content="Edit">
+                      <Button variant="ghost" size="icon-sm" onClick={() => openEdit(p)}>
+                        <HugeiconsIcon icon={PencilEdit01Icon} size={13} />
+                      </Button>
+                    </Tooltip>
+                    <Tooltip content="Delete">
+                      <Button variant="ghost" size="icon-sm" className="text-danger hover:text-danger" onClick={() => remove(p)}>
+                        <HugeiconsIcon icon={Delete02Icon} size={13} />
+                      </Button>
+                    </Tooltip>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </CardContent>
       </Card>
     </div>
   );

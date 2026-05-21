@@ -7,6 +7,13 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { TrendingUpDownIcon, UserGroupIcon, Calendar01Icon, ShieldKeyIcon, Download01Icon, ArrowUpDownIcon, ArrowUp01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { BarChart } from '@/components/analytics/bar-chart';
 import { Heatmap } from '@/components/analytics/heatmap';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTab } from '@/components/ui/tabs';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 interface TrendDay {
   date: string;
@@ -67,30 +74,10 @@ const TABS = [
 
 /* ─── small primitives ─── */
 
-function Card({ children, padded = true }: { children: React.ReactNode; padded?: boolean }) {
-  return (
-    <div style={{
-      background:   'var(--surface)',
-      borderRadius: '16px',
-      boxShadow:    'var(--shadow-md)',
-      overflow:     'hidden',
-      padding:      padded ? '20px' : 0,
-    }}>
-      {children}
-    </div>
-  );
-}
-
 function CardHead({ title, right }: { title: string; right?: React.ReactNode }) {
   return (
-    <div style={{
-      display:       'flex',
-      alignItems:    'center',
-      justifyContent:'space-between',
-      padding:       '14px 20px',
-      borderBottom:  '1px solid var(--hairline)',
-    }}>
-      <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.01em' }}>{title}</span>
+    <div className="flex items-center justify-between border-b border-hairline px-5 py-3.5">
+      <h3>{title}</h3>
       {right}
     </div>
   );
@@ -100,12 +87,17 @@ function StatCard({ title, value, loading, tone = 'ink' }: {
   title: string; value?: number | string; loading: boolean; tone?: string;
 }) {
   return (
-    <Card>
-      <div style={{ fontSize: '11px', color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '10px' }}>{title}</div>
+    <Card className="p-5">
+      <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-mute">{title}</div>
       {loading ? (
-        <div style={{ height: '32px', width: '60px', background: 'var(--surface-2)', borderRadius: '8px', animation: 'pulse 1.5s ease-in-out infinite' }} />
+        <Skeleton width={60} height={32} radius={8} />
       ) : (
-        <div style={{ fontSize: '30px', fontFamily: 'var(--font-display)', fontWeight: 400, color: `var(--${tone})`, letterSpacing: '-0.03em', lineHeight: 1 }}>
+        <div
+          className={cn(
+            'font-display text-[30px] font-normal leading-none -tracking-[0.03em] tabular-nums',
+            tone === 'mute' ? 'text-mute' : 'text-ink',
+          )}
+        >
           {value ?? 0}
         </div>
       )}
@@ -115,15 +107,15 @@ function StatCard({ title, value, loading, tone = 'ink' }: {
 
 function ErrorState({ message }: { message: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '160px', fontSize: '13px', color: 'oklch(0.50 0.20 22)' }}>
+    <div className="flex h-40 items-center justify-center text-[13px] text-danger">
       {message}
     </div>
   );
 }
 
-function EmptyState({ message }: { message: string }) {
+function EmptyMessage({ message }: { message: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '120px', fontSize: '13px', color: 'var(--mute)' }}>
+    <div className="flex h-[120px] items-center justify-center text-[13px] text-mute">
       {message}
     </div>
   );
@@ -142,32 +134,23 @@ function TrendsTab() {
   const totals = data?.totals;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div className="flex flex-col gap-4">
       {/* Range selector */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <div className="flex items-center gap-1.5">
         {DAY_RANGES.map((r) => (
-          <button
+          <Button
             key={r.value}
+            size="sm"
+            variant={days === r.value ? 'primary' : 'secondary'}
             onClick={() => setDays(r.value)}
-            style={{
-              padding:      '5px 12px',
-              fontSize:     '12px',
-              fontWeight:   days === r.value ? 600 : 500,
-              border:       0,
-              borderRadius: '8px',
-              cursor:       'pointer',
-              transition:   'all 100ms',
-              background:   days === r.value ? 'var(--accent-tint)' : 'var(--surface-2)',
-              color:        days === r.value ? 'var(--accent)' : 'var(--ink-soft)',
-            }}
           >
             {r.label}
-          </button>
+          </Button>
         ))}
       </div>
 
       {/* KPI row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+      <div className="grid grid-cols-4 gap-3">
         <StatCard title="Created"  value={totals?.created}  loading={isLoading} />
         <StatCard title="Resolved" value={totals?.resolved} loading={isLoading} />
         <StatCard title="Open"     value={totals?.open}     loading={isLoading} />
@@ -175,24 +158,24 @@ function TrendsTab() {
       </div>
 
       {/* Charts */}
-      <Card padded={false}>
+      <Card className="overflow-hidden">
         <CardHead title="Created vs Resolved" />
-        <div style={{ padding: '20px' }}>
+        <div className="p-5">
           {isLoading ? (
-            <div style={{ height: '180px', background: 'var(--surface-2)', borderRadius: '10px' }} />
+            <Skeleton height={180} radius={10} />
           ) : data?.data && data.data.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+            <div className="grid grid-cols-2 gap-8">
               <div>
-                <div style={{ fontSize: '11px', color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '10px' }}>Created</div>
+                <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-mute">Created</div>
                 <BarChart data={data.data.map((d) => ({ label: d.date, value: d.created }))} height={180} />
               </div>
               <div>
-                <div style={{ fontSize: '11px', color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '10px' }}>Resolved</div>
+                <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-mute">Resolved</div>
                 <BarChart data={data.data.map((d) => ({ label: d.date, value: d.resolved }))} height={180} />
               </div>
             </div>
           ) : (
-            <EmptyState message="No trend data available" />
+            <EmptyMessage message="No trend data available" />
           )}
         </div>
       </Card>
@@ -232,72 +215,56 @@ function AgentsTab() {
   if (error) return <ErrorState message="Failed to load agent data" />;
 
   return (
-    <Card padded={false}>
+    <Card className="overflow-hidden">
       <CardHead title="Agent Performance" />
-      <div style={{ overflowX: 'auto' }}>
-        {isLoading ? (
-          <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {[1,2,3,4].map((i) => (
-              <div key={i} style={{ height: '32px', background: 'var(--surface-2)', borderRadius: '8px' }} />
-            ))}
-          </div>
-        ) : sorted.length > 0 ? (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ background: 'var(--surface-2)' }}>
-                {cols.map((col) => (
-                  <th
-                    key={col.key}
-                    onClick={() => handleSort(col.key)}
-                    style={{
-                      padding:       '10px 18px',
-                      textAlign:     'left',
-                      fontSize:      '11px',
-                      fontWeight:    600,
-                      color:         sortKey === col.key ? 'var(--ink)' : 'var(--mute)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.06em',
-                      cursor:        'pointer',
-                      whiteSpace:    'nowrap',
-                      userSelect:    'none',
-                      borderBottom:  '1px solid var(--hairline)',
-                    }}
-                  >
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      {col.label}
-                      {sortKey === col.key ? (
-                        sortDir === 'asc' ? <HugeiconsIcon icon={ArrowUp01Icon} size={11} /> : <HugeiconsIcon icon={ArrowDown01Icon} size={11} />
-                      ) : (
-                        <HugeiconsIcon icon={ArrowUpDownIcon} size={11} style={{ opacity: 0.4 }} />
-                      )}
-                    </span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sorted.map((agent, i) => (
-                <tr
-                  key={agent.name}
-                  style={{ borderBottom: i === sorted.length - 1 ? 'none' : '1px solid var(--hairline)' }}
-                  onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = 'var(--surface-2)'; }}
-                  onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'; }}
+      {isLoading ? (
+        <div className="flex flex-col gap-2.5 p-5">
+          {[1,2,3,4].map((i) => (
+            <Skeleton key={i} height={32} radius={8} />
+          ))}
+        </div>
+      ) : sorted.length > 0 ? (
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-surface-2 hover:bg-surface-2">
+              {cols.map((col) => (
+                <TableHead
+                  key={col.key}
+                  onClick={() => handleSort(col.key)}
+                  className={cn(
+                    'cursor-pointer select-none whitespace-nowrap px-[18px]',
+                    sortKey === col.key ? 'text-ink' : 'text-mute',
+                  )}
                 >
-                  <td style={{ padding: '11px 18px', fontSize: '13px', color: 'var(--ink)', fontWeight: 500 }}>{agent.name}</td>
-                  <td style={{ padding: '11px 18px', fontSize: '13px', color: 'var(--ink)', fontFeatureSettings: '"tnum"' }}>{agent.assigned}</td>
-                  <td style={{ padding: '11px 18px', fontSize: '13px', color: 'var(--ink)', fontFeatureSettings: '"tnum"' }}>{agent.resolved}</td>
-                  <td style={{ padding: '11px 18px', fontSize: '13px', color: 'var(--ink)', fontFeatureSettings: '"tnum"' }}>{agent.comments}</td>
-                  <td style={{ padding: '11px 18px', fontSize: '12px', color: 'var(--mute)' }}>
-                    {agent.avgResponseTimeHours != null ? `${agent.avgResponseTimeHours.toFixed(1)}h` : 'N/A'}
-                  </td>
-                </tr>
+                  <span className="inline-flex items-center gap-1">
+                    {col.label}
+                    {sortKey === col.key ? (
+                      sortDir === 'asc' ? <HugeiconsIcon icon={ArrowUp01Icon} size={11} /> : <HugeiconsIcon icon={ArrowDown01Icon} size={11} />
+                    ) : (
+                      <HugeiconsIcon icon={ArrowUpDownIcon} size={11} className="opacity-40" />
+                    )}
+                  </span>
+                </TableHead>
               ))}
-            </tbody>
-          </table>
-        ) : (
-          <EmptyState message="No agent data available" />
-        )}
-      </div>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {sorted.map((agent) => (
+              <TableRow key={agent.name}>
+                <TableCell className="px-[18px] font-medium text-ink">{agent.name}</TableCell>
+                <TableCell className="px-[18px] tabular-nums text-ink">{agent.assigned}</TableCell>
+                <TableCell className="px-[18px] tabular-nums text-ink">{agent.resolved}</TableCell>
+                <TableCell className="px-[18px] tabular-nums text-ink">{agent.comments}</TableCell>
+                <TableCell className="px-[18px] text-xs text-mute">
+                  {agent.avgResponseTimeHours != null ? `${agent.avgResponseTimeHours.toFixed(1)}h` : 'N/A'}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      ) : (
+        <EmptyMessage message="No agent data available" />
+      )}
     </Card>
   );
 }
@@ -313,15 +280,15 @@ function HeatmapTab() {
   if (error) return <ErrorState message="Failed to load heatmap" />;
 
   return (
-    <Card padded={false}>
+    <Card className="overflow-hidden">
       <CardHead title="Ticket Volume by Day / Hour" />
-      <div style={{ padding: '20px' }}>
+      <div className="p-5">
         {isLoading ? (
-          <div style={{ height: '220px', background: 'var(--surface-2)', borderRadius: '10px' }} />
+          <Skeleton height={220} radius={10} />
         ) : data?.data && data.data.length > 0 ? (
           <Heatmap data={data.data} />
         ) : (
-          <EmptyState message="No heatmap data available" />
+          <EmptyMessage message="No heatmap data available" />
         )}
       </div>
     </Card>
@@ -344,31 +311,31 @@ function SLATab() {
   void C;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+    <div className="flex flex-col gap-4">
+      <div className="grid grid-cols-3 gap-3">
         {isLoading ? (
           [1,2,3].map((i) => (
-            <Card key={i}>
-              <div style={{ height: '40px', background: 'var(--surface-2)', borderRadius: '8px' }} />
+            <Card key={i} className="p-5">
+              <Skeleton height={40} radius={8} />
             </Card>
           ))
         ) : (
           <>
-            <Card>
-              <div style={{ fontSize: '11px', color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '10px' }}>Compliance Rate</div>
-              <div style={{ fontSize: '30px', fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.03em', lineHeight: 1 }}>
+            <Card className="p-5">
+              <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-mute">Compliance Rate</div>
+              <div className="font-display text-[30px] leading-none -tracking-[0.03em] tabular-nums text-ink">
                 {sla ? `${pct}%` : 'N/A'}
               </div>
             </Card>
-            <Card>
-              <div style={{ fontSize: '11px', color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '10px' }}>Compliant</div>
-              <div style={{ fontSize: '30px', fontFamily: 'var(--font-display)', color: 'oklch(0.52 0.18 155)', letterSpacing: '-0.03em', lineHeight: 1 }}>
+            <Card className="p-5">
+              <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-mute">Compliant</div>
+              <div className="font-display text-[30px] leading-none -tracking-[0.03em] tabular-nums text-success">
                 {sla?.compliant ?? 0}
               </div>
             </Card>
-            <Card>
-              <div style={{ fontSize: '11px', color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600, marginBottom: '10px' }}>Breached</div>
-              <div style={{ fontSize: '30px', fontFamily: 'var(--font-display)', color: 'oklch(0.50 0.20 22)', letterSpacing: '-0.03em', lineHeight: 1 }}>
+            <Card className="p-5">
+              <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-mute">Breached</div>
+              <div className="font-display text-[30px] leading-none -tracking-[0.03em] tabular-nums text-danger">
                 {sla?.breached ?? 0}
               </div>
             </Card>
@@ -376,83 +343,64 @@ function SLATab() {
         )}
       </div>
 
-      <Card padded={false}>
+      <Card className="overflow-hidden">
         <CardHead title="SLA Overview" />
-        <div style={{ padding: '20px' }}>
+        <div className="p-5">
           {isLoading ? (
-            <div style={{ height: '64px', background: 'var(--surface-2)', borderRadius: '10px' }} />
+            <Skeleton height={64} radius={10} />
           ) : sla ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div className="flex flex-col gap-3.5">
               {/* Gauge arc */}
-              <div style={{ display: 'flex', gap: '28px', alignItems: 'center' }}>
-                <div style={{ position: 'relative', width: '130px', height: '100px', flexShrink: 0 }}>
+              <div className="flex items-center gap-7">
+                <div className="relative h-[100px] w-[130px] shrink-0">
                   <svg width="130" height="100" viewBox="0 0 130 100">
-                    <defs>
-                      <linearGradient id="gauge-bg" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0" stopColor="oklch(0.92 0.03 155)" />
-                        <stop offset="0.5" stopColor="oklch(0.92 0.04 70)" />
-                        <stop offset="1" stopColor="oklch(0.92 0.04 22)" />
-                      </linearGradient>
-                      <linearGradient id="gauge-fg" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0"   stopColor="oklch(0.62 0.18 155)" />
-                        <stop offset="0.7" stopColor="oklch(0.65 0.18 70)" />
-                        <stop offset="1"   stopColor="oklch(0.60 0.20 22)" />
-                      </linearGradient>
-                    </defs>
-                    <path d="M 12 88 A 53 53 0 1 1 118 88" fill="none" stroke="url(#gauge-bg)" strokeWidth="10" strokeLinecap="round" />
+                    <path d="M 12 88 A 53 53 0 1 1 118 88" fill="none" stroke="var(--surface-2)" strokeWidth="10" strokeLinecap="round" />
                     <path
                       d="M 12 88 A 53 53 0 1 1 118 88"
-                      fill="none" stroke="url(#gauge-fg)" strokeWidth="10" strokeLinecap="round"
+                      fill="none" stroke="var(--accent)" strokeWidth="10" strokeLinecap="round"
                       pathLength="100"
                       strokeDasharray="100"
                       strokeDashoffset={100 - pct}
                     />
                   </svg>
-                  <div style={{
-                    position: 'absolute', inset: 0,
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end',
-                    paddingBottom: '4px',
-                  }}>
-                    <div style={{ fontSize: '28px', fontFamily: 'var(--font-display)', color: 'var(--ink)', letterSpacing: '-0.03em', lineHeight: 1 }}>
-                      {pct}<span style={{ fontSize: '14px', color: 'var(--mute)' }}>%</span>
+                  <div className="absolute inset-0 flex flex-col items-center justify-end pb-1">
+                    <div className="font-display text-[28px] leading-none -tracking-[0.03em] text-ink">
+                      {pct}<span className="text-sm text-mute">%</span>
                     </div>
-                    <div style={{ fontSize: '10px', color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: '2px' }}>
+                    <div className="mt-0.5 text-[10px] uppercase tracking-wider text-mute">
                       within SLA
                     </div>
                   </div>
                 </div>
 
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div className="flex flex-1 flex-col gap-2.5">
                   {[
-                    { color: 'oklch(0.62 0.18 155)', label: 'On track',   value: sla.compliant },
-                    { color: 'oklch(0.65 0.18 70)',  label: 'At risk',    value: Math.max(0, sla.total - sla.compliant - sla.breached) },
-                    { color: 'oklch(0.60 0.20 22)',  label: 'Breached',   value: sla.breached  },
-                  ].map(({ color, label, value }) => (
-                    <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ width: '8px', height: '8px', borderRadius: '999px', background: color, display: 'inline-block' }} />
-                        <span style={{ color: 'var(--ink)', fontWeight: 500 }}>{label}</span>
-                      </div>
-                      <span style={{ color: 'var(--ink)', fontWeight: 600, fontFeatureSettings: '"tnum"' }}>{value}</span>
+                    { variant: 'success' as const, label: 'On track',  value: sla.compliant },
+                    { variant: 'warning' as const, label: 'At risk',   value: Math.max(0, sla.total - sla.compliant - sla.breached) },
+                    { variant: 'danger'  as const, label: 'Breached',  value: sla.breached  },
+                  ].map(({ variant, label, value }) => (
+                    <div key={label} className="flex items-center justify-between text-xs">
+                      <Badge variant={variant}>{label}</Badge>
+                      <span className="font-semibold tabular-nums text-ink">{value}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Progress bar */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--mute)' }}>
-                  <span>Total: <strong style={{ color: 'var(--ink)' }}>{sla.total}</strong></span>
+              <div className="flex flex-col gap-2">
+                <div className="flex justify-between text-xs text-mute">
+                  <span>Total: <strong className="text-ink">{sla.total}</strong></span>
                   <span>{sla.compliant} compliant · {sla.breached} breached</span>
                 </div>
-                <div style={{ display: 'flex', height: '8px', borderRadius: '999px', overflow: 'hidden', background: 'var(--surface-2)' }}>
-                  <div style={{ background: 'oklch(0.62 0.18 155)', width: `${(sla.compliant / Math.max(sla.total, 1)) * 100}%`, transition: 'width 400ms ease' }} />
-                  <div style={{ background: 'oklch(0.60 0.20 22)', width: `${(sla.breached / Math.max(sla.total, 1)) * 100}%`, transition: 'width 400ms ease' }} />
+                <div className="flex h-2 overflow-hidden rounded-full bg-surface-2">
+                  <div className="bg-success transition-[width] duration-[400ms] ease-in-out" style={{ width: `${(sla.compliant / Math.max(sla.total, 1)) * 100}%` }} />
+                  <div className="bg-danger transition-[width] duration-[400ms] ease-in-out" style={{ width: `${(sla.breached / Math.max(sla.total, 1)) * 100}%` }} />
                 </div>
               </div>
             </div>
           ) : (
-            <EmptyState message="No SLA data available" />
+            <EmptyMessage message="No SLA data available" />
           )}
         </div>
       </Card>
@@ -487,30 +435,10 @@ function ExportButton() {
   };
 
   return (
-    <button
-      onClick={handleExport}
-      disabled={loading}
-      style={{
-        display:      'inline-flex',
-        alignItems:   'center',
-        gap:          '6px',
-        padding:      '8px 14px',
-        fontSize:     '13px',
-        fontWeight:   500,
-        border:       0,
-        borderRadius: '10px',
-        background:   'var(--surface-2)',
-        color:        loading ? 'var(--mute)' : 'var(--ink-soft)',
-        cursor:       loading ? 'not-allowed' : 'pointer',
-        boxShadow:    'var(--shadow-sm)',
-        transition:   'all 120ms',
-      }}
-      onMouseEnter={(e) => { if (!loading) (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-3)'; }}
-      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
-    >
+    <Button variant="secondary" onClick={handleExport} disabled={loading}>
       <HugeiconsIcon icon={Download01Icon} size={14} />
       Export CSV
-    </button>
+    </Button>
   );
 }
 
@@ -520,22 +448,12 @@ export default function AnalyticsPage() {
   const [tab, setTab] = useState<'trends' | 'agents' | 'heatmap' | 'sla'>('trends');
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="flex flex-col gap-6">
       {/* Page head */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+      <div className="flex items-start justify-between">
         <div>
-          <h1 style={{
-            fontSize:      '36px',
-            fontFamily:    'var(--font-display)',
-            fontWeight:    400,
-            color:         'var(--ink)',
-            letterSpacing: '-0.02em',
-            lineHeight:    1.05,
-            margin:        0,
-          }}>
-            Analytics
-          </h1>
-          <p style={{ fontSize: '13px', color: 'var(--mute)', marginTop: '6px' }}>
+          <h1>Analytics</h1>
+          <p className="mt-1.5 text-[13px] text-mute">
             Insights and metrics for your support queue
           </p>
         </div>
@@ -543,35 +461,16 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Tab bar */}
-      <div style={{ display: 'flex', gap: '4px', padding: '4px', background: 'var(--surface-2)', borderRadius: '12px', alignSelf: 'flex-start' }}>
-        {TABS.map((t) => {
-          const active = tab === t.key;
-          return (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key as typeof tab)}
-              style={{
-                display:      'inline-flex',
-                alignItems:   'center',
-                gap:          '6px',
-                padding:      '7px 14px',
-                fontSize:     '13px',
-                fontWeight:   active ? 600 : 500,
-                border:       0,
-                borderRadius: '9px',
-                cursor:       'pointer',
-                transition:   'all 100ms',
-                background:   active ? 'var(--surface)' : 'transparent',
-                color:        active ? 'var(--ink)' : 'var(--mute)',
-                boxShadow:    active ? 'var(--shadow-sm)' : 'none',
-              }}
-            >
+      <Tabs value={tab} onValueChange={(v: unknown) => setTab(v as typeof tab)}>
+        <TabsList>
+          {TABS.map((t) => (
+            <TabsTab key={t.key} value={t.key} className="inline-flex items-center gap-1.5">
               <HugeiconsIcon icon={t.icon} size={14} />
               {t.label}
-            </button>
-          );
-        })}
-      </div>
+            </TabsTab>
+          ))}
+        </TabsList>
+      </Tabs>
 
       {/* Tab content */}
       {tab === 'trends'  && <TrendsTab />}

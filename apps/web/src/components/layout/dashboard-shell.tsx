@@ -23,14 +23,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           aria-label="Navigation menu"
           aria-modal="true"
           onClick={closeSidebar}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 60,
-            background: 'rgba(8,10,18,0.55)', backdropFilter: 'blur(3px)',
-            animation: 'hx-fade 150ms ease-out',
-          }}
+          className="fixed inset-0 z-[60] bg-black/55 backdrop-blur-[3px]"
         >
           <div
-            style={{ width: '268px', height: '100%', animation: 'hx-slide-from-left 200ms cubic-bezier(0.2,0.8,0.2,1)' }}
+            className="h-full w-[268px]"
             onClick={(e) => e.stopPropagation()}
           >
             <Sidebar onClose={closeSidebar} />
@@ -42,15 +38,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <main className="hx-main" id="main-content">
         <a
           href="#main-content"
-          style={{
-            position: 'absolute', top: '-40px', left: '8px', zIndex: 100,
-            padding: '8px 14px', fontSize: '13px', fontWeight: 600,
-            background: 'var(--surface)', color: 'var(--ink)', borderRadius: '8px',
-            textDecoration: 'none', boxShadow: 'var(--shadow-md)',
-            transition: 'top 100ms',
-          }}
-          onFocus={(e) => { (e.currentTarget as HTMLAnchorElement).style.top = '8px'; }}
-          onBlur={(e) => { (e.currentTarget as HTMLAnchorElement).style.top = '-40px'; }}
+          className="absolute -top-10 left-2 z-[100] rounded-lg bg-surface px-3.5 py-2 text-[13px] font-semibold text-ink shadow-md transition-[top] focus:top-2"
         >
           Skip to content
         </a>

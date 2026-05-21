@@ -14,13 +14,13 @@ const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const HOUR_LABELS = Array.from({ length: 24 }, (_, i) => String(i))
 
 function getIntensityClass(count: number, max: number): string {
-  if (max === 0) return 'bg-muted'
+  if (max === 0) return 'bg-surface-2'
   const ratio = count / max
-  if (ratio === 0) return 'bg-muted'
-  if (ratio <= 0.25) return 'bg-primary/15'
-  if (ratio <= 0.5) return 'bg-primary/35'
-  if (ratio <= 0.75) return 'bg-primary/60'
-  return 'bg-primary'
+  if (ratio === 0) return 'bg-surface-2'
+  if (ratio <= 0.25) return 'bg-accent/15'
+  if (ratio <= 0.5) return 'bg-accent/35'
+  if (ratio <= 0.75) return 'bg-accent/60'
+  return 'bg-accent'
 }
 
 export function Heatmap({ data }: HeatmapProps) {
@@ -29,7 +29,7 @@ export function Heatmap({ data }: HeatmapProps) {
 
   if (data.length === 0) {
     return (
-      <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+      <div className="flex h-40 items-center justify-center text-sm text-mute">
         No heatmap data available
       </div>
     )
@@ -44,7 +44,7 @@ export function Heatmap({ data }: HeatmapProps) {
             {HOUR_LABELS.map((h) => (
               <div
                 key={h}
-                className="w-6 shrink-0 text-center text-[10px] text-muted-foreground"
+                className="w-6 shrink-0 text-center text-[10px] text-mute"
               >
                 {h}
               </div>
@@ -52,7 +52,7 @@ export function Heatmap({ data }: HeatmapProps) {
           </div>
           {DAY_LABELS.map((dayLabel, dayIndex) => (
             <div key={dayLabel} className="flex items-center">
-              <div className="w-10 shrink-0 text-xs text-muted-foreground">
+              <div className="w-10 shrink-0 text-xs text-mute">
                 {dayLabel}
               </div>
               {HOUR_LABELS.map((_, hourIndex) => {
@@ -62,7 +62,7 @@ export function Heatmap({ data }: HeatmapProps) {
                   <div
                     key={hourIndex}
                     className={cn(
-                      'w-6 h-6 rounded-sm border border-background transition-colors',
+                      'h-6 w-6 rounded-sm border border-bg transition-colors',
                       getIntensityClass(count, max)
                     )}
                     title={`${dayLabel} ${hourIndex}:00 - ${count} tickets`}
@@ -73,14 +73,14 @@ export function Heatmap({ data }: HeatmapProps) {
           ))}
         </div>
       </div>
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <div className="flex items-center gap-2 text-xs text-mute">
         <span>Low</span>
         <div className="flex gap-px">
-          <div className="h-3 w-4 rounded-sm bg-muted" />
-          <div className="h-3 w-4 rounded-sm bg-primary/15" />
-          <div className="h-3 w-4 rounded-sm bg-primary/35" />
-          <div className="h-3 w-4 rounded-sm bg-primary/60" />
-          <div className="h-3 w-4 rounded-sm bg-primary" />
+          <div className="h-3 w-4 rounded-sm bg-surface-2" />
+          <div className="h-3 w-4 rounded-sm bg-accent/15" />
+          <div className="h-3 w-4 rounded-sm bg-accent/35" />
+          <div className="h-3 w-4 rounded-sm bg-accent/60" />
+          <div className="h-3 w-4 rounded-sm bg-accent" />
         </div>
         <span>High</span>
       </div>

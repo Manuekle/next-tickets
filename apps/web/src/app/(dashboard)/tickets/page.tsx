@@ -9,25 +9,36 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { CreateTicketDrawer } from '@/components/drawers/ticket-drawer';
 import { KanbanBoard, type KanbanColumnDef, type KanbanTicket } from '@/components/tickets/kanban-board';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge, type BadgeProps } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 import { Ticket01Icon } from '@hugeicons/core-free-icons';
 import {
   Search01Icon, Add01Icon, FilterIcon, ArrowUpDownIcon, ListViewIcon, GridViewIcon,
   CheckmarkSquareIcon, Cancel01Icon, ArrowDown01Icon, CheckmarkCircle01Icon,
 } from '@hugeicons/core-free-icons';
 
-const STATUS_META: Record<string, { label: string; hue: number; dotChroma: number }> = {
-  OPEN:                { label: 'Open',        hue: 235, dotChroma: 0.18 },
-  IN_PROGRESS:         { label: 'In progress', hue: 65,  dotChroma: 0.18 },
-  WAITING_ON_CUSTOMER: { label: 'Waiting',     hue: 305, dotChroma: 0.16 },
-  RESOLVED:            { label: 'Resolved',    hue: 155, dotChroma: 0.16 },
-  CLOSED:              { label: 'Closed',      hue: 260, dotChroma: 0.015 },
+const STATUS_META: Record<string, { label: string; variant: BadgeProps['variant'] }> = {
+  OPEN:                { label: 'Open',        variant: 'info'    },
+  IN_PROGRESS:         { label: 'In progress', variant: 'warning' },
+  WAITING_ON_CUSTOMER: { label: 'Waiting',     variant: 'neutral' },
+  RESOLVED:            { label: 'Resolved',    variant: 'success' },
+  CLOSED:              { label: 'Closed',      variant: 'neutral' },
 };
 
-const PRIORITY_META: Record<string, { label: string; hue: number }> = {
-  LOW:      { label: 'Low',      hue: 155 },
-  MEDIUM:   { label: 'Medium',   hue: 70  },
-  HIGH:     { label: 'High',     hue: 40  },
-  CRITICAL: { label: 'Critical', hue: 22  },
+const PRIORITY_META: Record<string, { label: string; variant: BadgeProps['variant'] }> = {
+  LOW:      { label: 'Low',      variant: 'info'    },
+  MEDIUM:   { label: 'Medium',   variant: 'neutral' },
+  HIGH:     { label: 'High',     variant: 'warning' },
+  CRITICAL: { label: 'Critical', variant: 'danger'  },
 };
 
 interface Ticket {
@@ -51,79 +62,16 @@ function timeAgo(iso: string): string {
   return `${Math.round(h / 24)}d`;
 }
 
-function StatusPill({ status }: { status: string }) {
+function StatusBadge({ status }: { status: string }) {
   const m = STATUS_META[status];
   if (!m) return null;
-  return (
-    <span style={{
-      display:      'inline-flex',
-      alignItems:   'center',
-      gap:          '5px',
-      padding:      '3px 9px 3px 7px',
-      fontSize:     '11px',
-      fontWeight:   600,
-      borderRadius: '999px',
-      background:   `oklch(0.93 ${m.dotChroma * 0.32} ${m.hue})`,
-      color:        `oklch(0.32 ${m.dotChroma} ${m.hue})`,
-      whiteSpace:   'nowrap',
-    }}>
-      <span style={{
-        width: '5px', height: '5px', borderRadius: '999px',
-        background: `oklch(0.54 ${m.dotChroma * 1.1} ${m.hue})`,
-      }} />
-      {m.label}
-    </span>
-  );
+  return <Badge variant={m.variant}>{m.label}</Badge>;
 }
 
-function PriorityBar({ priority }: { priority: string }) {
-  const m     = PRIORITY_META[priority];
-  const order = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
-  const lvl   = order.indexOf(priority) + 1;
+function PriorityBadge({ priority }: { priority: string }) {
+  const m = PRIORITY_META[priority];
   if (!m) return null;
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontSize: '11.5px', color: 'var(--ink-soft)' }}>
-      <span style={{ display: 'inline-flex', alignItems: 'flex-end', gap: '2px', height: '12px' }}>
-        {[1, 2, 3, 4].map((i) => (
-          <span key={i} style={{
-            width:   '3px',
-            height:  `${3 + i * 2}px`,
-            borderRadius: '1.5px',
-            background: i <= lvl ? `oklch(0.60 0.20 ${m.hue})` : 'var(--surface-3)',
-          }} />
-        ))}
-      </span>
-      {m.label}
-    </span>
-  );
-}
-
-function Checkbox({ checked, onChange }: { checked: boolean; onChange: () => void }) {
-  return (
-    <label
-      onClick={(e) => { e.stopPropagation(); onChange(); }}
-      style={{
-        display:         'inline-flex',
-        alignItems:      'center',
-        justifyContent:  'center',
-        width:           '16px',
-        height:          '16px',
-        borderRadius:    '4px',
-        cursor:          'pointer',
-        border:          `1px solid ${checked ? 'var(--accent)' : 'var(--border)'}`,
-        background:      checked ? 'var(--accent)' : 'var(--surface)',
-        color:           'var(--accent-fg)',
-        transition:      'all 120ms',
-        flexShrink:      0,
-      }}
-    >
-      {checked && (
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
-          <polyline points="20 6 9 17 4 12" />
-        </svg>
-      )}
-    </label>
-  );
+  return <Badge variant={m.variant}>{m.label}</Badge>;
 }
 
 const STATUS_TABS = [
@@ -133,8 +81,6 @@ const STATUS_TABS = [
   { value: 'WAITING_ON_CUSTOMER', label: 'Waiting'      },
   { value: 'RESOLVED',            label: 'Resolved'     },
 ];
-
-const BOARD_COLS = ['OPEN', 'IN_PROGRESS', 'WAITING_ON_CUSTOMER', 'RESOLVED'] as const;
 
 const KANBAN_COLUMNS: KanbanColumnDef[] = [
   { status: 'OPEN',                label: 'Open',        hue: 235 },
@@ -146,15 +92,6 @@ const KANBAN_COLUMNS: KanbanColumnDef[] = [
 interface Category { id: string; name: string }
 
 const PRIORITIES = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const;
-const selectStyle: React.CSSProperties = {
-  padding: '5px 28px 5px 10px',
-  fontSize: '12px',
-  border: 0,
-  borderRadius: '8px',
-  appearance: 'none',
-  cursor: 'pointer',
-  fontFamily: 'inherit',
-};
 
 export default function TicketsPage() {
   const router    = useRouter();
@@ -168,7 +105,6 @@ export default function TicketsPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const [filterPrio,    setFilterPrio]    = useState<string[]>([]);
   const [filterCat,     setFilterCat]     = useState('');
-  const [statusPopover, setStatusPopover] = useState(false);
 
   const { data: catsRes } = useQuery({
     queryKey: ['categories'],
@@ -198,7 +134,6 @@ export default function TicketsPage() {
       qc.invalidateQueries({ queryKey: ['tickets'] });
       sileo.success({ title: `${selected.size} ticket${selected.size > 1 ? 's' : ''} updated` });
       setSelected(new Set());
-      setStatusPopover(false);
     },
     onError: () => sileo.error({ title: 'Failed to update tickets' }),
   });
@@ -233,213 +168,91 @@ export default function TicketsPage() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
+    <div className="flex flex-col gap-4">
       {/* Page head */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '20px' }}>
+      <div className="flex items-start justify-between gap-5">
         <div>
-          <div style={{
-            display:         'inline-flex',
-            alignItems:      'center',
-            gap:             '8px',
-            fontSize:        '11px',
-            color:           'var(--mute)',
-            textTransform:   'uppercase',
-            letterSpacing:   '0.12em',
-            fontWeight:      600,
-            marginBottom:    '12px',
-            padding:         '4px 10px 4px 8px',
-            background:      'var(--surface-2)',
-            borderRadius:    '6px',
-            boxShadow:       'var(--shadow-inset)',
-          }}>
-            <span style={{
-              width: '6px', height: '6px', borderRadius: '2px',
-              background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
-              boxShadow: '0 0 6px var(--accent-glow)',
-            }} />
-            Workspace
-          </div>
-          <h1 style={{
-            fontSize:      '36px',
-            fontWeight:    400,
-            color:         'var(--ink)',
-            letterSpacing: '-0.025em',
-            lineHeight:    1.0,
-            margin:        0,
-            fontFamily:    'var(--font-display)',
-          }}>Tickets</h1>
-          <p style={{ fontSize: '13px', color: 'var(--mute)', marginTop: '8px', lineHeight: 1.5 }}>
-            {total} tickets
-          </p>
+          <h1 className="text-ink">Tickets</h1>
+          <p className="mt-2 text-[13px] text-mute">{total} tickets</p>
         </div>
-        <div style={{ display: 'flex', gap: '8px', paddingTop: '6px' }}>
-          <button
-            style={{
-              display:       'inline-flex',
-              alignItems:    'center',
-              gap:           '6px',
-              padding:       '8px 14px',
-              border:        0,
-              background:    'var(--surface-2)',
-              color:         'var(--ink)',
-              fontSize:      '13px',
-              fontWeight:    500,
-              borderRadius:  '10px',
-              cursor:        'pointer',
-              boxShadow:     'var(--shadow-sm), var(--shadow-inset)',
-            }}
-          >
+        <div className="flex gap-2 pt-1.5">
+          <Button variant="secondary">
             <HugeiconsIcon icon={CheckmarkSquareIcon} size={14} />
             Saved views
-          </button>
-          <button
-            onClick={() => setCreateOpen(true)}
-            style={{
-              display:       'inline-flex',
-              alignItems:    'center',
-              gap:           '6px',
-              padding:       '8px 14px',
-              border:        0,
-              background:    'linear-gradient(135deg, var(--accent), var(--accent-2))',
-              color:         'var(--accent-fg)',
-              fontSize:      '13px',
-              fontWeight:    500,
-              borderRadius:  '10px',
-              cursor:        'pointer',
-              boxShadow:     'inset 0 1px 0 rgba(255,255,255,0.18), 0 4px 14px -4px var(--accent-glow)',
-            }}
-          >
+          </Button>
+          <Button variant="primary" onClick={() => setCreateOpen(true)}>
             <HugeiconsIcon icon={Add01Icon} size={14} />
             New ticket
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Controls bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+      <div className="flex flex-wrap items-center gap-2.5">
         {/* Status tabs */}
-        <div style={{
-          display:    'inline-flex',
-          gap:        '2px',
-          padding:    '3px',
-          background: 'var(--surface-2)',
-          borderRadius: '11px',
-          boxShadow:  'var(--shadow-inset), inset 0 0 0 1px var(--hairline)',
-        }}>
+        <div className="inline-flex gap-0.5 rounded-lg border border-border bg-surface-2 p-0.5">
           {STATUS_TABS.map((tab) => (
             <button
               key={tab.value}
               onClick={() => { setStatusTab(tab.value); setPage(1); }}
-              style={{
-                display:      'inline-flex',
-                alignItems:   'center',
-                gap:          '5px',
-                padding:      '5px 10px',
-                border:       0,
-                background:   statusTab === tab.value ? 'var(--surface)' : 'transparent',
-                color:        statusTab === tab.value ? 'var(--ink)' : 'var(--mute)',
-                fontSize:     '12px',
-                fontWeight:   500,
-                letterSpacing: '-0.005em',
-                cursor:       'pointer',
-                borderRadius: '8px',
-                boxShadow:    statusTab === tab.value ? 'var(--shadow-sm)' : 'none',
-                transition:   'all 130ms',
-              }}
+              className={cn(
+                'rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                statusTab === tab.value
+                  ? 'bg-surface text-ink shadow-sm'
+                  : 'text-mute hover:text-ink-soft',
+              )}
             >
               {tab.label}
             </button>
           ))}
         </div>
 
-        <div style={{ flex: 1 }} />
+        <div className="flex-1" />
 
         {/* Search */}
-        <label style={{
-          display:      'inline-flex',
-          alignItems:   'center',
-          gap:          '8px',
-          padding:      '7px 11px',
-          background:   'var(--surface-2)',
-          borderRadius: '10px',
-          border:       0,
-          boxShadow:    'var(--shadow-inset), inset 0 0 0 1px var(--hairline)',
-          transition:   'box-shadow 120ms',
-        }}>
-          <HugeiconsIcon icon={Search01Icon} size={13} color="var(--mute)" />
-          <input
-            type="text"
+        <div className="relative">
+          <HugeiconsIcon
+            icon={Search01Icon}
+            size={13}
+            className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-mute"
+          />
+          <Input
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search tickets…"
-            style={{
-              background:   'transparent',
-              border:       0,
-              outline:      0,
-              fontSize:     '12.5px',
-              color:        'var(--ink)',
-              width:        '180px',
-            }}
+            className="w-[200px] pl-8"
           />
-        </label>
+        </div>
 
-        <button
+        <Button
+          variant={showFilters || hasActiveFilters ? 'secondary' : 'outline'}
+          size="md"
           onClick={() => setShowFilters((v) => !v)}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: '6px',
-            padding: '6px 11px', border: 0, borderRadius: '10px', cursor: 'pointer',
-            background: showFilters || hasActiveFilters ? 'var(--accent-tint)' : 'var(--surface-2)',
-            color: showFilters || hasActiveFilters ? 'var(--accent)' : 'var(--ink)',
-            fontSize: '12px', fontWeight: 500,
-            boxShadow: showFilters || hasActiveFilters ? 'inset 0 0 0 1px var(--accent-border)' : 'var(--shadow-sm), var(--shadow-inset)',
-          }}
+          className={cn((showFilters || hasActiveFilters) && 'bg-accent-tint text-accent')}
         >
           <HugeiconsIcon icon={FilterIcon} size={13} />
           Filter
           {hasActiveFilters && (
-            <span style={{ background: 'var(--accent)', color: '#fff', borderRadius: '999px', fontSize: '9px', fontWeight: 700, padding: '1px 5px' }}>
-              {filterPrio.length + (filterCat ? 1 : 0)}
-            </span>
+            <Badge variant="solid">{filterPrio.length + (filterCat ? 1 : 0)}</Badge>
           )}
-        </button>
+        </Button>
 
-        <button style={{
-          display: 'inline-flex', alignItems: 'center', gap: '6px',
-          padding: '6px 11px', border: 0, background: 'var(--surface-2)',
-          color: 'var(--ink)', fontSize: '12px', fontWeight: 500, borderRadius: '10px',
-          cursor: 'pointer', boxShadow: 'var(--shadow-sm), var(--shadow-inset)',
-        }}>
+        <Button variant="outline">
           <HugeiconsIcon icon={ArrowUpDownIcon} size={13} /> Sort
-        </button>
+        </Button>
 
-        <div style={{ width: '1px', height: '22px', background: 'var(--hairline)' }} />
+        <div className="h-[22px] w-px bg-border" />
 
         {/* View toggle */}
-        <div style={{
-          display: 'inline-flex', gap: '2px', padding: '3px',
-          background: 'var(--surface-2)', borderRadius: '11px',
-          boxShadow: 'var(--shadow-inset), inset 0 0 0 1px var(--hairline)',
-        }}>
+        <div className="inline-flex gap-0.5 rounded-lg border border-border bg-surface-2 p-0.5">
           {(['table', 'board'] as const).map((v) => (
             <button
               key={v}
               onClick={() => setView(v)}
-              style={{
-                display:      'inline-flex',
-                alignItems:   'center',
-                gap:          '5px',
-                padding:      '5px 10px',
-                border:       0,
-                background:   view === v ? 'var(--surface)' : 'transparent',
-                color:        view === v ? 'var(--ink)' : 'var(--mute)',
-                fontSize:     '12px',
-                fontWeight:   500,
-                cursor:       'pointer',
-                borderRadius: '8px',
-                boxShadow:    view === v ? 'var(--shadow-sm)' : 'none',
-                transition:   'all 130ms',
-              }}
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors',
+                view === v ? 'bg-surface text-ink shadow-sm' : 'text-mute hover:text-ink-soft',
+              )}
             >
               {v === 'table' ? <HugeiconsIcon icon={ListViewIcon} size={12} /> : <HugeiconsIcon icon={GridViewIcon} size={12} />}
               {v.charAt(0).toUpperCase() + v.slice(1)}
@@ -450,32 +263,23 @@ export default function TicketsPage() {
 
       {/* Filter panel */}
       {showFilters && (
-        <div style={{
-          background: 'var(--surface)', borderRadius: '14px', padding: '14px 18px',
-          boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
-          display: 'flex', flexDirection: 'column', gap: '12px',
-          animation: 'hx-rise 120ms ease-out',
-        }}>
+        <Card className="flex flex-col gap-3 p-4">
           {/* Priority filter */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--mute)', minWidth: '60px' }}>Priority</span>
-            <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+          <div className="flex items-center gap-2.5">
+            <span className="min-w-[60px] text-[11.5px] font-semibold text-mute">Priority</span>
+            <div className="flex flex-wrap gap-1.5">
               {PRIORITIES.map((p) => {
                 const active = filterPrio.includes(p);
                 return (
-                  <button
+                  <Button
                     key={p}
+                    size="sm"
+                    variant={active ? 'secondary' : 'outline'}
+                    className={cn(active && 'bg-accent-tint text-accent')}
                     onClick={() => setFilterPrio((prev) => active ? prev.filter((x) => x !== p) : [...prev, p])}
-                    style={{
-                      padding: '4px 10px', fontSize: '11.5px', fontWeight: 600,
-                      border: 0, borderRadius: '7px', cursor: 'pointer', transition: 'all 80ms',
-                      background: active ? 'var(--accent-tint)' : 'var(--surface-2)',
-                      color: active ? 'var(--accent)' : 'var(--ink-soft)',
-                      boxShadow: active ? 'inset 0 0 0 1px var(--accent-border)' : 'none',
-                    }}
                   >
                     {p.charAt(0) + p.slice(1).toLowerCase()}
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -483,269 +287,184 @@ export default function TicketsPage() {
 
           {/* Category filter */}
           {categories.length > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--mute)', minWidth: '60px' }}>Category</span>
-              <div style={{ position: 'relative' }}>
-                <select
-                  value={filterCat}
-                  onChange={(e) => setFilterCat(e.target.value)}
-                  style={{
-                    ...selectStyle,
-                    background: filterCat ? 'var(--accent-tint)' : 'var(--surface-2)',
-                    color: filterCat ? 'var(--accent)' : 'var(--ink-soft)',
-                    boxShadow: filterCat ? 'inset 0 0 0 1px var(--accent-border)' : 'none',
-                  }}
-                >
-                  <option value="">All categories</option>
-                  {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-                <HugeiconsIcon icon={ArrowDown01Icon} size={10} color="var(--mute)"
-                  style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-              </div>
+            <div className="flex items-center gap-2.5">
+              <span className="min-w-[60px] text-[11.5px] font-semibold text-mute">Category</span>
+              <Select value={filterCat} onValueChange={(v) => setFilterCat(v as string)}>
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="All categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All categories</SelectItem>
+                  {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
           {/* Clear filters */}
           {hasActiveFilters && (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
+              className="self-start text-danger hover:text-danger"
               onClick={() => { setFilterPrio([]); setFilterCat(''); }}
-              style={{ alignSelf: 'flex-start', padding: '4px 10px', fontSize: '11.5px', fontWeight: 500, border: 0, borderRadius: '7px', background: 'transparent', color: 'oklch(0.50 0.20 22)', cursor: 'pointer' }}
             >
               Clear filters
-            </button>
+            </Button>
           )}
-        </div>
+        </Card>
       )}
 
       {/* Bulk action bar */}
       {selected.size > 0 && (
-        <div style={{
-          display:      'flex',
-          alignItems:   'center',
-          gap:          '8px',
-          padding:      '10px 18px',
-          background:   'var(--accent-tint)',
-          borderRadius: '12px',
-          border:       '1px solid var(--accent-border)',
-          animation:    'hx-rise 150ms ease-out',
-        }}>
-          <span style={{ fontSize: '12px', color: 'var(--accent-fg-on-tint)', fontWeight: 500 }}>
-            {selected.size} selected
-          </span>
-          <div style={{ flex: 1 }} />
+        <div className="flex items-center gap-2 rounded-lg border border-accent bg-accent-tint px-4 py-2.5">
+          <span className="text-xs font-medium text-accent">{selected.size} selected</span>
+          <div className="flex-1" />
 
           {/* Resolve */}
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-success hover:bg-success-tint hover:text-success"
             onClick={() => bulkStatusMutation.mutate('RESOLVED')}
             disabled={bulkStatusMutation.isPending}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: '5px',
-              padding: '5px 10px', border: 0, fontSize: '12px', fontWeight: 500,
-              borderRadius: '7px', cursor: 'pointer', transition: 'background 100ms',
-              background: 'oklch(0.55 0.16 148 / 0.14)', color: 'oklch(0.42 0.16 148)',
-            }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'oklch(0.55 0.16 148 / 0.22)'; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'oklch(0.55 0.16 148 / 0.14)'; }}
           >
             <HugeiconsIcon icon={CheckmarkCircle01Icon} size={12} />
             Resolve
-          </button>
+          </Button>
 
-          {/* Change status popover */}
-          <div style={{ position: 'relative' }}>
-            <button
-              onClick={() => setStatusPopover((v) => !v)}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '5px',
-                padding: '5px 10px', border: 0, fontSize: '12px', fontWeight: 500,
-                borderRadius: '7px', cursor: 'pointer', transition: 'background 100ms',
-                background: 'color-mix(in oklch, var(--accent) 14%, transparent)',
-                color: 'var(--accent)',
-              }}
-            >
-              Change status
-              <HugeiconsIcon icon={ArrowDown01Icon} size={11} />
-            </button>
+          {/* Change status menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              render={
+                <Button variant="ghost" size="sm" className="text-accent hover:text-accent">
+                  Change status
+                  <HugeiconsIcon icon={ArrowDown01Icon} size={11} />
+                </Button>
+              }
+            />
+            <DropdownMenuContent align="end">
+              {[
+                { value: 'OPEN',                label: 'Open'         },
+                { value: 'IN_PROGRESS',         label: 'In Progress'  },
+                { value: 'WAITING_ON_CUSTOMER', label: 'Waiting'      },
+                { value: 'RESOLVED',            label: 'Resolved'     },
+                { value: 'CLOSED',              label: 'Closed'       },
+              ].map((s) => (
+                <DropdownMenuItem
+                  key={s.value}
+                  onClick={() => bulkStatusMutation.mutate(s.value)}
+                  disabled={bulkStatusMutation.isPending}
+                >
+                  {s.label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-            {statusPopover && (
-              <>
-                <div onClick={() => setStatusPopover(false)} aria-hidden="true" style={{ position: 'fixed', inset: 0, zIndex: 50 }} />
-                <div style={{
-                  position: 'absolute', bottom: '36px', left: 0, zIndex: 51,
-                  background: 'var(--surface)', border: '1px solid var(--border)',
-                  borderRadius: '10px', boxShadow: 'var(--shadow-pop)', padding: '4px', minWidth: '160px',
-                  animation: 'hx-pop 120ms cubic-bezier(0.2,0.8,0.2,1)',
-                }}>
-                  {[
-                    { value: 'OPEN',                label: 'Open'         },
-                    { value: 'IN_PROGRESS',         label: 'In Progress'  },
-                    { value: 'WAITING_ON_CUSTOMER', label: 'Waiting'      },
-                    { value: 'RESOLVED',            label: 'Resolved'     },
-                    { value: 'CLOSED',              label: 'Closed'       },
-                  ].map((s) => (
-                    <button
-                      key={s.value}
-                      onClick={() => bulkStatusMutation.mutate(s.value)}
-                      disabled={bulkStatusMutation.isPending}
-                      style={{
-                        width: '100%', display: 'flex', alignItems: 'center', padding: '7px 10px',
-                        fontSize: '12.5px', fontWeight: 500, border: 0, borderRadius: '7px',
-                        background: 'transparent', color: 'var(--ink)', cursor: 'pointer', textAlign: 'left',
-                        transition: 'background 80ms',
-                      }}
-                      onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
-                      onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          <button
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="text-accent hover:text-accent"
             onClick={() => setSelected(new Set())}
-            style={{
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: '24px', height: '24px', border: 0, borderRadius: '5px',
-              background: 'transparent', color: 'var(--accent-fg-on-tint)', cursor: 'pointer',
-            }}
-          ><HugeiconsIcon icon={Cancel01Icon} size={13} /></button>
+          >
+            <HugeiconsIcon icon={Cancel01Icon} size={13} />
+          </Button>
         </div>
       )}
 
       {/* Table view */}
       {view === 'table' && (
-        <div style={{
-          background:   'var(--surface)',
-          borderRadius: '16px',
-          boxShadow:    'var(--shadow-md)',
-          overflow:     'hidden',
-        }}>
-          {/* Column headers */}
-          <div style={{
-            display:             'grid',
-            gridTemplateColumns: '32px 90px 1fr 120px 120px 120px 70px',
-            padding:             '10px 18px',
-            borderBottom:        '1px solid var(--hairline)',
-            fontSize:            '11px',
-            color:               'var(--mute)',
-            fontWeight:          600,
-            textTransform:       'uppercase',
-            letterSpacing:       '0.06em',
-            background:          'var(--surface-2)',
-            columnGap:           '12px',
-          }}>
-            <span><Checkbox checked={selected.size === tickets.length && tickets.length > 0} onChange={toggleAll} /></span>
-            <span>ID</span>
-            <span>Ticket</span>
-            <span>Status</span>
-            <span>Priority</span>
-            <span>Assignee</span>
-            <span style={{ textAlign: 'right' }}>Updated</span>
-          </div>
-
-          {/* Rows */}
-          <div>
-            {isLoading
-              ? Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} style={{
-                    display:             'grid',
-                    gridTemplateColumns: '32px 90px 1fr 120px 120px 120px 70px',
-                    padding:             '13px 18px',
-                    borderBottom:        i < 7 ? '1px solid var(--hairline)' : 'none',
-                    columnGap:           '12px',
-                    alignItems:          'center',
-                  }}>
-                    <div style={{ width: '16px', height: '16px', background: 'var(--surface-2)', borderRadius: '4px' }} />
-                    <div style={{ height: '11px', background: 'var(--surface-2)', borderRadius: '4px' }} />
-                    <div style={{ height: '13px', background: 'var(--surface-2)', borderRadius: '4px' }} />
-                    <div style={{ height: '22px', width: '80px', background: 'var(--surface-2)', borderRadius: '999px' }} />
-                    <div style={{ height: '13px', width: '60px', background: 'var(--surface-2)', borderRadius: '4px' }} />
-                    <div style={{ height: '13px', width: '80px', background: 'var(--surface-2)', borderRadius: '4px' }} />
-                    <div style={{ height: '11px', background: 'var(--surface-2)', borderRadius: '4px' }} />
-                  </div>
+        <Card className="overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-surface-2 hover:bg-surface-2">
+                <TableHead className="w-8">
+                  <Checkbox
+                    checked={selected.size === tickets.length && tickets.length > 0}
+                    onCheckedChange={toggleAll}
+                  />
+                </TableHead>
+                <TableHead className="w-[90px]">ID</TableHead>
+                <TableHead>Ticket</TableHead>
+                <TableHead className="w-[120px]">Status</TableHead>
+                <TableHead className="w-[120px]">Priority</TableHead>
+                <TableHead className="w-[120px]">Assignee</TableHead>
+                <TableHead className="w-[70px] text-right">Updated</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array.from({ length: 8 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><div className="h-4 w-4 rounded bg-surface-2" /></TableCell>
+                    <TableCell><div className="h-3 rounded bg-surface-2" /></TableCell>
+                    <TableCell><div className="h-3.5 rounded bg-surface-2" /></TableCell>
+                    <TableCell><div className="h-[22px] w-20 rounded-md bg-surface-2" /></TableCell>
+                    <TableCell><div className="h-3.5 w-14 rounded bg-surface-2" /></TableCell>
+                    <TableCell><div className="h-3.5 w-20 rounded bg-surface-2" /></TableCell>
+                    <TableCell><div className="h-3 rounded bg-surface-2" /></TableCell>
+                  </TableRow>
                 ))
-              : tickets.length === 0
-              ? (
-                <EmptyState
-                  icon={Ticket01Icon}
-                  title="No tickets found"
-                  description={hasActiveFilters || search ? 'Try clearing filters to see more results.' : 'Create your first ticket to get started.'}
-                />
-              )
-              : tickets.map((t, i) => (
-                <div
-                  key={t.id}
-                  style={{
-                    display:             'grid',
-                    gridTemplateColumns: '32px 90px 1fr 120px 120px 120px 70px',
-                    alignItems:          'center',
-                    columnGap:           '12px',
-                    padding:             '11px 18px',
-                    borderBottom:        i < tickets.length - 1 ? '1px solid var(--hairline)' : 'none',
-                    cursor:              'pointer',
-                    background:          selected.has(t.id) ? 'var(--accent-tint)' : 'transparent',
-                    transition:          'background 80ms',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!selected.has(t.id)) (e.currentTarget as HTMLDivElement).style.background = 'var(--surface-2)';
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.currentTarget as HTMLDivElement).style.background = selected.has(t.id) ? 'var(--accent-tint)' : 'transparent';
-                  }}
-                  onClick={(e) => {
-                    if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'LABEL') return;
-                    router.push(`/tickets/${t.id}`);
-                  }}
-                >
-                  <span onClick={(e) => e.stopPropagation()}>
-                    <Checkbox checked={selected.has(t.id)} onChange={() => toggleSelect(t.id)} />
-                  </span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--mute)' }}>
-                    {t.id?.slice(0, 8)}
-                  </span>
-                  <div style={{ minWidth: 0, paddingRight: '8px' }}>
-                    <div style={{
-                      fontSize:     '13px',
-                      color:        'var(--ink)',
-                      fontWeight:   500,
-                      whiteSpace:   'nowrap',
-                      overflow:     'hidden',
-                      textOverflow: 'ellipsis',
-                      letterSpacing: '-0.005em',
-                    }}>{t.title}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--mute)', marginTop: '2px' }}>
-                      {t.customer?.name}
-                    </div>
-                  </div>
-                  <span><StatusPill status={t.status} /></span>
-                  <span><PriorityBar priority={t.priority} /></span>
-                  <span style={{ fontSize: '12px', color: t.assignedTo ? 'var(--ink)' : 'var(--mute)', fontStyle: t.assignedTo ? 'normal' : 'italic' }}>
-                    {t.assignedTo?.name ?? 'Unassigned'}
-                  </span>
-                  <span style={{ fontSize: '11px', color: 'var(--mute)', textAlign: 'right', fontFeatureSettings: '"tnum"' }}>
-                    {timeAgo(t.updatedAt)}
-                  </span>
-                </div>
-              ))
-            }
-          </div>
-        </div>
+              ) : tickets.length === 0 ? (
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={7}>
+                    <EmptyState
+                      icon={Ticket01Icon}
+                      title="No tickets found"
+                      description={hasActiveFilters || search ? 'Try clearing filters to see more results.' : 'Create your first ticket to get started.'}
+                    />
+                  </TableCell>
+                </TableRow>
+              ) : (
+                tickets.map((t) => (
+                  <TableRow
+                    key={t.id}
+                    className={cn('cursor-pointer', selected.has(t.id) && 'bg-accent-tint hover:bg-accent-tint')}
+                    onClick={(e) => {
+                      const tag = (e.target as HTMLElement).tagName;
+                      if (tag === 'INPUT' || tag === 'BUTTON') return;
+                      if ((e.target as HTMLElement).closest('[role="checkbox"]')) return;
+                      router.push(`/tickets/${t.id}`);
+                    }}
+                  >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox checked={selected.has(t.id)} onCheckedChange={() => toggleSelect(t.id)} />
+                    </TableCell>
+                    <TableCell className="font-mono text-[11px] text-mute">{t.id?.slice(0, 8)}</TableCell>
+                    <TableCell>
+                      <div className="min-w-0 pr-2">
+                        <div className="truncate text-[13px] font-medium text-ink">{t.title}</div>
+                        <div className="mt-0.5 text-[11px] text-mute">{t.customer?.name}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell><StatusBadge status={t.status} /></TableCell>
+                    <TableCell><PriorityBadge priority={t.priority} /></TableCell>
+                    <TableCell className={cn('text-xs', t.assignedTo ? 'text-ink' : 'italic text-mute')}>
+                      {t.assignedTo?.name ?? 'Unassigned'}
+                    </TableCell>
+                    <TableCell className="text-right text-[11px] tabular-nums text-mute">
+                      {timeAgo(t.updatedAt)}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </Card>
       )}
 
       {/* Board view (drag & drop) */}
       {view === 'board' && (
         isLoading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${KANBAN_COLUMNS.length}, minmax(260px, 1fr))`, gap: '12px', overflowX: 'auto' }}>
+          <div className="grid gap-3 overflow-x-auto" style={{ gridTemplateColumns: `repeat(${KANBAN_COLUMNS.length}, minmax(260px, 1fr))` }}>
             {KANBAN_COLUMNS.map((c) => (
-              <div key={c.status} style={{ background: 'var(--surface-2)', borderRadius: '14px', padding: '10px', minHeight: '200px' }}>
+              <div key={c.status} className="min-h-[200px] rounded-xl border border-border bg-surface-2 p-2.5">
                 {Array.from({ length: 2 }).map((_, i) => (
-                  <div key={i} style={{ background: 'var(--surface)', borderRadius: '12px', padding: '13px', marginBottom: '8px' }}>
-                    <div style={{ height: '11px', background: 'var(--surface-2)', borderRadius: '3px', marginBottom: '10px' }} />
-                    <div style={{ height: '26px', background: 'var(--surface-2)', borderRadius: '3px' }} />
-                  </div>
+                  <Card key={i} className="mb-2 p-3">
+                    <div className="mb-2.5 h-3 rounded bg-surface-2" />
+                    <div className="h-[26px] rounded bg-surface-2" />
+                  </Card>
                 ))}
               </div>
             ))}
@@ -757,31 +476,17 @@ export default function TicketsPage() {
             onOpen={(id) => router.push(`/tickets/${id}`)}
             onMove={(id, status) => moveTicketMutation.mutate({ id, status })}
             renderCard={(t) => (
-              <div style={{
-                background: 'var(--surface)', borderRadius: '12px', padding: '13px',
-                boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column', gap: '8px',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '10.5px', color: 'var(--mute)', fontWeight: 500 }}>
-                    {t.id?.slice(0, 8)}
-                  </span>
-                  <PriorityBar priority={t.priority} />
+              <Card className="flex flex-col gap-2 p-3 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[10.5px] font-medium text-mute">{t.id?.slice(0, 8)}</span>
+                  <PriorityBadge priority={t.priority} />
                 </div>
-                <div style={{
-                  fontSize: '13px', color: 'var(--ink)', fontWeight: 500, lineHeight: 1.35,
-                  letterSpacing: '-0.005em', display: '-webkit-box',
-                  WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-                } as React.CSSProperties}>{t.title}</div>
-                <div style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  marginTop: '2px', paddingTop: '8px', borderTop: '1px solid var(--hairline)',
-                }}>
-                  <span style={{ fontSize: '11px', color: 'var(--mute)' }}>{t.customer?.name}</span>
-                  <span style={{ fontSize: '11px', color: 'var(--mute)', fontFeatureSettings: '"tnum"' }}>
-                    {timeAgo(t.updatedAt)}
-                  </span>
+                <div className="line-clamp-2 text-[13px] font-medium leading-snug text-ink">{t.title}</div>
+                <div className="mt-0.5 flex items-center justify-between border-t border-border pt-2">
+                  <span className="text-[11px] text-mute">{t.customer?.name}</span>
+                  <span className="text-[11px] tabular-nums text-mute">{timeAgo(t.updatedAt)}</span>
                 </div>
-              </div>
+              </Card>
             )}
           />
         )
@@ -789,42 +494,16 @@ export default function TicketsPage() {
 
       {/* Pagination */}
       {data?.meta && data.meta.totalPages > 1 && view === 'table' && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-          <button
-            disabled={page <= 1}
-            onClick={() => setPage(page - 1)}
-            style={{
-              padding:      '6px 14px',
-              border:       0,
-              background:   'var(--surface-2)',
-              color:        page <= 1 ? 'var(--mute)' : 'var(--ink)',
-              fontSize:     '12.5px',
-              fontWeight:   500,
-              borderRadius: '9px',
-              cursor:       page <= 1 ? 'not-allowed' : 'pointer',
-              boxShadow:    page <= 1 ? 'none' : 'var(--shadow-sm)',
-              opacity:      page <= 1 ? 0.5 : 1,
-            }}
-          >Previous</button>
-          <span style={{ fontSize: '12px', color: 'var(--mute)', fontFeatureSettings: '"tnum"' }}>
+        <div className="flex items-center justify-center gap-3">
+          <Button variant="secondary" disabled={page <= 1} onClick={() => setPage(page - 1)}>
+            Previous
+          </Button>
+          <span className="text-xs tabular-nums text-mute">
             Page {page} of {data.meta.totalPages}
           </span>
-          <button
-            disabled={page >= data.meta.totalPages}
-            onClick={() => setPage(page + 1)}
-            style={{
-              padding:      '6px 14px',
-              border:       0,
-              background:   'var(--surface-2)',
-              color:        page >= data.meta.totalPages ? 'var(--mute)' : 'var(--ink)',
-              fontSize:     '12.5px',
-              fontWeight:   500,
-              borderRadius: '9px',
-              cursor:       page >= data.meta.totalPages ? 'not-allowed' : 'pointer',
-              boxShadow:    page >= data.meta.totalPages ? 'none' : 'var(--shadow-sm)',
-              opacity:      page >= data.meta.totalPages ? 0.5 : 1,
-            }}
-          >Next</button>
+          <Button variant="secondary" disabled={page >= data.meta.totalPages} onClick={() => setPage(page + 1)}>
+            Next
+          </Button>
         </div>
       )}
       <CreateTicketDrawer open={createOpen} onClose={() => setCreateOpen(false)} />

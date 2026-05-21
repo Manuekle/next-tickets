@@ -8,6 +8,10 @@ import { sileo } from 'sileo';
 import { useState } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { CheckmarkCircle01Icon } from '@hugeicons/core-free-icons';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 
 const forgotSchema = z.object({ email: z.string().email('Invalid email') });
 type ForgotForm = z.infer<typeof forgotSchema>;
@@ -34,76 +38,50 @@ export default function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <div style={{ width: '100%', background: 'var(--surface)', borderRadius: '18px', boxShadow: 'var(--shadow-lg)', padding: '40px 28px', textAlign: 'center' }}>
-        <div style={{ width: '52px', height: '52px', borderRadius: '999px', background: 'oklch(0.94 0.06 148)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: 'oklch(0.52 0.18 148)' }}>
+      <Card className="w-full px-7 py-10 text-center shadow-md">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-success-tint text-success">
           <HugeiconsIcon icon={CheckmarkCircle01Icon} size={24} />
         </div>
-        <h1 style={{ fontSize: '20px', fontFamily: 'var(--font-display)', fontWeight: 400, color: 'var(--ink)', letterSpacing: '-0.02em', margin: '0 0 8px' }}>
-          Check your email
-        </h1>
-        <p style={{ fontSize: '13px', color: 'var(--mute)', margin: '0 0 24px', lineHeight: 1.6 }}>
+        <h1 className="mb-2 text-xl font-semibold tracking-tight text-ink">Check your email</h1>
+        <p className="mb-6 text-[13px] leading-relaxed text-mute">
           If an account with that email exists, we&apos;ve sent password reset instructions.
         </p>
-        <Link href="/login" style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>
+        <Link href="/login" className="text-[13px] font-semibold text-ink hover:underline">
           Back to sign in
         </Link>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div style={{ width: '100%', background: 'var(--surface)', borderRadius: '18px', boxShadow: 'var(--shadow-lg)', overflow: 'hidden' }}>
-      <div style={{ padding: '28px 28px 0' }}>
-        <h1 style={{ fontSize: '22px', fontFamily: 'var(--font-display)', fontWeight: 400, color: 'var(--ink)', letterSpacing: '-0.02em', margin: '0 0 4px' }}>
-          Forgot password?
-        </h1>
-        <p style={{ fontSize: '13px', color: 'var(--mute)', margin: 0 }}>
-          Enter your email and we&apos;ll send a reset link
-        </p>
+    <Card className="w-full shadow-md">
+      <div className="px-7 pt-7">
+        <h1 className="mb-1 text-2xl font-semibold tracking-tight text-ink">Forgot password?</h1>
+        <p className="text-[13px] text-mute">Enter your email and we&apos;ll send a reset link</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        <div>
-          <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-soft)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '7px' }}>
-            Email
-          </label>
-          <input
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 px-7 py-6">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
             type="email"
             {...register('email')}
             placeholder="you@company.com"
-            style={{
-              width: '100%', padding: '10px 12px', fontSize: '14px', color: 'var(--ink)',
-              border: 0, borderRadius: '10px', background: 'var(--surface)',
-              boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)', outline: 'none',
-              boxSizing: 'border-box', transition: 'box-shadow 100ms', fontFamily: 'inherit',
-            }}
-            onFocus={(e) => { (e.currentTarget as HTMLInputElement).style.boxShadow = 'var(--shadow-sm), inset 0 0 0 1.5px var(--accent)'; }}
-            onBlur={(e)  => { (e.currentTarget as HTMLInputElement).style.boxShadow = 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)'; }}
           />
-          {errors.email && <p style={{ fontSize: '11px', color: 'oklch(0.50 0.20 22)', marginTop: '4px' }}>{errors.email.message}</p>}
+          {errors.email && <p className="text-[11px] text-danger">{errors.email.message}</p>}
         </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            width: '100%', padding: '11px', fontSize: '14px', fontWeight: 600,
-            border: 0, borderRadius: '10px',
-            background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
-            color: '#fff', cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.7 : 1, boxShadow: '0 4px 14px -4px var(--accent-glow)',
-            transition: 'all 120ms', fontFamily: 'inherit',
-          }}
-        >
+        <Button type="submit" disabled={loading} size="lg" className="w-full">
           {loading ? 'Sending…' : 'Send reset link'}
-        </button>
+        </Button>
       </form>
 
-      <div style={{ padding: '0 28px 24px', textAlign: 'center', fontSize: '13px', color: 'var(--mute)' }}>
-        <Link href="/login" style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>
+      <div className="px-7 pb-6 text-center text-[13px] text-mute">
+        <Link href="/login" className="font-semibold text-ink hover:underline">
           Back to sign in
         </Link>
       </div>
-    </div>
+    </Card>
   );
 }

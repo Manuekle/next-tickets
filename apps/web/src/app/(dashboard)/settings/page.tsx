@@ -9,6 +9,20 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/api';
 import { sileo } from 'sileo';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  Avatar,
+  Badge,
+  Button,
+  Input,
+  Separator,
+} from '@/components/ui';
+import type { BadgeProps } from '@/components/ui';
+import { cn } from '@/lib/utils';
 
 const ROLE_LABEL: Record<string, string> = {
   SUPER_ADMIN: 'Super Admin',
@@ -17,44 +31,18 @@ const ROLE_LABEL: Record<string, string> = {
   CUSTOMER: 'Customer',
 };
 
-const ROLE_STYLE: Record<string, React.CSSProperties> = {
-  SUPER_ADMIN: { background: 'oklch(0.95 0.04 22)',  color: 'oklch(0.50 0.20 22)'  },
-  ADMIN:       { background: 'oklch(0.96 0.06 60)',  color: 'oklch(0.50 0.18 60)'  },
-  AGENT:       { background: 'var(--accent-tint)',   color: 'var(--accent)'         },
-  CUSTOMER:    { background: 'oklch(0.94 0.06 148)', color: 'oklch(0.42 0.16 148)' },
+const ROLE_VARIANT: Record<string, BadgeProps['variant']> = {
+  SUPER_ADMIN: 'danger',
+  ADMIN: 'warning',
+  AGENT: 'info',
+  CUSTOMER: 'success',
 };
 
-function Card({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
-  return (
-    <div style={{ background: 'var(--surface)', borderRadius: '16px', boxShadow: 'var(--shadow-md)', overflow: 'hidden' }}>
-      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--hairline)' }}>
-        <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.005em' }}>{title}</div>
-        {subtitle && <div style={{ fontSize: '12px', color: 'var(--mute)', marginTop: '2px' }}>{subtitle}</div>}
-      </div>
-      <div style={{ padding: '18px 20px' }}>{children}</div>
-    </div>
-  );
-}
-
-function ThemeBtn({ value, label, icon, current, onClick }: { value: string; label: string; icon: React.ReactNode; current: string | undefined; onClick: () => void }) {
-  const active = current === value;
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
-        padding: '12px 8px', fontSize: '12px', fontWeight: active ? 600 : 500,
-        border: 0, borderRadius: '10px', cursor: 'pointer', transition: 'all 120ms',
-        background: active ? 'var(--accent-tint)' : 'var(--surface-2)',
-        color: active ? 'var(--accent)' : 'var(--ink-soft)',
-        boxShadow: active ? 'inset 0 0 0 1.5px var(--accent-border)' : 'none',
-      }}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
+const THEME_OPTIONS: Array<{ value: string; label: string; icon: any }> = [
+  { value: 'light', label: 'Light', icon: Sun01Icon },
+  { value: 'system', label: 'System', icon: ComputerDesk01Icon },
+  { value: 'dark', label: 'Dark', icon: Moon01Icon },
+];
 
 export default function SettingsPage() {
   const { user, setUser, logout } = useAuthStore();
@@ -64,9 +52,6 @@ export default function SettingsPage() {
   const [editingName, setEditingName] = useState(false);
   const [name, setName] = useState(user?.name ?? '');
   const [saving, setSaving] = useState(false);
-
-  const initials = (user?.name ?? 'U').split(' ').map((p: string) => p[0]).join('').slice(0, 2).toUpperCase();
-  const roleStyle = ROLE_STYLE[user?.role ?? ''] ?? { background: 'var(--surface-2)', color: 'var(--mute)' };
 
   const handleLogout = () => { logout(); router.push('/login'); };
 
@@ -89,160 +74,171 @@ export default function SettingsPage() {
   };
 
   return (
-    <div style={{ maxWidth: '580px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className="flex max-w-[580px] flex-col gap-5">
       <div>
-        <h1 style={{ fontSize: '28px', fontFamily: 'var(--font-display)', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em', margin: 0 }}>
-          Settings
-        </h1>
-        <p style={{ fontSize: '13px', color: 'var(--mute)', marginTop: '4px' }}>Manage your account and preferences</p>
+        <h1>Settings</h1>
+        <p className="mt-1 text-[13px] text-mute">Manage your account and preferences</p>
       </div>
 
       {/* Profile */}
-      <Card title="Profile" subtitle="Your account information">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '18px' }}>
-          <div style={{
-            width: '48px', height: '48px', borderRadius: '999px', flexShrink: 0,
-            background: 'linear-gradient(135deg, oklch(0.52 0.04 258), oklch(0.42 0.04 262))',
-            color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '17px', fontWeight: 600, letterSpacing: '-0.01em',
-          }}>
-            {initials}
+      <Card>
+        <CardHeader className="gap-0.5 border-b border-hairline">
+          <CardTitle>Profile</CardTitle>
+          <CardDescription>Your account information</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <div className="mb-4 flex items-center gap-3.5">
+            <Avatar name={user?.name ?? 'U'} size={48} />
+            <div className="min-w-0 flex-1">
+              <div className="text-sm font-semibold text-ink">{user?.name || '—'}</div>
+              <div className="mt-px text-xs text-mute">{user?.email || '—'}</div>
+            </div>
+            <Badge variant={ROLE_VARIANT[user?.role ?? ''] ?? 'neutral'}>
+              {ROLE_LABEL[user?.role ?? ''] ?? user?.role ?? '—'}
+            </Badge>
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--ink)' }}>{user?.name || '—'}</div>
-            <div style={{ fontSize: '12px', color: 'var(--mute)', marginTop: '1px' }}>{user?.email || '—'}</div>
-          </div>
-          <span style={{ ...roleStyle, padding: '3px 9px', fontSize: '11px', fontWeight: 600, borderRadius: '6px', whiteSpace: 'nowrap' }}>
-            {ROLE_LABEL[user?.role ?? ''] ?? user?.role ?? '—'}
-          </span>
-        </div>
 
-        {/* Name field */}
-        <div style={{ paddingTop: '14px', borderTop: '1px solid var(--hairline)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--mute)' }}>Display name</span>
-            {!editingName && (
-              <button
-                onClick={() => { setName(user?.name ?? ''); setEditingName(true); }}
-                style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '3px 8px', fontSize: '11px', fontWeight: 500, border: 0, borderRadius: '6px', background: 'var(--surface-2)', color: 'var(--ink-soft)', cursor: 'pointer' }}
-              >
-                <HugeiconsIcon icon={PencilEdit01Icon} size={10} /> Edit
-              </button>
+          <Separator />
+
+          {/* Name field */}
+          <div className="pt-3.5">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-xs font-medium text-mute">Display name</span>
+              {!editingName && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { setName(user?.name ?? ''); setEditingName(true); }}
+                >
+                  <HugeiconsIcon icon={PencilEdit01Icon} size={10} /> Edit
+                </Button>
+              )}
+            </div>
+            {editingName ? (
+              <div className="flex gap-2">
+                <Input
+                  autoFocus
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditingName(false); }}
+                  className="flex-1"
+                />
+                <Button onClick={saveName} disabled={saving}>
+                  <HugeiconsIcon icon={FloppyDiskIcon} size={12} />
+                  {saving ? 'Saving…' : 'Save'}
+                </Button>
+                <Button variant="secondary" onClick={() => setEditingName(false)}>
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <div className="text-[13px] font-medium text-ink">{user?.name || '—'}</div>
             )}
           </div>
-          {editingName ? (
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <input
-                autoFocus
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditingName(false); }}
-                style={{
-                  flex: 1, padding: '8px 10px', fontSize: '13px', border: 0, borderRadius: '8px',
-                  background: 'var(--surface-2)', color: 'var(--ink)',
-                  boxShadow: 'inset 0 0 0 1.5px var(--accent)', outline: 'none', fontFamily: 'inherit',
-                }}
-              />
-              <button
-                onClick={saveName}
-                disabled={saving}
-                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 12px', fontSize: '12px', fontWeight: 600, border: 0, borderRadius: '8px', background: 'var(--accent)', color: '#fff', cursor: 'pointer', opacity: saving ? 0.6 : 1 }}
-              >
-                <HugeiconsIcon icon={FloppyDiskIcon} size={12} />
-                {saving ? 'Saving…' : 'Save'}
-              </button>
-              <button
-                onClick={() => setEditingName(false)}
-                style={{ padding: '8px 10px', fontSize: '12px', border: 0, borderRadius: '8px', background: 'var(--surface-2)', color: 'var(--ink-soft)', cursor: 'pointer' }}
-              >
-                Cancel
-              </button>
-            </div>
-          ) : (
-            <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--ink)' }}>{user?.name || '—'}</div>
-          )}
-        </div>
 
-        {/* Email (read-only) */}
-        <div style={{ paddingTop: '12px', marginTop: '12px', borderTop: '1px solid var(--hairline)' }}>
-          <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--mute)', marginBottom: '4px' }}>Email address</div>
-          <div style={{ fontSize: '13px', color: 'var(--ink-soft)' }}>{user?.email || '—'}</div>
-        </div>
+          {/* Email (read-only) */}
+          <div className="mt-3 pt-3">
+            <Separator className="mb-3" />
+            <div className="mb-1 text-xs font-medium text-mute">Email address</div>
+            <div className="text-[13px] text-ink-soft">{user?.email || '—'}</div>
+          </div>
+        </CardContent>
       </Card>
 
       {/* Appearance */}
-      <Card title="Appearance" subtitle="Choose your preferred color scheme">
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <ThemeBtn value="light" label="Light" current={theme} onClick={() => setTheme('light')}
-            icon={<HugeiconsIcon icon={Sun01Icon} size={16} />} />
-          <ThemeBtn value="system" label="System" current={theme} onClick={() => setTheme('system')}
-            icon={<HugeiconsIcon icon={ComputerDesk01Icon} size={16} />} />
-          <ThemeBtn value="dark" label="Dark" current={theme} onClick={() => setTheme('dark')}
-            icon={<HugeiconsIcon icon={Moon01Icon} size={16} />} />
-        </div>
+      <Card>
+        <CardHeader className="gap-0.5 border-b border-hairline">
+          <CardTitle>Appearance</CardTitle>
+          <CardDescription>Choose your preferred color scheme</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <div
+            role="radiogroup"
+            aria-label="Color scheme"
+            className="flex gap-1 rounded-lg border border-border bg-surface-2 p-1"
+          >
+            {THEME_OPTIONS.map((opt) => {
+              const active = theme === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  role="radio"
+                  aria-checked={active}
+                  onClick={() => setTheme(opt.value)}
+                  className={cn(
+                    'flex flex-1 flex-col items-center gap-1.5 rounded-md px-2 py-2.5 text-xs font-medium transition-colors',
+                    active
+                      ? 'bg-accent text-accent-fg'
+                      : 'text-ink-soft hover:bg-surface-3 hover:text-ink',
+                  )}
+                >
+                  <HugeiconsIcon icon={opt.icon} size={16} />
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
       </Card>
 
       {/* AI & Integrations */}
-      <Card title="AI & Integrations" subtitle="Configure AI providers and copilot features">
-        <Link
-          href="/settings/ai"
-          style={{
-            display: 'flex', alignItems: 'center', gap: '12px', padding: '12px',
-            borderRadius: '10px', background: 'var(--surface-2)', textDecoration: 'none',
-            color: 'var(--ink)', transition: 'background 120ms',
-          }}
-          onMouseEnter={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = 'var(--accent-tint)'; }}
-          onMouseLeave={(e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.background = 'var(--surface-2)'; }}
-        >
-          <div style={{
-            width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
-            background: 'linear-gradient(135deg, var(--accent), var(--accent-2, var(--accent)))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff',
-          }}>
-            <HugeiconsIcon icon={Robot01Icon} size={18} />
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>AI Providers</div>
-            <div style={{ fontSize: '11.5px', color: 'var(--mute)', marginTop: '1px' }}>OpenAI, Anthropic, Gemini, OpenRouter, Groq</div>
-          </div>
-          <HugeiconsIcon icon={ArrowRight01Icon} size={14} color="var(--mute)" />
-        </Link>
+      <Card>
+        <CardHeader className="gap-0.5 border-b border-hairline">
+          <CardTitle>AI & Integrations</CardTitle>
+          <CardDescription>Configure AI providers and copilot features</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <Link
+            href="/settings/ai"
+            className="flex items-center gap-3 rounded-lg border border-border bg-surface-2 p-3 text-ink no-underline transition-colors hover:bg-surface-3"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent text-accent-fg">
+              <HugeiconsIcon icon={Robot01Icon} size={18} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-[13px] font-semibold text-ink">AI Providers</div>
+              <div className="mt-px text-[11.5px] text-mute">OpenAI, Anthropic, Gemini, OpenRouter, Groq</div>
+            </div>
+            <HugeiconsIcon icon={ArrowRight01Icon} size={14} className="text-mute" />
+          </Link>
+        </CardContent>
       </Card>
 
       {/* About */}
-      <Card title="About">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          {[
-            { label: 'App',     value: 'open-tickets'                        },
-            { label: 'License', value: 'MIT'                                 },
-            { label: 'Source',  value: 'github.com/Manuekle/next-tickets'    },
-          ].map(({ label, value }) => (
-            <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '13px' }}>
-              <span style={{ color: 'var(--mute)' }}>{label}</span>
-              <span style={{ color: 'var(--ink)', fontWeight: 500, fontFamily: label === 'Source' ? 'var(--font-mono, monospace)' : 'inherit', fontSize: label === 'Source' ? '11.5px' : '13px' }}>
-                {value}
-              </span>
-            </div>
-          ))}
-        </div>
+      <Card>
+        <CardHeader className="border-b border-hairline">
+          <CardTitle>About</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <div className="flex flex-col gap-2.5">
+            {[
+              { label: 'App',     value: 'open-tickets',                       mono: false },
+              { label: 'License', value: 'MIT',                                mono: false },
+              { label: 'Source',  value: 'github.com/Manuekle/next-tickets',   mono: true },
+            ].map(({ label, value, mono }) => (
+              <div key={label} className="flex items-center justify-between text-[13px]">
+                <span className="text-mute">{label}</span>
+                <span className={cn('font-medium text-ink', mono && 'font-mono text-[11.5px]')}>
+                  {value}
+                </span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
       </Card>
 
       {/* Session */}
-      <Card title="Session" subtitle="Sign out of your account">
-        <button
-          onClick={handleLogout}
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-            width: '100%', padding: '10px', fontSize: '13px', fontWeight: 600,
-            border: 0, borderRadius: '10px', cursor: 'pointer', transition: 'all 120ms',
-            background: 'oklch(0.96 0.04 22)', color: 'oklch(0.50 0.20 22)',
-          }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'oklch(0.92 0.06 22)'; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'oklch(0.96 0.04 22)'; }}
-        >
-          <HugeiconsIcon icon={Logout01Icon} size={14} />
-          Sign Out
-        </button>
+      <Card>
+        <CardHeader className="gap-0.5 border-b border-hairline">
+          <CardTitle>Session</CardTitle>
+          <CardDescription>Sign out of your account</CardDescription>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <Button variant="destructive" className="w-full" onClick={handleLogout}>
+            <HugeiconsIcon icon={Logout01Icon} size={14} />
+            Sign Out
+          </Button>
+        </CardContent>
       </Card>
     </div>
   );

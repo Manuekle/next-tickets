@@ -9,6 +9,12 @@ import { apiClient } from '@/lib/api';
 import { sileo } from 'sileo';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ArrowRight01Icon } from '@hugeicons/core-free-icons';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 const ticketSchema = z.object({
   title:       z.string().min(1, 'Title is required').max(200),
@@ -20,23 +26,23 @@ const ticketSchema = z.object({
 type TicketForm = z.infer<typeof ticketSchema>;
 
 const PRIORITIES = [
-  { value: 'LOW',      label: 'Low',      hue: 148 },
-  { value: 'MEDIUM',   label: 'Medium',   hue: 50  },
-  { value: 'HIGH',     label: 'High',     hue: 28  },
-  { value: 'CRITICAL', label: 'Critical', hue: 22  },
+  { value: 'LOW',      label: 'Low'      },
+  { value: 'MEDIUM',   label: 'Medium'   },
+  { value: 'HIGH',     label: 'High'     },
+  { value: 'CRITICAL', label: 'Critical' },
 ] as const;
 
 function FieldLabel({ children, required }: { children: React.ReactNode; required?: boolean }) {
   return (
-    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--ink-soft)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '7px' }}>
-      {children}{required && <span style={{ color: 'oklch(0.50 0.20 22)', marginLeft: '2px' }}>*</span>}
-    </label>
+    <Label className="mb-2 block">
+      {children}{required && <span className="ml-0.5 text-danger">*</span>}
+    </Label>
   );
 }
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
-  return <div style={{ fontSize: '11px', color: 'oklch(0.50 0.20 22)', marginTop: '4px' }}>{message}</div>;
+  return <div className="mt-1 text-[11px] text-danger">{message}</div>;
 }
 
 export default function NewTicketPage() {
@@ -75,118 +81,62 @@ export default function NewTicketPage() {
 
   const onSubmit = (data: TicketForm) => mutation.mutate(data);
 
-  const inputStyle: React.CSSProperties = {
-    width:        '100%',
-    padding:      '9px 12px',
-    fontSize:     '13px',
-    color:        'var(--ink)',
-    border:       0,
-    borderRadius: '10px',
-    background:   'var(--surface)',
-    boxShadow:    'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
-    outline:      'none',
-    boxSizing:    'border-box',
-    transition:   'box-shadow 100ms',
-    fontFamily:   'inherit',
-  };
-  const selectStyle: React.CSSProperties = {
-    width: '100%', padding: '9px 12px', fontSize: '13px', color: 'var(--ink)',
-    border: 0, borderRadius: '10px', background: 'var(--surface)',
-    boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
-    outline: 'none', boxSizing: 'border-box', transition: 'box-shadow 100ms', appearance: 'none', cursor: 'pointer', paddingRight: '28px',
-  };
-
   return (
-    <div style={{ maxWidth: '640px' }}>
+    <div className="max-w-[640px]">
       {/* Breadcrumb */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--mute)', marginBottom: '20px' }}>
+      <div className="mb-5 flex items-center gap-1.5 text-xs text-mute">
         <button
           type="button"
           onClick={() => router.push('/tickets')}
-          style={{ background: 'none', border: 0, cursor: 'pointer', color: 'var(--mute)', fontSize: '12px', padding: 0, transition: 'color 100ms' }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--ink)'; }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--mute)'; }}
+          className="p-0 text-mute transition-colors hover:text-ink"
         >
           Tickets
         </button>
         <HugeiconsIcon icon={ArrowRight01Icon} size={11} />
-        <span style={{ color: 'var(--ink)', fontWeight: 500 }}>New ticket</span>
+        <span className="font-medium text-ink">New ticket</span>
       </div>
 
       {/* Page head */}
-      <div style={{ marginBottom: '28px' }}>
-        <h1 style={{
-          fontSize:      '36px',
-          fontFamily:    'var(--font-display)',
-          fontWeight:    400,
-          color:         'var(--ink)',
-          letterSpacing: '-0.02em',
-          lineHeight:    1.05,
-          margin:        '0 0 6px',
-        }}>
-          Create Ticket
-        </h1>
-        <p style={{ fontSize: '13px', color: 'var(--mute)', margin: 0 }}>Submit a new support request</p>
+      <div className="mb-7">
+        <h1 className="text-ink">Create Ticket</h1>
+        <p className="mt-1.5 text-[13px] text-mute">Submit a new support request</p>
       </div>
 
       {/* Form card */}
-      <div style={{ background: 'var(--surface)', borderRadius: '16px', boxShadow: 'var(--shadow-md)', overflow: 'hidden' }}>
+      <Card className="overflow-hidden">
         <form onSubmit={handleSubmit(onSubmit)}>
-          <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="flex flex-col gap-5 p-6">
             {/* Title */}
             <div>
               <FieldLabel required>Title</FieldLabel>
-              <input
-                {...register('title')}
-                placeholder="Enter ticket title"
-                style={inputStyle}
-                onFocus={(e)  => { (e.currentTarget as HTMLInputElement).style.boxShadow = 'var(--shadow-sm), inset 0 0 0 1.5px var(--accent)'; }}
-                onBlur={(e)   => { (e.currentTarget as HTMLInputElement).style.boxShadow = 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)'; }}
-              />
+              <Input {...register('title')} placeholder="Enter ticket title" />
               <FieldError message={errors.title?.message} />
             </div>
 
             {/* Description */}
             <div>
               <FieldLabel>Description</FieldLabel>
-              <textarea
-                {...register('description')}
-                rows={5}
-                placeholder="Describe the issue…"
-                style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
-                onFocus={(e)  => { (e.currentTarget as HTMLTextAreaElement).style.boxShadow = 'var(--shadow-sm), inset 0 0 0 1.5px var(--accent)'; }}
-                onBlur={(e)   => { (e.currentTarget as HTMLTextAreaElement).style.boxShadow = 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)'; }}
-              />
+              <Textarea {...register('description')} rows={5} placeholder="Describe the issue…" className="leading-relaxed" />
             </div>
 
             {/* Priority + Category row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="grid grid-cols-2 gap-4">
               {/* Priority */}
               <div>
                 <FieldLabel>Priority</FieldLabel>
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                <div className="flex flex-wrap gap-1.5">
                   {PRIORITIES.map((p) => {
                     const active = priority === p.value;
                     return (
-                      <button
+                      <Button
                         key={p.value}
                         type="button"
+                        size="sm"
+                        variant={active ? 'primary' : 'outline'}
                         onClick={() => setValue('priority', p.value)}
-                        style={{
-                          padding:      '5px 11px',
-                          fontSize:     '12px',
-                          fontWeight:   active ? 600 : 500,
-                          border:       0,
-                          borderRadius: '8px',
-                          cursor:       'pointer',
-                          transition:   'all 80ms',
-                          background:   active ? `oklch(0.94 0.06 ${p.hue})` : 'var(--surface-2)',
-                          color:        active ? `oklch(0.38 0.16 ${p.hue})` : 'var(--ink-soft)',
-                          boxShadow:    active ? `inset 0 0 0 1px oklch(0.84 0.08 ${p.hue})` : 'none',
-                        }}
                       >
                         {p.label}
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -195,74 +145,35 @@ export default function NewTicketPage() {
               {/* Category */}
               <div>
                 <FieldLabel>Category</FieldLabel>
-                <div style={{ position: 'relative' }}>
-                  <select
-                    value={categoryId ?? ''}
-                    onChange={(e) => setValue('categoryId', e.target.value || undefined)}
-                    style={selectStyle}
-                    onFocus={(e)  => { (e.currentTarget as HTMLSelectElement).style.boxShadow = 'var(--shadow-sm), inset 0 0 0 1.5px var(--accent)'; }}
-                    onBlur={(e)   => { (e.currentTarget as HTMLSelectElement).style.boxShadow = 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)'; }}
-                  >
-                  <option value="">Select category</option>
-                  {(categories?.data ?? []).map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}</option>
-                  ))}
-                  </select>
-                  <HugeiconsIcon icon={ArrowRight01Icon} size={12} color="var(--mute)" style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-                </div>
+                <Select
+                  value={categoryId ?? ''}
+                  onValueChange={(v) => setValue('categoryId', (v as string) || undefined)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No category</SelectItem>
+                    {(categories?.data ?? []).map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
 
           {/* Footer actions */}
-          <div style={{
-            display:        'flex',
-            justifyContent: 'flex-end',
-            gap:            '10px',
-            padding:        '16px 24px',
-            borderTop:      '1px solid var(--hairline)',
-            background:     'var(--surface-2)',
-          }}>
-            <button
-              type="button"
-              onClick={() => router.back()}
-              style={{
-                padding:      '8px 16px',
-                fontSize:     '13px',
-                fontWeight:   500,
-                border:       0,
-                borderRadius: '10px',
-                background:   'var(--surface)',
-                color:        'var(--ink-soft)',
-                cursor:       'pointer',
-                boxShadow:    'var(--shadow-sm)',
-                transition:   'all 100ms',
-              }}
-            >
+          <div className="flex justify-end gap-2.5 border-t border-border bg-surface-2 px-6 py-4">
+            <Button type="button" variant="outline" onClick={() => router.back()}>
               Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={mutation.isPending}
-              style={{
-                padding:      '8px 20px',
-                fontSize:     '13px',
-                fontWeight:   600,
-                border:       0,
-                borderRadius: '10px',
-                background:   'linear-gradient(135deg, var(--accent), var(--accent-2))',
-                color:        '#fff',
-                cursor:       mutation.isPending ? 'not-allowed' : 'pointer',
-                opacity:      mutation.isPending ? 0.7 : 1,
-                boxShadow:    '0 4px 12px -4px var(--accent-glow)',
-                transition:   'all 120ms',
-              }}
-            >
+            </Button>
+            <Button type="submit" variant="primary" disabled={mutation.isPending}>
               {mutation.isPending ? 'Creating…' : 'Create Ticket'}
-            </button>
+            </Button>
           </div>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }

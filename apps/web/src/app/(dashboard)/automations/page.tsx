@@ -8,7 +8,23 @@ import { z } from 'zod';
 import { apiClient } from '@/lib/api';
 import { sileo } from 'sileo';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Add01Icon, PencilEdit01Icon, Delete01Icon, WorkflowSquare01Icon, Cancel01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons';
+import { Add01Icon, PencilEdit01Icon, Delete01Icon, WorkflowSquare01Icon, FlashIcon, Cancel01Icon } from '@hugeicons/core-free-icons';
+import {
+  Button,
+  Input,
+  Textarea,
+  Label,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+  Switch,
+  Badge,
+  Card,
+  EmptyState,
+  Skeleton,
+} from '@/components/ui';
 
 /* ─── constants ─── */
 
@@ -132,78 +148,33 @@ function getActionSummary(action: { type: string; params: Record<string, any> })
   }
 }
 
-/* ─── small UI primitives ─── */
+/* ─── small UI helpers ─── */
 
-const inputStyle: React.CSSProperties = {
-  width:        '100%',
-  padding:      '8px 10px',
-  fontSize:     '13px',
-  color:        'var(--ink)',
-  border:       0,
-  borderRadius: '8px',
-  background:   'var(--surface)',
-  boxShadow:    'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
-  outline:      'none',
-  boxSizing:    'border-box',
-  fontFamily:   'inherit',
-  transition:   'box-shadow 100ms',
-};
-const selectStyle: React.CSSProperties = {
-  width: '100%', padding: '8px 10px', fontSize: '13px', color: 'var(--ink)',
-  border: 0, borderRadius: '8px', background: 'var(--surface)',
-  boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
-  outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'box-shadow 100ms',
-  appearance: 'none', cursor: 'pointer', paddingRight: '28px',
-};
-
-function NativeSelect({ value, onChange, options, placeholder }: {
+function FieldSelect({ value, onChange, options, placeholder }: {
   value: string; onChange: (v: string) => void;
   options: readonly { value: string; label: string }[];
   placeholder?: string;
 }) {
   return (
-    <div style={{ position: 'relative' }}>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        style={selectStyle}
-      >
-        {placeholder && <option value="">{placeholder}</option>}
-        {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
-      <HugeiconsIcon icon={ArrowDown01Icon} size={12} color="var(--mute)" style={{ position: 'absolute', right: '9px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-    </div>
-  );
-}
-
-function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'none', border: 0, cursor: 'pointer', padding: 0 }}
+    <Select
+      value={value || ''}
+      onValueChange={(v) => onChange((v as string) ?? '')}
+      items={options as { value: string; label: string }[]}
     >
-      <div style={{
-        width: '32px', height: '18px', borderRadius: '999px', position: 'relative',
-        background: checked ? 'var(--accent)' : 'var(--surface-3)',
-        transition: 'background 150ms',
-        boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.12)',
-      }}>
-        <div style={{
-          position: 'absolute', top: '2px',
-          left: checked ? '16px' : '2px',
-          width: '14px', height: '14px', borderRadius: '999px',
-          background: '#fff', transition: 'left 150ms',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
-        }} />
-      </div>
-      <span style={{ fontSize: '12px', color: 'var(--ink-soft)', fontWeight: 500 }}>{label}</span>
-    </button>
+      <SelectTrigger>
+        <SelectValue placeholder={placeholder} />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((o) => (
+          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '5px' }}>{children}</div>;
+  return <div className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-mute">{children}</div>;
 }
 
 /* ─── dialog ─── */
@@ -255,7 +226,7 @@ function AutomationDialog({ open, onClose, editRule }: {
           <div>
             <FieldLabel>User</FieldLabel>
             <Controller control={control} name={`actions.${index}.params.userId`} render={({ field }) => (
-              <NativeSelect value={field.value || ''} onChange={field.onChange} options={users?.data.map((u) => ({ value: u.id, label: u.name })) ?? []} placeholder="Select user" />
+              <FieldSelect value={field.value || ''} onChange={field.onChange} options={users?.data.map((u) => ({ value: u.id, label: u.name })) ?? []} placeholder="Select user" />
             )} />
           </div>
         );
@@ -264,7 +235,7 @@ function AutomationDialog({ open, onClose, editRule }: {
           <div>
             <FieldLabel>Priority</FieldLabel>
             <Controller control={control} name={`actions.${index}.params.priority`} render={({ field }) => (
-              <NativeSelect value={field.value || ''} onChange={field.onChange} options={priorityOptions} placeholder="Select priority" />
+              <FieldSelect value={field.value || ''} onChange={field.onChange} options={priorityOptions} placeholder="Select priority" />
             )} />
           </div>
         );
@@ -273,7 +244,7 @@ function AutomationDialog({ open, onClose, editRule }: {
           <div>
             <FieldLabel>Status</FieldLabel>
             <Controller control={control} name={`actions.${index}.params.status`} render={({ field }) => (
-              <NativeSelect value={field.value || ''} onChange={field.onChange} options={statusOptions} placeholder="Select status" />
+              <FieldSelect value={field.value || ''} onChange={field.onChange} options={statusOptions} placeholder="Select status" />
             )} />
           </div>
         );
@@ -281,14 +252,14 @@ function AutomationDialog({ open, onClose, editRule }: {
         return (
           <div>
             <FieldLabel>Tag Name</FieldLabel>
-            <input {...register(`actions.${index}.params.tagName`)} placeholder="e.g. urgent" style={inputStyle} />
+            <Input {...register(`actions.${index}.params.tagName`)} placeholder="e.g. urgent" />
           </div>
         );
       case 'add_note':
         return (
           <div>
             <FieldLabel>Note Content</FieldLabel>
-            <textarea {...register(`actions.${index}.params.note`)} rows={3} placeholder="Internal note text…" style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.5 }} />
+            <Textarea {...register(`actions.${index}.params.note`)} rows={3} placeholder="Internal note text…" />
           </div>
         );
       case 'send_notification':
@@ -297,22 +268,22 @@ function AutomationDialog({ open, onClose, editRule }: {
             <div>
               <FieldLabel>User</FieldLabel>
               <Controller control={control} name={`actions.${index}.params.userId`} render={({ field }) => (
-                <NativeSelect value={field.value || ''} onChange={field.onChange} options={users?.data.map((u) => ({ value: u.id, label: u.name })) ?? []} placeholder="Select user" />
+                <FieldSelect value={field.value || ''} onChange={field.onChange} options={users?.data.map((u) => ({ value: u.id, label: u.name })) ?? []} placeholder="Select user" />
               )} />
             </div>
             <div>
               <FieldLabel>Title</FieldLabel>
-              <input {...register(`actions.${index}.params.title`)} placeholder="Notification title" style={inputStyle} />
+              <Input {...register(`actions.${index}.params.title`)} placeholder="Notification title" />
             </div>
             <div>
               <FieldLabel>Body</FieldLabel>
-              <textarea {...register(`actions.${index}.params.body`)} rows={2} placeholder="Notification body" style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.5 }} />
+              <Textarea {...register(`actions.${index}.params.body`)} rows={2} placeholder="Notification body" />
             </div>
           </>
         );
       case 'assign_team':
       case 'close_ticket':
-        return <p style={{ fontSize: '12px', color: 'var(--mute)', fontStyle: 'italic' }}>No additional parameters needed.</p>;
+        return <p className="text-xs italic text-mute">No additional parameters needed.</p>;
       default:
         return null;
     }
@@ -321,70 +292,70 @@ function AutomationDialog({ open, onClose, editRule }: {
   return (
     <div
       onClick={onClose}
-      style={{ position: 'fixed', inset: 0, zIndex: 100, background: 'rgba(15,18,30,0.32)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-6 backdrop-blur-[2px]"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ width: 'min(640px, 100%)', background: 'var(--surface)', borderRadius: '18px', boxShadow: '0 24px 60px -20px rgba(15,18,30,0.30)', maxHeight: '90vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+        className="flex max-h-[90vh] w-[min(640px,100%)] flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-pop"
       >
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 22px', borderBottom: '1px solid var(--hairline)' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.01em', margin: 0 }}>
+        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+          <h3 className="text-ink">
             {isEdit ? 'Edit automation rule' : 'Create automation rule'}
-          </h2>
-          <button onClick={onClose} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'var(--surface-2)', color: 'var(--mute)', cursor: 'pointer' }}>
+          </h3>
+          <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close">
             <HugeiconsIcon icon={Cancel01Icon} size={14} />
-          </button>
+          </Button>
         </div>
 
         {/* Body */}
-        <div style={{ overflowY: 'auto', flex: 1 }}>
-          <form onSubmit={handleSubmit(onSubmit)} id="automation-form" style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        <div className="flex-1 overflow-y-auto">
+          <form onSubmit={handleSubmit(onSubmit)} id="automation-form" className="flex flex-col gap-4 px-6 py-5">
             {/* Name */}
             <div>
               <FieldLabel>Name *</FieldLabel>
-              <input {...register('name')} placeholder="Rule name" style={inputStyle} />
-              {errors.name && <p style={{ fontSize: '11px', color: 'oklch(0.50 0.20 22)', marginTop: '4px' }}>{errors.name.message}</p>}
+              <Input {...register('name')} placeholder="Rule name" />
+              {errors.name && <p className="mt-1 text-[11px] text-danger">{errors.name.message}</p>}
             </div>
 
             {/* Description */}
             <div>
               <FieldLabel>Description</FieldLabel>
-              <textarea {...register('description')} rows={2} placeholder="Optional description" style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.5 }} />
+              <Textarea {...register('description')} rows={2} placeholder="Optional description" />
             </div>
 
             {/* Trigger */}
             <div>
               <FieldLabel>Trigger *</FieldLabel>
               <Controller control={control} name="trigger" render={({ field }) => (
-                <NativeSelect value={field.value || ''} onChange={field.onChange} options={triggerOptions} placeholder="Select trigger" />
+                <FieldSelect value={field.value || ''} onChange={field.onChange} options={triggerOptions} placeholder="Select trigger" />
               )} />
-              {errors.trigger && <p style={{ fontSize: '11px', color: 'oklch(0.50 0.20 22)', marginTop: '4px' }}>{errors.trigger.message}</p>}
+              {errors.trigger && <p className="mt-1 text-[11px] text-danger">{errors.trigger.message}</p>}
             </div>
 
             {/* Conditions */}
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <div className="mb-2.5 flex items-center justify-between">
                 <FieldLabel>Conditions</FieldLabel>
-                <button type="button" onClick={() => addCond({ field: 'priority', operator: 'equals', value: '' })} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', fontSize: '11px', fontWeight: 600, border: 0, borderRadius: '7px', background: 'var(--surface-2)', color: 'var(--ink-soft)', cursor: 'pointer' }}>
+                <Button variant="secondary" size="sm" onClick={() => addCond({ field: 'priority', operator: 'equals', value: '' })}>
                   <HugeiconsIcon icon={Add01Icon} size={11} /> Add
-                </button>
+                </Button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="flex flex-col gap-2">
                 {condFields.map((field, index) => (
-                  <div key={field.id} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', background: 'var(--surface-2)', borderRadius: '10px', padding: '12px' }}>
-                    <div style={{ flex: 1, display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                  <div key={field.id} className="flex items-start gap-2 rounded-lg bg-surface-2 p-3">
+                    <div className="grid flex-1 grid-cols-3 gap-2">
                       <Controller control={control} name={`conditions.${index}.field`} render={({ field: f }) => (
-                        <NativeSelect value={f.value || ''} onChange={f.onChange} options={conditionFieldOptions} placeholder="Field" />
+                        <FieldSelect value={f.value || ''} onChange={f.onChange} options={conditionFieldOptions} placeholder="Field" />
                       )} />
                       <Controller control={control} name={`conditions.${index}.operator`} render={({ field: f }) => (
-                        <NativeSelect value={f.value || ''} onChange={f.onChange} options={operatorOptions} placeholder="Operator" />
+                        <FieldSelect value={f.value || ''} onChange={f.onChange} options={operatorOptions} placeholder="Operator" />
                       )} />
-                      <input {...register(`conditions.${index}.value`)} placeholder="Value" style={inputStyle} />
+                      <Input {...register(`conditions.${index}.value`)} placeholder="Value" />
                     </div>
-                    <button type="button" onClick={() => removeCond(index)} style={{ width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'transparent', color: 'oklch(0.50 0.20 22)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '1px' }}>
+                    <Button variant="ghost" size="icon-sm" className="mt-0.5 shrink-0 text-mute hover:text-danger" onClick={() => removeCond(index)} aria-label="Remove condition">
                       <HugeiconsIcon icon={Delete01Icon} size={13} />
-                    </button>
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -392,19 +363,19 @@ function AutomationDialog({ open, onClose, editRule }: {
 
             {/* Actions */}
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+              <div className="mb-2.5 flex items-center justify-between">
                 <FieldLabel>Actions *</FieldLabel>
-                <button type="button" onClick={() => addAct({ type: 'assign_user', params: { userId: '' } } as any)} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '4px 10px', fontSize: '11px', fontWeight: 600, border: 0, borderRadius: '7px', background: 'var(--surface-2)', color: 'var(--ink-soft)', cursor: 'pointer' }}>
+                <Button variant="secondary" size="sm" onClick={() => addAct({ type: 'assign_user', params: { userId: '' } } as any)}>
                   <HugeiconsIcon icon={Add01Icon} size={11} /> Add
-                </button>
+                </Button>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div className="flex flex-col gap-2">
                 {actFields.map((field, index) => (
-                  <div key={field.id} style={{ background: 'var(--surface-2)', borderRadius: '10px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{ flex: 1 }}>
+                  <div key={field.id} className="flex flex-col gap-2.5 rounded-lg bg-surface-2 p-3">
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1">
                         <Controller control={control} name={`actions.${index}.type`} render={({ field: f }) => (
-                          <NativeSelect
+                          <FieldSelect
                             value={f.value || ''}
                             onChange={(type) => {
                               f.onChange(type);
@@ -415,30 +386,31 @@ function AutomationDialog({ open, onClose, editRule }: {
                           />
                         )} />
                       </div>
-                      <button type="button" onClick={() => removeAct(index)} style={{ width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'transparent', color: 'oklch(0.50 0.20 22)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Button variant="ghost" size="icon-sm" className="shrink-0 text-mute hover:text-danger" onClick={() => removeAct(index)} aria-label="Remove action">
                         <HugeiconsIcon icon={Delete01Icon} size={13} />
-                      </button>
+                      </Button>
                     </div>
                     {renderActionParams(index)}
                   </div>
                 ))}
               </div>
-              {errors.actions && <p style={{ fontSize: '11px', color: 'oklch(0.50 0.20 22)', marginTop: '4px' }}>{errors.actions.message as string}</p>}
+              {errors.actions && <p className="mt-1 text-[11px] text-danger">{errors.actions.message as string}</p>}
             </div>
 
             {/* Active toggle */}
-            <Toggle checked={!!isActive} onChange={(v) => setValue('isActive', v)} label="Active rule" />
+            <Label className="flex w-fit cursor-pointer items-center gap-2">
+              <Switch checked={!!isActive} onCheckedChange={(v: boolean) => setValue('isActive', v)} />
+              Active rule
+            </Label>
           </form>
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '14px 22px', borderTop: '1px solid var(--hairline)', display: 'flex', justifyContent: 'flex-end', gap: '10px', background: 'var(--surface-2)' }}>
-          <button type="button" onClick={onClose} style={{ padding: '8px 16px', fontSize: '13px', fontWeight: 500, border: 0, borderRadius: '9px', background: 'var(--surface)', color: 'var(--ink-soft)', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
-            Cancel
-          </button>
-          <button type="submit" form="automation-form" disabled={isPending} style={{ padding: '8px 18px', fontSize: '13px', fontWeight: 600, border: 0, borderRadius: '9px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', color: '#fff', cursor: isPending ? 'not-allowed' : 'pointer', opacity: isPending ? 0.7 : 1, boxShadow: '0 4px 12px -4px var(--accent-glow)' }}>
+        <div className="flex justify-end gap-2.5 border-t border-border bg-surface-2 px-6 py-3.5">
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button variant="primary" type="submit" form="automation-form" disabled={isPending}>
             {isPending ? 'Saving…' : isEdit ? 'Update rule' : 'Create rule'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -478,115 +450,107 @@ export default function AutomationsPage() {
 
   if (error) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', padding: '60px 0' }}>
-        <p style={{ fontSize: '14px', fontWeight: 500, color: 'oklch(0.50 0.20 22)' }}>Failed to load automations</p>
-        <button onClick={() => queryClient.invalidateQueries({ queryKey: ['automations'] })} style={{ padding: '7px 14px', fontSize: '13px', fontWeight: 500, border: 0, borderRadius: '9px', background: 'var(--surface-2)', color: 'var(--ink-soft)', cursor: 'pointer', boxShadow: 'var(--shadow-sm)' }}>
+      <div className="flex flex-col items-center gap-2.5 py-16">
+        <p className="text-sm font-medium text-danger">Failed to load automations</p>
+        <Button variant="secondary" onClick={() => queryClient.invalidateQueries({ queryKey: ['automations'] })}>
           Retry
-        </button>
+        </Button>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="flex flex-col gap-6">
       {/* Page head */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+      <div className="flex items-start justify-between">
         <div>
-          <h1 style={{ fontSize: '36px', fontFamily: 'var(--font-display)', fontWeight: 400, color: 'var(--ink)', letterSpacing: '-0.02em', lineHeight: 1.05, margin: 0 }}>
-            Automations
-          </h1>
-          <p style={{ fontSize: '13px', color: 'var(--mute)', marginTop: '6px' }}>
+          <h1 className="text-ink">Automations</h1>
+          <p className="mt-1.5 text-[13px] text-mute">
             {rules.length} rule{rules.length !== 1 ? 's' : ''} configured
           </p>
         </div>
-        <button
-          onClick={openCreate}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', fontSize: '13px', fontWeight: 600, border: 0, borderRadius: '10px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', color: '#fff', cursor: 'pointer', boxShadow: '0 4px 12px -4px var(--accent-glow)' }}
-        >
+        <Button variant="primary" onClick={openCreate}>
           <HugeiconsIcon icon={Add01Icon} size={14} /> New Rule
-        </button>
+        </Button>
       </div>
 
       {/* Loading */}
       {isLoading && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+        <div className="grid grid-cols-3 gap-3.5">
           {[1,2,3,4,5,6].map((i) => (
-            <div key={i} style={{ background: 'var(--surface)', borderRadius: '16px', boxShadow: 'var(--shadow-sm)', padding: '18px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ height: '16px', width: '60%', background: 'var(--surface-2)', borderRadius: '6px' }} />
-              <div style={{ height: '13px', width: '100%', background: 'var(--surface-2)', borderRadius: '6px' }} />
-              <div style={{ height: '13px', width: '40%', background: 'var(--surface-2)', borderRadius: '6px' }} />
-            </div>
+            <Card key={i} className="flex flex-col gap-2.5 p-[18px]">
+              <Skeleton width="60%" height={16} />
+              <Skeleton width="100%" height={13} />
+              <Skeleton width="40%" height={13} />
+            </Card>
           ))}
         </div>
       )}
 
       {/* Empty */}
       {!isLoading && rules.length === 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', padding: '80px 0' }}>
-          <div style={{ width: '56px', height: '56px', borderRadius: '16px', background: 'var(--surface-2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--mute)' }}>
-            <HugeiconsIcon icon={WorkflowSquare01Icon} size={24} />
-          </div>
-          <p style={{ fontSize: '15px', fontWeight: 500, color: 'var(--ink)', margin: 0 }}>No automation rules yet</p>
-          <p style={{ fontSize: '13px', color: 'var(--mute)', margin: 0 }}>Create rules to automate repetitive ticket workflows.</p>
-          <button onClick={openCreate} style={{ marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 18px', fontSize: '13px', fontWeight: 600, border: 0, borderRadius: '10px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', color: '#fff', cursor: 'pointer', boxShadow: '0 4px 12px -4px var(--accent-glow)' }}>
-            <HugeiconsIcon icon={Add01Icon} size={14} /> Create Rule
-          </button>
-        </div>
+        <EmptyState
+          icon={WorkflowSquare01Icon}
+          title="No automation rules yet"
+          description="Create rules to automate repetitive ticket workflows."
+          action={
+            <Button variant="primary" onClick={openCreate}>
+              <HugeiconsIcon icon={Add01Icon} size={14} /> Create Rule
+            </Button>
+          }
+        />
       )}
 
       {/* Rules grid */}
       {!isLoading && rules.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px' }}>
+        <div className="grid grid-cols-3 gap-3.5">
           {rules.map((rule) => (
-            <div key={rule.id} style={{ background: 'var(--surface)', borderRadius: '16px', boxShadow: 'var(--shadow-sm)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-              <div style={{ padding: '16px 18px', flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px', marginBottom: '10px' }}>
-                  <p style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.005em', margin: 0, lineHeight: 1.3 }}>{rule.name}</p>
-                  <span style={{
-                    flexShrink: 0,
-                    padding: '2px 7px', fontSize: '10.5px', fontWeight: 600, borderRadius: '5px',
-                    background: rule.isActive ? 'oklch(0.92 0.06 148)' : 'var(--surface-2)',
-                    color:      rule.isActive ? 'oklch(0.40 0.16 148)' : 'var(--mute)',
-                  }}>
+            <Card key={rule.id} className="flex flex-col overflow-hidden">
+              <div className="flex-1 p-4">
+                <div className="mb-2.5 flex items-start justify-between gap-2.5">
+                  <p className="text-[13.5px] font-semibold leading-tight text-ink">{rule.name}</p>
+                  <Badge variant={rule.isActive ? 'success' : 'neutral'} className="shrink-0">
                     {rule.isActive ? 'Active' : 'Inactive'}
-                  </span>
+                  </Badge>
                 </div>
-                {rule.description && <p style={{ fontSize: '12px', color: 'var(--mute)', margin: '0 0 12px', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{rule.description}</p>}
+                {rule.description && (
+                  <p className="mb-3 line-clamp-2 text-xs leading-relaxed text-mute">{rule.description}</p>
+                )}
 
                 {/* Trigger */}
-                <div style={{ marginBottom: '8px' }}>
-                  <span style={{ display: 'inline-flex', padding: '3px 8px', fontSize: '11px', fontWeight: 500, borderRadius: '6px', background: 'var(--accent-tint)', color: 'var(--accent)' }}>
-                    ⚡ {getTriggerLabel(rule.trigger)}
-                  </span>
+                <div className="mb-2">
+                  <Badge variant="info" className="gap-1">
+                    <HugeiconsIcon icon={FlashIcon} size={11} /> {getTriggerLabel(rule.trigger)}
+                  </Badge>
                 </div>
 
                 {/* Actions */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                <div className="flex flex-wrap gap-1">
                   {rule.actions.map((a, i) => (
-                    <span key={i} style={{ padding: '2px 7px', fontSize: '11px', fontWeight: 500, borderRadius: '5px', background: 'var(--surface-2)', color: 'var(--ink-soft)' }}>
-                      {getActionSummary(a)}
-                    </span>
+                    <Badge key={i} variant="neutral">{getActionSummary(a)}</Badge>
                   ))}
                 </div>
               </div>
 
               {/* Footer */}
-              <div style={{ padding: '10px 18px', borderTop: '1px solid var(--hairline)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Toggle
-                  checked={rule.isActive}
-                  onChange={(checked) => toggleMutation.mutate({ id: rule.id, isActive: checked })}
-                  label={rule.isActive ? 'On' : 'Off'}
-                />
-                <div style={{ display: 'flex', gap: '4px' }}>
-                  <button onClick={() => openEdit(rule)} style={{ width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'transparent', color: 'var(--mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 100ms' }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--ink)'; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--mute)'; }}>
+              <div className="flex items-center justify-between border-t border-border px-4 py-2.5">
+                <Label className="flex cursor-pointer items-center gap-2">
+                  <Switch
+                    checked={rule.isActive}
+                    onCheckedChange={(checked: boolean) => toggleMutation.mutate({ id: rule.id, isActive: checked })}
+                  />
+                  {rule.isActive ? 'On' : 'Off'}
+                </Label>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon-sm" onClick={() => openEdit(rule)} aria-label="Edit rule">
                     <HugeiconsIcon icon={PencilEdit01Icon} size={13} />
-                  </button>
-                  <button onClick={() => { if (window.confirm('Delete this rule?')) deleteMutation.mutate(rule.id); }} style={{ width: '28px', height: '28px', border: 0, borderRadius: '7px', background: 'transparent', color: 'var(--mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 100ms' }} onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'oklch(0.96 0.04 22)'; (e.currentTarget as HTMLButtonElement).style.color = 'oklch(0.50 0.20 22)'; }} onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--mute)'; }}>
+                  </Button>
+                  <Button variant="ghost" size="icon-sm" className="text-mute hover:text-danger" onClick={() => { if (window.confirm('Delete this rule?')) deleteMutation.mutate(rule.id); }} aria-label="Delete rule">
                     <HugeiconsIcon icon={Delete01Icon} size={13} />
-                  </button>
+                  </Button>
                 </div>
               </div>
-            </div>
+            </Card>
           ))}
         </div>
       )}

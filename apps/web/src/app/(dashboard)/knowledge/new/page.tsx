@@ -22,12 +22,10 @@ export default function NewArticlePage() {
   if (!user || !isAdminOrAgent) return null;
 
   return (
-    <div style={{ maxWidth: '640px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div className="flex max-w-[640px] flex-col gap-5">
       <div>
-        <h1 style={{ fontSize: '28px', fontFamily: 'var(--font-display)', fontWeight: 400, color: 'var(--ink)', letterSpacing: '-0.02em', margin: 0 }}>
-          New Article
-        </h1>
-        <p style={{ fontSize: '13px', color: 'var(--mute)', marginTop: '6px' }}>Create a new knowledge base article</p>
+        <h1>New Article</h1>
+        <p className="mt-1.5 text-[13px] text-mute">Create a new knowledge base article</p>
       </div>
       <ArticleForm />
     </div>

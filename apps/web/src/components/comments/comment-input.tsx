@@ -7,6 +7,12 @@ import { ZapIcon, PlusSignIcon, Delete02Icon } from '@hugeicons/core-free-icons'
 import { apiClient } from '@/lib/api';
 import { sileo } from 'sileo';
 import { useSocket } from '@/components/providers/socket-provider';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface QuickReply { id: string; label: string; content: string; }
 
@@ -45,7 +51,6 @@ export function CommentInput({
   const [open, setOpen] = useState(false);
   const [replies, setReplies] = useState<QuickReply[]>([]);
   const [newLabel, setNewLabel] = useState('');
-  const popRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const socket = useSocket();
   const typingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -70,15 +75,6 @@ export function CommentInput({
   }, [socket, ticketId]);
 
   useEffect(() => { setReplies(loadReplies()); }, []);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (popRef.current && !popRef.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -119,8 +115,8 @@ export function CommentInput({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      <textarea
+    <div className="flex flex-col gap-2">
+      <Textarea
         placeholder="Write a comment… markdown supported (use @ to mention)"
         aria-label="Write a comment"
         value={content}
@@ -134,104 +130,81 @@ export function CommentInput({
             emitTyping(false);
           }
         }}
+        onBlur={() => emitTyping(false)}
         rows={3}
-        style={{
-          width: '100%', padding: '9px 11px', fontSize: '13px', color: 'var(--ink)',
-          border: 0, borderRadius: '9px', background: 'var(--surface)',
-          boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
-          outline: 'none', fontFamily: 'inherit', resize: 'vertical', lineHeight: '1.55',
-          boxSizing: 'border-box', transition: 'box-shadow 100ms',
-        }}
-        onFocus={(e) => { e.currentTarget.style.boxShadow = 'var(--shadow-sm), inset 0 0 0 1.5px var(--accent)'; }}
-        onBlur={(e) => {
-          e.currentTarget.style.boxShadow = 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)';
-          emitTyping(false);
-        }}
       />
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ position: 'relative' }} ref={popRef}>
-            <button
-              type="button"
-              onClick={() => setOpen((v) => !v)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 9px', fontSize: '11.5px', fontWeight: 500, border: 0, borderRadius: '7px', background: 'var(--surface-2)', color: 'var(--ink-soft)', cursor: 'pointer' }}
-            >
-              <HugeiconsIcon icon={ZapIcon} size={11} /> Quick replies
-            </button>
-            {open && (
-              <div style={{
-                position: 'absolute', bottom: 'calc(100% + 6px)', left: 0, width: '320px', zIndex: 50,
-                background: 'var(--surface)', borderRadius: '10px', padding: '8px',
-                boxShadow: 'var(--shadow-md), 0 0 0 1px var(--hairline)',
-              }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', maxHeight: '220px', overflowY: 'auto' }}>
-                  {replies.length === 0 && (
-                    <div style={{ padding: '8px', fontSize: '11.5px', color: 'var(--mute)' }}>No saved replies yet</div>
-                  )}
-                  {replies.map((r) => (
-                    <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 8px', borderRadius: '7px', transition: 'background 100ms' }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--surface-2)'; }}
-                      onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-                    >
-                      <button
-                        onClick={() => insertReply(r)}
-                        style={{ flex: 1, minWidth: 0, textAlign: 'left', border: 0, background: 'transparent', cursor: 'pointer', padding: 0 }}
-                      >
-                        <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--ink)' }}>{r.label}</div>
-                        <div style={{ fontSize: '11px', color: 'var(--mute)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{r.content}</div>
-                      </button>
-                      <button
-                        onClick={() => removeReply(r.id)}
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', border: 0, borderRadius: '5px', background: 'transparent', color: 'var(--mute)', cursor: 'pointer' }}
-                        title="Delete"
-                      >
-                        <HugeiconsIcon icon={Delete02Icon} size={11} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid var(--hairline)', display: 'flex', gap: '6px' }}>
-                  <input
-                    placeholder="Save current as…"
-                    value={newLabel}
-                    onChange={(e) => setNewLabel(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') saveCurrentAs(); }}
-                    style={{ flex: 1, padding: '6px 8px', fontSize: '11.5px', border: 0, borderRadius: '6px', background: 'var(--surface-2)', color: 'var(--ink)', outline: 'none' }}
-                  />
-                  <button
-                    onClick={saveCurrentAs}
-                    disabled={!content.trim() || !newLabel.trim()}
-                    style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 10px', fontSize: '11px', fontWeight: 600, border: 0, borderRadius: '6px', background: 'var(--accent)', color: '#fff', cursor: 'pointer', opacity: (!content.trim() || !newLabel.trim()) ? 0.45 : 1 }}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger
+              render={
+                <Button variant="secondary" size="sm">
+                  <HugeiconsIcon icon={ZapIcon} size={11} /> Quick replies
+                </Button>
+              }
+            />
+            <PopoverContent align="start" className="w-80 p-2">
+              <div className="flex max-h-[220px] flex-col gap-0.5 overflow-y-auto">
+                {replies.length === 0 && (
+                  <div className="p-2 text-[11.5px] text-mute">No saved replies yet</div>
+                )}
+                {replies.map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex items-center gap-1.5 rounded-md p-1.5 transition-colors hover:bg-surface-2"
                   >
-                    <HugeiconsIcon icon={PlusSignIcon} size={10} /> Save
-                  </button>
-                </div>
+                    <button
+                      type="button"
+                      onClick={() => insertReply(r)}
+                      className="min-w-0 flex-1 cursor-pointer text-left"
+                    >
+                      <div className="text-xs font-semibold text-ink">{r.label}</div>
+                      <div className="truncate text-[11px] text-mute">{r.content}</div>
+                    </button>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => removeReply(r.id)}
+                      title="Delete"
+                    >
+                      <HugeiconsIcon icon={Delete02Icon} size={11} />
+                    </Button>
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
+              <div className="mt-2 flex gap-1.5 border-t border-border pt-2">
+                <Input
+                  placeholder="Save current as…"
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') saveCurrentAs(); }}
+                  className="h-7 text-[11.5px]"
+                />
+                <Button
+                  size="sm"
+                  onClick={saveCurrentAs}
+                  disabled={!content.trim() || !newLabel.trim()}
+                >
+                  <HugeiconsIcon icon={PlusSignIcon} size={10} /> Save
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
           {showInternal && (
-            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--mute)', cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={isInternal}
-                onChange={(e) => setIsInternal(e.target.checked)}
-              />
+            <Label className="flex cursor-pointer items-center gap-2 text-xs text-mute">
+              <Switch checked={isInternal} onCheckedChange={setIsInternal} />
               Internal
-            </label>
+            </Label>
           )}
         </div>
-        <button
+        <Button
+          variant="primary"
+          size="md"
           onClick={() => mutation.mutate()}
           disabled={!content.trim() || mutation.isPending}
-          style={{
-            padding: '7px 16px', fontSize: '12px', fontWeight: 600, border: 0,
-            borderRadius: '9px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
-            color: '#fff', cursor: 'pointer', opacity: (!content.trim() || mutation.isPending) ? 0.55 : 1,
-            boxShadow: '0 3px 10px -3px var(--accent-glow)', transition: 'opacity 100ms',
-          }}
         >
           {mutation.isPending ? 'Sending…' : 'Send'}
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -46,153 +46,68 @@ export function CommandPalette() {
   return (
     <div
       onClick={close}
-      style={{
-        position:        'fixed',
-        inset:           0,
-        zIndex:          100,
-        background:      'rgba(15,18,30,0.32)',
-        backdropFilter:  'blur(4px)',
-        display:         'flex',
-        alignItems:      'flex-start',
-        justifyContent:  'center',
-        paddingTop:      '12vh',
-        animation:       'hx-fade 140ms ease-out',
-      }}
+      className="fixed inset-0 z-[100] flex items-start justify-center bg-black/40 pt-[12vh] backdrop-blur-[4px]"
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{
-          width:         'min(620px, 92vw)',
-          background:    'var(--surface)',
-          border:        '1px solid var(--border)',
-          borderRadius:  '16px',
-          boxShadow:     '0 24px 60px -20px rgba(15,18,30,0.30), 0 4px 12px rgba(15,18,30,0.08)',
-          overflow:      'hidden',
-          animation:     'hx-pop 200ms cubic-bezier(0.2,0.8,0.2,1)',
-        }}
+        className="w-[min(620px,92vw)] overflow-hidden rounded-2xl border border-border bg-surface shadow-pop"
       >
         {/* Search bar */}
-        <div style={{
-          display:      'flex',
-          alignItems:   'center',
-          gap:          '10px',
-          padding:      '14px 18px',
-          borderBottom: '1px solid var(--border)',
-        }}>
-          <HugeiconsIcon icon={Search01Icon} size={16} color="var(--mute)" />
+        <div className="flex items-center gap-2.5 border-b border-border px-4 py-3.5">
+          <HugeiconsIcon icon={Search01Icon} size={16} className="text-mute" />
           <input
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search or run a command…"
-            style={{
-              flex:         1,
-              border:       0,
-              outline:      0,
-              background:   'transparent',
-              fontSize:     '15px',
-              color:        'var(--ink)',
-              letterSpacing: '-0.01em',
-            }}
+            className="flex-1 border-0 bg-transparent text-[15px] text-ink outline-none placeholder:text-mute-soft"
           />
           <button
             onClick={close}
-            style={{
-              display:         'inline-flex',
-              alignItems:      'center',
-              justifyContent:  'center',
-              width:           '22px',
-              height:          '22px',
-              border:          0,
-              borderRadius:    '5px',
-              background:      'var(--surface-2)',
-              color:           'var(--mute)',
-              cursor:          'pointer',
-              transition:      'all 100ms',
-            }}
+            className="inline-flex h-[22px] w-[22px] items-center justify-center rounded-md bg-surface-2 text-mute hover:bg-surface-3"
           >
             <HugeiconsIcon icon={Cancel01Icon} size={12} />
           </button>
         </div>
 
         {/* Results */}
-        <div style={{ maxHeight: '400px', overflowY: 'auto', padding: '6px 0' }}>
-          <div style={{ padding: '8px 0' }}>
-            <div style={{
-              padding:        '4px 18px',
-              fontSize:       '10px',
-              color:          'var(--mute)',
-              textTransform:  'uppercase',
-              letterSpacing:  '0.08em',
-              fontWeight:     600,
-            }}>
+        <div className="max-h-[400px] overflow-y-auto py-1.5">
+          <div className="py-2">
+            <div className="px-4 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-mute">
               {query ? 'Results' : 'Quick actions'}
             </div>
             {filtered.length === 0 ? (
-              <div style={{ padding: '32px 18px', textAlign: 'center', fontSize: '13px', color: 'var(--mute)' }}>
+              <div className="px-4 py-8 text-center text-[13px] text-mute">
                 No results for &ldquo;{query}&rdquo;
               </div>
             ) : (
-              filtered.map((a) => {
-                return (
-                  <button
-                    key={a.href}
-                    onClick={() => { close(); router.push(a.href); }}
-                    style={{
-                      display:      'flex',
-                      alignItems:   'center',
-                      gap:          '10px',
-                      width:        '100%',
-                      padding:      '8px 18px',
-                      background:   'transparent',
-                      border:       0,
-                      cursor:       'pointer',
-                      textAlign:    'left',
-                      color:        'var(--ink)',
-                      transition:   'background 80ms',
-                    }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--surface-2)'; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent'; }}
-                  >
-                    <span style={{ color: 'var(--mute)', display: 'flex' }}><HugeiconsIcon icon={a.icon} size={15} /></span>
-                    <span style={{ flex: 1, fontSize: '13px', fontWeight: 500, letterSpacing: '-0.005em' }}>{a.label}</span>
-                    {a.kbd && (
-                      <kbd style={{
-                        display:       'inline-flex',
-                        alignItems:    'center',
-                        padding:       '1.5px 5px',
-                        fontSize:      '10.5px',
-                        background:    'var(--surface-2)',
-                        color:         'var(--mute)',
-                        borderRadius:  '4px',
-                        fontFamily:    'var(--font-mono)',
-                        boxShadow:     'var(--shadow-sm)',
-                      }}>{a.kbd}</kbd>
-                    )}
-                  </button>
-                );
-              })
+              filtered.map((a) => (
+                <button
+                  key={a.href}
+                  onClick={() => { close(); router.push(a.href); }}
+                  className="flex w-full items-center gap-2.5 px-4 py-2 text-left text-ink transition-colors hover:bg-surface-2"
+                >
+                  <span className="flex text-mute"><HugeiconsIcon icon={a.icon} size={15} /></span>
+                  <span className="flex-1 text-[13px] font-medium">{a.label}</span>
+                  {a.kbd && (
+                    <kbd className="inline-flex items-center rounded bg-surface-2 px-1.5 py-px font-mono text-[10.5px] text-mute shadow-sm">
+                      {a.kbd}
+                    </kbd>
+                  )}
+                </button>
+              ))
             )}
           </div>
         </div>
 
         {/* Footer hint */}
-        <div style={{
-          display:         'flex',
-          alignItems:      'center',
-          justifyContent:  'space-between',
-          padding:         '10px 18px',
-          borderTop:       '1px solid var(--border)',
-          background:      'var(--surface-2)',
-          fontSize:        '11px',
-          color:           'var(--mute)',
-        }}>
-          <div style={{ display: 'flex', gap: '14px' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <kbd style={{ fontFamily: 'var(--font-mono)', background: 'var(--surface)', padding: '0 4px', borderRadius: '3px', fontSize: '11px' }}>↵</kbd> open
+        <div className="flex items-center justify-between border-t border-border bg-surface-2 px-4 py-2.5 text-[11px] text-mute">
+          <div className="flex gap-3.5">
+            <span className="inline-flex items-center gap-1">
+              <kbd className="rounded bg-surface px-1 font-mono text-[11px]">↵</kbd> open
             </span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-              <kbd style={{ fontFamily: 'var(--font-mono)', background: 'var(--surface)', padding: '0 4px', borderRadius: '3px', fontSize: '11px' }}>esc</kbd> close
+            <span className="inline-flex items-center gap-1">
+              <kbd className="rounded bg-surface px-1 font-mono text-[11px]">esc</kbd> close
             </span>
           </div>
         </div>

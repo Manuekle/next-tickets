@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '@/lib/api';
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
 import { UserGroupIcon, Ticket01Icon, BubbleChatIcon, Activity01Icon } from '@hugeicons/core-free-icons';
+import { Card, Skeleton } from '@/components/ui';
 
 interface SystemStats {
   totalUsers: number;
@@ -15,17 +16,17 @@ interface SystemStats {
 
 function StatCard({ title, value, icon, loading }: { title: string; value?: number; icon: IconSvgElement; loading: boolean }) {
   return (
-    <div style={{ background: 'var(--surface)', borderRadius: '14px', boxShadow: 'var(--shadow-md)', padding: '18px 20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-        <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--mute)' }}>{title}</span>
+    <Card className="p-[18px]">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-xs font-medium text-mute">{title}</span>
         <HugeiconsIcon icon={icon} size={16} color="var(--mute)" />
       </div>
       {loading ? (
-        <div style={{ height: '28px', width: '80px', borderRadius: '6px', background: 'var(--surface-2)' }} />
+        <Skeleton width={80} height={28} />
       ) : (
-        <p style={{ fontSize: '26px', fontWeight: 700, color: 'var(--ink)', letterSpacing: '-0.02em', margin: 0 }}>{value ?? 0}</p>
+        <p className="text-2xl font-bold tracking-tight text-ink">{value ?? 0}</p>
       )}
-    </div>
+    </Card>
   );
 }
 
@@ -39,47 +40,47 @@ export default function AdminSettingsPage() {
 
   if (error) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '64px 0', color: 'oklch(0.50 0.20 22)', fontSize: '14px' }}>
+      <div className="flex items-center justify-center py-16 text-sm text-danger">
         Failed to load system stats
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="flex flex-col gap-6">
       <div>
-        <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.01em', margin: 0 }}>Settings</h2>
-        <p style={{ fontSize: '12px', color: 'var(--mute)', marginTop: '3px' }}>System information and configuration</p>
+        <h2 className="text-ink">Settings</h2>
+        <p className="mt-0.5 text-xs text-mute">System information and configuration</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px' }}>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-3">
         <StatCard title="Total Users"    value={stats?.totalUsers}    icon={UserGroupIcon}  loading={isLoading} />
         <StatCard title="Total Tickets"  value={stats?.totalTickets}  icon={Ticket01Icon}   loading={isLoading} />
         <StatCard title="Total Comments" value={stats?.totalComments} icon={BubbleChatIcon} loading={isLoading} />
         <StatCard title="Active Sessions" value={stats?.activeSessions} icon={Activity01Icon} loading={isLoading} />
       </div>
 
-      <div style={{ background: 'var(--surface)', borderRadius: '14px', boxShadow: 'var(--shadow-md)', overflow: 'hidden' }}>
-        <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--hairline)' }}>
-          <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--ink)' }}>Users by Role</span>
+      <Card className="overflow-hidden">
+        <div className="border-b border-border px-[18px] py-3.5">
+          <span className="text-[13px] font-semibold text-ink">Users by Role</span>
         </div>
-        <div style={{ padding: '18px' }}>
+        <div className="p-[18px]">
           {isLoading ? (
-            <div style={{ height: '120px', borderRadius: '8px', background: 'var(--surface-2)' }} />
+            <Skeleton height={120} radius={8} />
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div className="flex flex-col gap-2.5">
               {stats?.usersByRole.map((r) => (
-                <div key={r.role} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '13px' }}>
-                  <span style={{ color: 'var(--ink-soft)', textTransform: 'capitalize' }}>
+                <div key={r.role} className="flex items-center justify-between text-[13px]">
+                  <span className="capitalize text-ink-soft">
                     {r.role === 'SUPER_ADMIN' ? 'Super Admin' : r.role.toLowerCase()}
                   </span>
-                  <span style={{ fontWeight: 600, color: 'var(--ink)' }}>{r.count}</span>
+                  <span className="font-semibold text-ink">{r.count}</span>
                 </div>
               ))}
             </div>
           )}
         </div>
-      </div>
+      </Card>
     </div>
   );
 }

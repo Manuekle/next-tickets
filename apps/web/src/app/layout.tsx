@@ -1,13 +1,8 @@
 import type { Metadata } from 'next';
 import { Providers } from '@/components/providers';
 import './globals.css';
-import { Plus_Jakarta_Sans } from 'next/font/google';
-
-const font = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  variable: '--font-sans',
-  weight: ['400', '500', '600', '700'],
-});
+import { GeistSans } from 'geist/font/sans';
+import { GeistMono } from 'geist/font/mono';
 
 export const metadata: Metadata = {
   title: {
@@ -34,9 +29,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       suppressHydrationWarning
-      className={font.variable}
+      className={`${GeistSans.variable} ${GeistMono.variable}`}
       data-theme="light"
-      data-accent="indigo"
     >
       <body suppressHydrationWarning>
         <Providers>{children}</Providers>

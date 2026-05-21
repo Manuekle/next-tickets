@@ -6,6 +6,19 @@ import { apiClient } from '@/lib/api';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { Search01Icon } from '@hugeicons/core-free-icons';
 import { format } from 'date-fns';
+import {
+  Button,
+  Input,
+  Badge,
+  Card,
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  Skeleton,
+} from '@/components/ui';
 
 interface AuditLog {
   id: string;
@@ -19,11 +32,11 @@ interface AuditLog {
 
 type ApiListResponse<T> = { data: T; meta: { total: number; totalPages: number } };
 
-const actionBadge: Record<string, React.CSSProperties> = {
-  CREATE: { background: 'oklch(0.94 0.06 148)', color: 'oklch(0.42 0.16 148)' },
-  UPDATE: { background: 'var(--accent-tint)', color: 'var(--accent)' },
-  DELETE: { background: 'oklch(0.95 0.04 22)', color: 'oklch(0.50 0.20 22)' },
-  LOGIN:  { background: 'var(--surface-2)', color: 'var(--mute)' },
+const actionBadgeVariant: Record<string, 'success' | 'info' | 'danger' | 'neutral'> = {
+  CREATE: 'success',
+  UPDATE: 'info',
+  DELETE: 'danger',
+  LOGIN: 'neutral',
 };
 
 export default function AuditLogsPage() {
@@ -43,93 +56,77 @@ export default function AuditLogsPage() {
   const logs = data?.data || [];
   const totalPages = data?.meta?.totalPages || 1;
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '8px 10px 8px 32px', fontSize: '13px', color: 'var(--ink)',
-    border: 0, borderRadius: '8px', background: 'var(--surface)',
-    boxShadow: 'var(--shadow-sm), inset 0 0 0 1px var(--hairline)',
-    outline: 'none', fontFamily: 'inherit',
-  };
-  const btnSecondary: React.CSSProperties = {
-    padding: '7px 14px', fontSize: '12px', fontWeight: 500, border: 0, borderRadius: '8px',
-    background: 'var(--surface-2)', color: 'var(--ink-soft)', cursor: 'pointer', boxShadow: 'var(--shadow-sm)',
-  };
-
   if (error) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '64px 0', color: 'oklch(0.50 0.20 22)', fontSize: '14px' }}>
+      <div className="flex items-center justify-center py-16 text-sm text-danger">
         Failed to load audit logs
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div className="flex flex-col gap-4">
       <div>
-        <h2 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.01em', margin: 0 }}>Audit Logs</h2>
-        <p style={{ fontSize: '12px', color: 'var(--mute)', marginTop: '3px' }}>{data?.meta?.total || 0} total entries</p>
+        <h2 className="text-ink">Audit Logs</h2>
+        <p className="mt-0.5 text-xs text-mute">{data?.meta?.total || 0} total entries</p>
       </div>
 
-      <div style={{ position: 'relative', maxWidth: '360px' }}>
-        <HugeiconsIcon icon={Search01Icon} size={14} color="var(--mute)" style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-        <input
+      <div className="relative max-w-[360px]">
+        <HugeiconsIcon icon={Search01Icon} size={14} color="var(--mute)" className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2" />
+        <Input
           placeholder="Search actions…"
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-          style={inputStyle}
+          className="pl-8"
         />
       </div>
 
-      <div style={{ background: 'var(--surface)', borderRadius: '14px', boxShadow: 'var(--shadow-md)', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid var(--border)' }}>
+      <Card className="overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
               {['Timestamp', 'User', 'Action', 'Entity', 'Entity ID', 'IP'].map((h) => (
-                <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: '11px', fontWeight: 600, color: 'var(--mute)', textTransform: 'uppercase', letterSpacing: '0.06em', background: 'var(--surface-2)' }}>{h}</th>
+                <TableHead key={h} className="bg-surface-2">{h}</TableHead>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {isLoading
               ? Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} style={{ borderBottom: '1px solid var(--hairline)' }}>
-                    <td colSpan={6} style={{ padding: '12px 16px' }}>
-                      <div style={{ height: '18px', borderRadius: '5px', background: 'var(--surface-2)' }} />
-                    </td>
-                  </tr>
+                  <TableRow key={i} className="hover:bg-transparent">
+                    <TableCell colSpan={6}>
+                      <Skeleton height={18} radius={5} />
+                    </TableCell>
+                  </TableRow>
                 ))
               : logs.length === 0
                 ? (
-                  <tr>
-                    <td colSpan={6} style={{ padding: '40px 16px', textAlign: 'center', color: 'var(--mute)' }}>No audit logs found</td>
-                  </tr>
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={6} className="py-10 text-center text-mute">No audit logs found</TableCell>
+                  </TableRow>
                 )
                 : logs.map((log) => (
-                  <tr key={log.id} style={{ borderBottom: '1px solid var(--hairline)' }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = 'var(--surface-2)'; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLTableRowElement).style.background = 'transparent'; }}
-                  >
-                    <td style={{ padding: '10px 16px', color: 'var(--mute)' }}>{format(new Date(log.createdAt), 'MMM d, yyyy HH:mm')}</td>
-                    <td style={{ padding: '10px 16px', color: 'var(--ink)' }}>{log.user?.name || 'System'}</td>
-                    <td style={{ padding: '10px 16px' }}>
-                      <span style={{ ...(actionBadge[log.action] ?? { background: 'var(--surface-2)', color: 'var(--mute)' }), padding: '2px 8px', borderRadius: '6px', fontSize: '11px', fontWeight: 600 }}>
-                        {log.action}
-                      </span>
-                    </td>
-                    <td style={{ padding: '10px 16px', color: 'var(--ink-soft)', textTransform: 'capitalize' }}>{log.entity}</td>
-                    <td style={{ padding: '10px 16px', fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--mute)' }}>{log.entityId}</td>
-                    <td style={{ padding: '10px 16px', color: 'var(--mute)' }}>{log.ip}</td>
-                  </tr>
+                  <TableRow key={log.id}>
+                    <TableCell className="text-mute">{format(new Date(log.createdAt), 'MMM d, yyyy HH:mm')}</TableCell>
+                    <TableCell className="text-ink">{log.user?.name || 'System'}</TableCell>
+                    <TableCell>
+                      <Badge variant={actionBadgeVariant[log.action] ?? 'neutral'}>{log.action}</Badge>
+                    </TableCell>
+                    <TableCell className="capitalize text-ink-soft">{log.entity}</TableCell>
+                    <TableCell className="font-mono text-[11px] text-mute">{log.entityId}</TableCell>
+                    <TableCell className="text-mute">{log.ip}</TableCell>
+                  </TableRow>
                 ))
             }
-          </tbody>
-        </table>
-      </div>
+          </TableBody>
+        </Table>
+      </Card>
 
       {totalPages > 1 && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-          <button style={btnSecondary} disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button>
-          <span style={{ fontSize: '12px', color: 'var(--mute)' }}>Page {page} of {totalPages}</span>
-          <button style={btnSecondary} disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Next</button>
+        <div className="flex items-center justify-center gap-3">
+          <Button variant="secondary" size="sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</Button>
+          <span className="text-xs text-mute">Page {page} of {totalPages}</span>
+          <Button variant="secondary" size="sm" disabled={page >= totalPages} onClick={() => setPage(page + 1)}>Next</Button>
         </div>
       )}
     </div>

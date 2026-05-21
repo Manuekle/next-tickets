@@ -10,6 +10,11 @@ import { sileo } from 'sileo';
 import { useState, Suspense } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { LockPasswordIcon } from '@hugeicons/core-free-icons';
+import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 const resetSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
@@ -20,13 +25,6 @@ const resetSchema = z.object({
 });
 
 type ResetForm = z.infer<typeof resetSchema>;
-
-const inputStyle: React.CSSProperties = {
-  width: '100%', padding: '10px 12px', fontSize: '13px', color: 'var(--ink)',
-  border: 0, borderRadius: '9px', background: 'var(--surface-2)',
-  boxShadow: 'inset 0 0 0 1px var(--hairline)',
-  outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', transition: 'box-shadow 100ms',
-};
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -56,69 +54,60 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <div>
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <h1 style={{ fontSize: '22px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em', margin: '0 0 6px' }}>Invalid link</h1>
-          <p style={{ fontSize: '13px', color: 'var(--mute)' }}>This password reset link is invalid or has expired.</p>
-        </div>
+      <Card className="w-full px-7 py-10 text-center shadow-md">
+        <h1 className="mb-1.5 text-2xl font-semibold tracking-tight text-ink">Invalid link</h1>
+        <p className="mb-7 text-[13px] text-mute">This password reset link is invalid or has expired.</p>
         <Link
           href="/forgot-password"
-          style={{ display: 'block', textAlign: 'center', fontSize: '13px', color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}
+          className="block text-center text-[13px] font-medium text-ink hover:underline"
         >
           Request a new reset link
         </Link>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div>
-      <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-        <div style={{ width: '44px', height: '44px', borderRadius: '14px', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', boxShadow: '0 6px 18px -6px var(--accent-glow)' }}>
-          <HugeiconsIcon icon={LockPasswordIcon} size={20} color="#fff" />
+    <Card className="w-full px-7 py-8 shadow-md">
+      <div className="mb-7 text-center">
+        <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-accent text-accent-fg">
+          <HugeiconsIcon icon={LockPasswordIcon} size={20} />
         </div>
-        <h1 style={{ fontSize: '22px', fontWeight: 600, color: 'var(--ink)', letterSpacing: '-0.02em', margin: '0 0 6px' }}>Reset password</h1>
-        <p style={{ fontSize: '13px', color: 'var(--mute)' }}>Enter your new password below</p>
+        <h1 className="mb-1.5 text-2xl font-semibold tracking-tight text-ink">Reset password</h1>
+        <p className="text-[13px] text-mute">Enter your new password below</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        <div>
-          <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--ink-soft)', display: 'block', marginBottom: '5px' }}>New password</label>
-          <input
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3.5">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="password">New password</Label>
+          <Input
+            id="password"
             type="password"
             {...register('password')}
-            style={{ ...inputStyle, ...(errors.password ? { boxShadow: 'inset 0 0 0 1.5px oklch(0.58 0.20 22)' } : {}) }}
+            className={cn(errors.password && 'border-danger')}
           />
-          {errors.password && <p style={{ fontSize: '11px', color: 'oklch(0.58 0.20 22)', marginTop: '4px' }}>{errors.password.message}</p>}
+          {errors.password && <p className="text-[11px] text-danger">{errors.password.message}</p>}
         </div>
-        <div>
-          <label style={{ fontSize: '12px', fontWeight: 500, color: 'var(--ink-soft)', display: 'block', marginBottom: '5px' }}>Confirm password</label>
-          <input
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="confirmPassword">Confirm password</Label>
+          <Input
+            id="confirmPassword"
             type="password"
             {...register('confirmPassword')}
-            style={{ ...inputStyle, ...(errors.confirmPassword ? { boxShadow: 'inset 0 0 0 1.5px oklch(0.58 0.20 22)' } : {}) }}
+            className={cn(errors.confirmPassword && 'border-danger')}
           />
-          {errors.confirmPassword && <p style={{ fontSize: '11px', color: 'oklch(0.58 0.20 22)', marginTop: '4px' }}>{errors.confirmPassword.message}</p>}
+          {errors.confirmPassword && <p className="text-[11px] text-danger">{errors.confirmPassword.message}</p>}
         </div>
-        <button
-          type="submit"
-          disabled={loading}
-          style={{
-            width: '100%', padding: '11px', fontSize: '13px', fontWeight: 600, border: 0, borderRadius: '10px',
-            background: 'linear-gradient(135deg, var(--accent), var(--accent-2))', color: '#fff', cursor: 'pointer',
-            boxShadow: '0 4px 14px -4px var(--accent-glow)', opacity: loading ? 0.7 : 1, transition: 'opacity 100ms',
-            marginTop: '4px',
-          }}
-        >
+        <Button type="submit" disabled={loading} size="lg" className="mt-1 w-full">
           {loading ? 'Resetting…' : 'Reset password'}
-        </button>
+        </Button>
       </form>
 
-      <p style={{ textAlign: 'center', fontSize: '12px', color: 'var(--mute)', marginTop: '20px' }}>
+      <p className="mt-5 text-center text-xs text-mute">
         Remember your password?{' '}
-        <Link href="/login" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 500 }}>Sign in</Link>
+        <Link href="/login" className="font-medium text-ink hover:underline">Sign in</Link>
       </p>
-    </div>
+    </Card>
   );
 }
 
