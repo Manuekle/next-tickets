@@ -157,6 +157,10 @@ export function ArticleForm({ initialData }: ArticleFormProps) {
               <Select
                 value={categoryId}
                 onValueChange={(v) => setValue('categoryId', (v as string) || undefined)}
+                items={{
+                  '': 'No category',
+                  ...Object.fromEntries((categories?.data ?? []).map((c) => [c.id, `${c.name} (${c._count.articles})`])),
+                }}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="No category" />
