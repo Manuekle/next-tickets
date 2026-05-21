@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { ArrowLeft01Icon, ThumbsUpIcon, ThumbsDownIcon, User02Icon, PencilEdit01Icon } from '@hugeicons/core-free-icons';
 import { sileo } from 'sileo';
-import { Button, Badge, Card, CardContent, Skeleton } from '@/components/ui';
+import { Button, Badge, categoryVariant, Card, CardContent, Skeleton } from '@/components/ui';
 
 interface ArticleDetail {
   id: string;
@@ -111,7 +111,7 @@ export default function ArticleDetailPage() {
         </div>
         <div className="mt-3 flex flex-wrap items-center gap-2.5">
           {article.category && (
-            <Badge variant="solid">{article.category.name}</Badge>
+            <Badge variant={categoryVariant(article.category.name)}>{article.category.name}</Badge>
           )}
           {article.author && (
             <span className="flex items-center gap-1 text-xs text-mute">

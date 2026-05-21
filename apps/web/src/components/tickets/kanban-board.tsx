@@ -11,6 +11,7 @@ export interface KanbanTicket {
   status: string;
   priority: string;
   customer?: { name: string };
+  category?: { name: string } | null;
   updatedAt: string;
 }
 

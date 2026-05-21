@@ -4,7 +4,7 @@ import { HugeiconsIcon } from '@hugeicons/react';
 
 import { ThumbsUpIcon, User02Icon } from '@hugeicons/core-free-icons';
 import { format } from 'date-fns';
-import { Card, Badge } from '@/components/ui';
+import { Card, Badge, categoryVariant } from '@/components/ui';
 
 interface ArticleCardProps {
   id: string;
@@ -20,14 +20,14 @@ interface ArticleCardProps {
 export function ArticleCard({ slug, title, excerpt, category, author, createdAt, helpfulCount }: ArticleCardProps) {
   return (
     <Link href={`/knowledge/${slug}`} className="block h-full no-underline">
-      <Card className="flex h-full flex-col gap-2 p-4 shadow-sm transition-all hover:-translate-y-px hover:border-border-strong hover:shadow-md">
+      <Card className="flex h-full flex-col gap-2 p-4 transition-all hover:-translate-y-0.5 hover:shadow-md">
         {/* Header: title + category */}
         <div className="flex items-start justify-between gap-2.5">
           <h3 className="m-0 line-clamp-2 text-[13.5px] font-semibold leading-snug tracking-tight text-ink">
             {title}
           </h3>
           {category && (
-            <Badge variant="neutral" className="shrink-0">
+            <Badge variant={categoryVariant(category.name)} className="shrink-0">
               {category.name}
             </Badge>
           )}

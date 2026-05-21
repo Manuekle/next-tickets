@@ -16,7 +16,7 @@ import { format } from 'date-fns';
 import { HugeiconsIcon, type IconSvgElement } from '@hugeicons/react';
 import { ArrowRight01Icon, BubbleChatIcon, InformationCircleIcon, Activity01Icon } from '@hugeicons/core-free-icons';
 import { sileo } from 'sileo';
-import { Badge, type BadgeProps } from '@/components/ui/badge';
+import { Badge, categoryVariant, type BadgeProps } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar } from '@/components/ui/avatar';
@@ -242,7 +242,7 @@ export default function TicketDetailPage() {
         <div className="flex flex-wrap items-center gap-1.5">
           <StatusBadge status={ticket.status} />
           <PriorityBadge priority={ticket.priority} />
-          {ticket.category && <Badge variant="neutral">{ticket.category.name}</Badge>}
+          {ticket.category && <Badge variant={categoryVariant(ticket.category.name)}>{ticket.category.name}</Badge>}
         </div>
       </div>
 
@@ -353,7 +353,7 @@ export default function TicketDetailPage() {
 
             {ticket.category && (
               <SideField label="Category">
-                <Badge variant="neutral">{ticket.category.name}</Badge>
+                <Badge variant={categoryVariant(ticket.category.name)}>{ticket.category.name}</Badge>
               </SideField>
             )}
 

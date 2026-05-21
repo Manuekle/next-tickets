@@ -15,7 +15,7 @@ import { CriticalBanner } from '@/components/tickets/critical-banner';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Ticket01Icon } from '@hugeicons/core-free-icons';
 import { Card } from '@/components/ui/card';
-import { Badge, type BadgeProps } from '@/components/ui/badge';
+import { Badge, categoryVariant, type BadgeProps } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -60,9 +60,9 @@ const STATUS_FILTERS = [
 /* ─── sub-components ─── */
 function StatChip({ label, value }: { label: string; value: number | string }) {
   return (
-    <Card className="flex min-w-[80px] flex-col items-center gap-0.5 px-4 py-2.5">
-      <span className="font-mono text-[22px] font-bold leading-none text-ink">{value}</span>
+    <Card hover className="flex min-w-[96px] flex-col gap-1 px-4 py-3">
       <span className="text-[11px] font-medium uppercase tracking-wide text-mute">{label}</span>
+      <span className="font-mono text-[22px] font-bold leading-none text-ink">{value}</span>
     </Card>
   );
 }
@@ -113,7 +113,7 @@ function TicketRow({ ticket, active, onClick }: { ticket: Ticket; active: boolea
         <div className="flex flex-wrap items-center gap-1.5">
           <StatusChip status={ticket.status} />
           {ticket.category && (
-            <Badge variant="neutral">{ticket.category.name}</Badge>
+            <Badge variant={categoryVariant(ticket.category.name)}>{ticket.category.name}</Badge>
           )}
           {(ticket._count?.comments ?? 0) > 0 && (
             <span className="ml-auto inline-flex items-center gap-1 text-[11px] text-mute">
@@ -215,9 +215,9 @@ export default function InboxPage() {
                 type="button"
                 onClick={() => setStatus(f.value)}
                 className={cn(
-                  'rounded-md px-2.5 py-1.5 text-xs transition-colors',
+                  'rounded-full px-3 py-1.5 text-xs transition-all',
                   status === f.value
-                    ? 'bg-accent-tint font-semibold text-accent shadow-[inset_0_0_0_1px_var(--accent-border)]'
+                    ? 'bg-accent font-semibold text-accent-fg shadow-sm'
                     : 'font-medium text-ink-soft hover:bg-surface-2',
                 )}
               >

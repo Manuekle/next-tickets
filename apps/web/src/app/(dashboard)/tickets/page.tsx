@@ -11,7 +11,7 @@ import { KanbanBoard, type KanbanColumnDef, type KanbanTicket } from '@/componen
 import { EmptyState } from '@/components/ui/empty-state';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge, type BadgeProps } from '@/components/ui/badge';
+import { Badge, categoryVariant, type BadgeProps } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
@@ -476,15 +476,18 @@ export default function TicketsPage() {
             onOpen={(id) => router.push(`/tickets/${id}`)}
             onMove={(id, status) => moveTicketMutation.mutate({ id, status })}
             renderCard={(t) => (
-              <Card className="flex flex-col gap-2 p-3 shadow-sm">
-                <div className="flex items-center justify-between">
+              <Card hover className="flex flex-col gap-2 p-3">
+                <div className="flex items-center justify-between gap-2">
                   <span className="font-mono text-[10.5px] font-medium text-mute">{t.id?.slice(0, 8)}</span>
                   <PriorityBadge priority={t.priority} />
                 </div>
                 <div className="line-clamp-2 text-[13px] font-medium leading-snug text-ink">{t.title}</div>
-                <div className="mt-0.5 flex items-center justify-between border-t border-border pt-2">
-                  <span className="text-[11px] text-mute">{t.customer?.name}</span>
-                  <span className="text-[11px] tabular-nums text-mute">{timeAgo(t.updatedAt)}</span>
+                {t.category?.name && (
+                  <Badge variant={categoryVariant(t.category.name)}>{t.category.name}</Badge>
+                )}
+                <div className="mt-0.5 flex items-center justify-between border-t border-hairline pt-2">
+                  <span className="truncate text-[11px] text-mute">{t.customer?.name}</span>
+                  <span className="shrink-0 text-[11px] tabular-nums text-mute">{timeAgo(t.updatedAt)}</span>
                 </div>
               </Card>
             )}
