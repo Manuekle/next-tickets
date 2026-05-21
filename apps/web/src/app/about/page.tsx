@@ -4,7 +4,13 @@ import Logo from '@/components/logo';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import type { Metadata } from 'next';
+
+const FEATURE_TINTS = [
+  'bg-cat-purple-tint', 'bg-cat-blue-tint', 'bg-cat-green-tint', 'bg-cat-amber-tint',
+  'bg-cat-red-tint', 'bg-cat-teal-tint', 'bg-cat-pink-tint', 'bg-surface-2',
+];
 
 export const metadata: Metadata = {
   title: 'open-tickets — Open Source Ticket Management',
@@ -91,9 +97,11 @@ export default function AboutPage() {
           Everything a support team needs
         </h2>
         <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-4">
-          {FEATURES.map((f) => (
-            <Card key={f.title} className="p-[22px]">
-              <div className="mb-3 text-2xl">{f.icon}</div>
+          {FEATURES.map((f, i) => (
+            <Card key={f.title} hover className="p-[22px]">
+              <div className={cn('mb-3 flex h-11 w-11 items-center justify-center rounded-xl text-xl', FEATURE_TINTS[i % FEATURE_TINTS.length])}>
+                {f.icon}
+              </div>
               <div className="mb-1.5 text-sm font-semibold text-ink">{f.title}</div>
               <div className="text-[13px] leading-relaxed text-mute">{f.desc}</div>
             </Card>

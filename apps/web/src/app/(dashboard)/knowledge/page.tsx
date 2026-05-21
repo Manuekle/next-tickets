@@ -129,7 +129,7 @@ export default function KnowledgePage() {
       {isLoading && (
         <div className="grid grid-cols-3 gap-3.5">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className="p-4 shadow-sm">
+            <Card key={i} className="p-4">
               <Skeleton width="75%" height={18} className="mb-2.5" />
               <Skeleton width="100%" height={14} className="mb-1.5" />
               <Skeleton width="55%" height={14} className="mb-4" />
@@ -197,10 +197,10 @@ function CategoryChip({ label, count, active, onClick }: {
     <button
       onClick={onClick}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+        'inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-all',
         active
-          ? 'border-transparent bg-accent text-accent-fg'
-          : 'border-border bg-surface-2 text-ink-soft hover:bg-surface-3 hover:text-ink',
+          ? 'border-transparent bg-accent text-accent-fg shadow-sm'
+          : 'border-border bg-surface text-ink-soft hover:bg-surface-2 hover:text-ink',
       )}
     >
       {label}
