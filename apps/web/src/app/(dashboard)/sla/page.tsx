@@ -104,10 +104,10 @@ export default function SlaPage() {
 
       {/* KPI row */}
       <div className="grid grid-cols-4 gap-3">
-        <StatCard title="Compliance Rate" value={metrics ? `${metrics.slaComplianceRate}%` : undefined} icon={CheckmarkCircle01Icon} loading={isLoading} />
+        <StatCard title="Compliance Rate" value={metrics ? `${metrics.slaComplianceRate ?? 0}%` : undefined} icon={CheckmarkCircle01Icon} loading={isLoading} />
         <StatCard title="Active SLAs"     value={metrics?.totalTickets}   icon={DashboardSpeed01Icon}   loading={isLoading} />
         <StatCard title="Breached"         value={metrics?.breachedCount}  icon={Alert02Icon}            loading={isLoading} danger />
-        <StatCard title="Avg Resolution"   value={metrics ? `${metrics.avgResolutionTime}h` : undefined} icon={Clock01Icon} loading={isLoading} />
+        <StatCard title="Avg Resolution"   value={metrics ? `${metrics.avgResolutionTime ?? 0}h` : undefined} icon={Clock01Icon} loading={isLoading} />
       </div>
 
       {/* Detail cards */}
