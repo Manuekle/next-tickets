@@ -98,10 +98,10 @@ export function CopilotPanel({ ticketId }: { ticketId: string }) {
   };
 
   return (
-    <Card className="mt-3 overflow-hidden shadow-sm">
+    <Card className="mt-3 overflow-hidden">
       <div className="flex items-center gap-2 border-b border-hairline px-3.5 py-3">
-        <div className="flex h-6 w-6 items-center justify-center rounded-md bg-accent-tint text-accent">
-          <HugeiconsIcon icon={SparklesIcon} size={13} />
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-cat-purple-tint text-cat-purple">
+          <HugeiconsIcon icon={SparklesIcon} size={14} />
         </div>
         <div className="text-xs font-semibold text-ink">AI Copilot</div>
       </div>
@@ -113,9 +113,9 @@ export function CopilotPanel({ ticketId }: { ticketId: string }) {
             onClick={() => run(a.key, a.path)}
             disabled={loading !== null}
             className={cn(
-              'flex items-center gap-1.5 rounded-md px-2.5 py-2 text-[11.5px] font-medium transition-colors',
+              'flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-[11.5px] font-medium transition-colors',
               loading === a.key
-                ? 'bg-accent-tint text-accent'
+                ? 'bg-cat-purple-tint text-cat-purple'
                 : 'bg-surface-2 text-ink-soft hover:bg-surface-3 hover:text-ink',
               loading !== null && 'cursor-wait',
             )}

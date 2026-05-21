@@ -359,7 +359,7 @@ export default function AiSettingsPage() {
                     !p.enabled && 'opacity-55',
                   )}
                 >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent-tint text-accent">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cat-purple-tint text-cat-purple">
                     <HugeiconsIcon icon={Robot01Icon} size={16} />
                   </div>
                   <div className="min-w-0 flex-1">

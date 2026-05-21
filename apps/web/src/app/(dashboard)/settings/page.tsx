@@ -192,7 +192,7 @@ export default function SettingsPage() {
             href="/settings/ai"
             className="flex items-center gap-3 rounded-lg border border-border bg-surface-2 p-3 text-ink no-underline transition-colors hover:bg-surface-3"
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-accent text-accent-fg">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cat-purple-tint text-cat-purple">
               <HugeiconsIcon icon={Robot01Icon} size={18} />
             </div>
             <div className="min-w-0 flex-1">
