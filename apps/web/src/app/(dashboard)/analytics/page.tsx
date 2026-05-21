@@ -83,21 +83,28 @@ function CardHead({ title, right }: { title: string; right?: React.ReactNode }) 
   );
 }
 
+const STAT_TONE: Record<string, { dot: string; value: string }> = {
+  ink:    { dot: 'bg-mute-soft',  value: 'text-ink' },
+  blue:   { dot: 'bg-cat-blue',   value: 'text-ink' },
+  green:  { dot: 'bg-cat-green',  value: 'text-ink' },
+  amber:  { dot: 'bg-cat-amber',  value: 'text-ink' },
+  red:    { dot: 'bg-cat-red',    value: 'text-ink' },
+};
+
 function StatCard({ title, value, loading, tone = 'ink' }: {
   title: string; value?: number | string; loading: boolean; tone?: string;
 }) {
+  const t = STAT_TONE[tone] ?? STAT_TONE.ink;
   return (
-    <Card className="p-5">
-      <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-mute">{title}</div>
+    <Card hover className="p-5">
+      <div className="mb-3 flex items-center gap-2">
+        <span className={cn('h-2 w-2 rounded-full', t.dot)} />
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-mute">{title}</span>
+      </div>
       {loading ? (
         <Skeleton width={60} height={32} radius={8} />
       ) : (
-        <div
-          className={cn(
-            'font-display text-[30px] font-normal leading-none -tracking-[0.03em] tabular-nums',
-            tone === 'mute' ? 'text-mute' : 'text-ink',
-          )}
-        >
+        <div className={cn('text-[30px] font-bold leading-none -tracking-[0.02em] tabular-nums', t.value)}>
           {value ?? 0}
         </div>
       )}
@@ -140,7 +147,7 @@ function TrendsTab() {
         {DAY_RANGES.map((r) => (
           <Button
             key={r.value}
-            size="sm"
+            size="pill"
             variant={days === r.value ? 'primary' : 'secondary'}
             onClick={() => setDays(r.value)}
           >
@@ -151,10 +158,10 @@ function TrendsTab() {
 
       {/* KPI row */}
       <div className="grid grid-cols-4 gap-3">
-        <StatCard title="Created"  value={totals?.created}  loading={isLoading} />
-        <StatCard title="Resolved" value={totals?.resolved} loading={isLoading} />
-        <StatCard title="Open"     value={totals?.open}     loading={isLoading} />
-        <StatCard title="Critical" value={totals?.critical} loading={isLoading} tone="mute" />
+        <StatCard title="Created"  value={totals?.created}  loading={isLoading} tone="blue" />
+        <StatCard title="Resolved" value={totals?.resolved} loading={isLoading} tone="green" />
+        <StatCard title="Open"     value={totals?.open}     loading={isLoading} tone="amber" />
+        <StatCard title="Critical" value={totals?.critical} loading={isLoading} tone="red" />
       </div>
 
       {/* Charts */}
@@ -321,21 +328,30 @@ function SLATab() {
           ))
         ) : (
           <>
-            <Card className="p-5">
-              <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-mute">Compliance Rate</div>
-              <div className="font-display text-[30px] leading-none -tracking-[0.03em] tabular-nums text-ink">
+            <Card hover className="p-5">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-cat-blue" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-mute">Compliance Rate</span>
+              </div>
+              <div className="text-[30px] font-bold leading-none -tracking-[0.02em] tabular-nums text-ink">
                 {sla ? `${pct}%` : 'N/A'}
               </div>
             </Card>
-            <Card className="p-5">
-              <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-mute">Compliant</div>
-              <div className="font-display text-[30px] leading-none -tracking-[0.03em] tabular-nums text-success">
+            <Card hover className="p-5">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-cat-green" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-mute">Compliant</span>
+              </div>
+              <div className="text-[30px] font-bold leading-none -tracking-[0.02em] tabular-nums text-success">
                 {sla?.compliant ?? 0}
               </div>
             </Card>
-            <Card className="p-5">
-              <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-wider text-mute">Breached</div>
-              <div className="font-display text-[30px] leading-none -tracking-[0.03em] tabular-nums text-danger">
+            <Card hover className="p-5">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-cat-red" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-mute">Breached</span>
+              </div>
+              <div className="text-[30px] font-bold leading-none -tracking-[0.02em] tabular-nums text-danger">
                 {sla?.breached ?? 0}
               </div>
             </Card>
@@ -357,7 +373,7 @@ function SLATab() {
                     <path d="M 12 88 A 53 53 0 1 1 118 88" fill="none" stroke="var(--surface-2)" strokeWidth="10" strokeLinecap="round" />
                     <path
                       d="M 12 88 A 53 53 0 1 1 118 88"
-                      fill="none" stroke="var(--accent)" strokeWidth="10" strokeLinecap="round"
+                      fill="none" stroke="var(--success)" strokeWidth="10" strokeLinecap="round"
                       pathLength="100"
                       strokeDasharray="100"
                       strokeDashoffset={100 - pct}

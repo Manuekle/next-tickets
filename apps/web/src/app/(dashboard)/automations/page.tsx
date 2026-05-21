@@ -505,7 +505,7 @@ export default function AutomationsPage() {
       {!isLoading && rules.length > 0 && (
         <div className="grid grid-cols-3 gap-3.5">
           {rules.map((rule) => (
-            <Card key={rule.id} className="flex flex-col overflow-hidden">
+            <Card key={rule.id} hover className="flex flex-col overflow-hidden">
               <div className="flex-1 p-4">
                 <div className="mb-2.5 flex items-start justify-between gap-2.5">
                   <p className="text-[13.5px] font-semibold leading-tight text-ink">{rule.name}</p>
@@ -533,7 +533,7 @@ export default function AutomationsPage() {
               </div>
 
               {/* Footer */}
-              <div className="flex items-center justify-between border-t border-border px-4 py-2.5">
+              <div className="flex items-center justify-between border-t border-hairline bg-surface-2/40 px-4 py-2.5">
                 <Label className="flex cursor-pointer items-center gap-2">
                   <Switch
                     checked={rule.isActive}
