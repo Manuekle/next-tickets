@@ -122,7 +122,7 @@ async function main() {
 
   /* ─── Tickets ─── */
 
-  type UserRef = { id: string };
+  type UserRef = { id: string; name: string };
   type TicketSeed = {
     title: string;
     desc: string;
@@ -185,7 +185,7 @@ async function main() {
     { title: 'Request for dedicated support contact',                 desc: 'As an enterprise customer, we\'d like to have a named account manager and dedicated support email. Our contract mentions enterprise support but we\'ve been going through the general queue.',                                  priority: TicketPriority.LOW,      status: TicketStatus.CLOSED,              customer: cust5,  agent: superAdmin, cat: 'general-inquiry', tags: ['enterprise'],                          created: daysAgo(25), resolved: daysAgo(22) },
   ];
 
-  const createdTickets = [];
+  const createdTickets: Awaited<ReturnType<typeof prisma.ticket.create>>[] = [];
   for (const t of ticketSeeds) {
     const ticket = await prisma.ticket.create({
       data: {
