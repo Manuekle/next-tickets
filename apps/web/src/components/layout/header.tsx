@@ -95,7 +95,7 @@ export function Header({ onOpenSidebar }: HeaderProps) {
             }
           }}
           aria-label="Search or run a command (⌘K)"
-          className="flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-1.5 text-xs text-mute transition-colors hover:bg-surface-3"
+          className="flex items-center gap-2 rounded-full border border-border bg-surface-2 px-3.5 py-1.5 text-xs text-mute transition-colors hover:bg-surface-3"
         >
           <HugeiconsIcon icon={Search01Icon} size={13} aria-hidden="true" />
           <span className="hx-search-label min-w-[140px] flex-1 text-left">Search…</span>
